@@ -1,0 +1,28 @@
+{
+  "appId": "com.pixelforge.editor",
+  "productName": "PixelForge",
+  "directories": {
+    "output": "release/editor"
+  },
+  "files": [
+    "out/**/*",
+    "examples/**/*",
+    "package.json"
+  ],
+  "mac": {
+    "category": "public.app-category.developer-tools",
+    "target": ["dmg", "zip"],
+    "extendInfo": {
+      "NSMicrophoneUsageDescription": "PixelForge analyzes audio input for reactive LED visuals.",
+      "NSLocalNetworkUsageDescription": "PixelForge sends LED pixel data to fixtures on your local network via sACN, Art-Net, or DDP."
+    }
+  },
+  "win": {
+    "target": ["nsis"]
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "pixelforge",
+    "repo": "pixelforge"
+  }
+}

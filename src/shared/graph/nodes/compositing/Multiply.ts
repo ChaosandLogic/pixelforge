@@ -1,0 +1,34 @@
+import { blendMultiply } from '../../compositing/blend'
+import { floatInput, pixelsInput, type NodeTypeDef } from '../../types'
+
+export const Multiply: NodeTypeDef = {
+  type: 'composite/multiply',
+  label: 'Multiply',
+  category: 'composite',
+  description: 'Multiplies two pixel streams',
+  inputs: [
+    { name: 'a', label: 'A', type: 'pixels' },
+    { name: 'b', label: 'B', type: 'pixels' },
+    { name: 'amount', label: 'Amount', type: 'float' }
+  ],
+  outputs: [{ name: 'pixels', label: 'Pixels', type: 'pixels' }],
+  params: [
+    { name: 'amount', label: 'Amount', type: 'float', default: 1, min: 0, max: 1, step: 0.01 }
+  ],
+  evaluate(inputs, params, ctx) {
+    const a = pixelsInput(inputs, 'a')
+    const b = pixelsInput(inputs, 'b')
+    const out = ctx.acquire()
+    if (a === null && b === null) {
+      out.fill(0)
+      return { pixels: out }
+    }
+    if (a === null || b === null) {
+      out.set(a ?? (b as Float32Array))
+      return { pixels: out }
+    }
+    const amount = Math.max(0, Math.min(1, floatInput(inputs, params, 'amount', 1)))
+    blendMultiply(a, b, amount, out)
+    return { pixels: out }
+  }
+}

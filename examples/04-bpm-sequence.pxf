@@ -1,0 +1,691 @@
+{
+  "version": "1.4.0",
+  "meta": {
+    "name": "BPM Sequence",
+    "created": "2026-06-13T21:01:06.464Z",
+    "modified": "2026-06-13T21:01:06.464Z"
+  },
+  "patch": {
+    "points": [
+      {
+        "id": "fixture-1:0",
+        "x": 0,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:1",
+        "x": 0.015873015873015872,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:2",
+        "x": 0.031746031746031744,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:3",
+        "x": 0.047619047619047616,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:4",
+        "x": 0.06349206349206349,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:5",
+        "x": 0.07936507936507936,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:6",
+        "x": 0.09523809523809523,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:7",
+        "x": 0.1111111111111111,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:8",
+        "x": 0.12698412698412698,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:9",
+        "x": 0.14285714285714285,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:10",
+        "x": 0.15873015873015872,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:11",
+        "x": 0.1746031746031746,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:12",
+        "x": 0.19047619047619047,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:13",
+        "x": 0.20634920634920634,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:14",
+        "x": 0.2222222222222222,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:15",
+        "x": 0.23809523809523808,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:16",
+        "x": 0.25396825396825395,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:17",
+        "x": 0.2698412698412698,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:18",
+        "x": 0.2857142857142857,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:19",
+        "x": 0.30158730158730157,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:20",
+        "x": 0.31746031746031744,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:21",
+        "x": 0.3333333333333333,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:22",
+        "x": 0.3492063492063492,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:23",
+        "x": 0.36507936507936506,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:24",
+        "x": 0.38095238095238093,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:25",
+        "x": 0.3968253968253968,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:26",
+        "x": 0.4126984126984127,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:27",
+        "x": 0.42857142857142855,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:28",
+        "x": 0.4444444444444444,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:29",
+        "x": 0.4603174603174603,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:30",
+        "x": 0.47619047619047616,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:31",
+        "x": 0.49206349206349204,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:32",
+        "x": 0.5079365079365079,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:33",
+        "x": 0.5238095238095238,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:34",
+        "x": 0.5396825396825397,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:35",
+        "x": 0.5555555555555556,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:36",
+        "x": 0.5714285714285714,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:37",
+        "x": 0.5873015873015873,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:38",
+        "x": 0.6031746031746031,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:39",
+        "x": 0.6190476190476191,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:40",
+        "x": 0.6349206349206349,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:41",
+        "x": 0.6507936507936508,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:42",
+        "x": 0.6666666666666666,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:43",
+        "x": 0.6825396825396826,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:44",
+        "x": 0.6984126984126984,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:45",
+        "x": 0.7142857142857143,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:46",
+        "x": 0.7301587301587301,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:47",
+        "x": 0.746031746031746,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:48",
+        "x": 0.7619047619047619,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:49",
+        "x": 0.7777777777777778,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:50",
+        "x": 0.7936507936507936,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:51",
+        "x": 0.8095238095238095,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:52",
+        "x": 0.8253968253968254,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:53",
+        "x": 0.8412698412698413,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:54",
+        "x": 0.8571428571428571,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:55",
+        "x": 0.873015873015873,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:56",
+        "x": 0.8888888888888888,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:57",
+        "x": 0.9047619047619048,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:58",
+        "x": 0.9206349206349206,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:59",
+        "x": 0.9365079365079365,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:60",
+        "x": 0.9523809523809523,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:61",
+        "x": 0.9682539682539683,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:62",
+        "x": 0.9841269841269841,
+        "y": 0.5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:63",
+        "x": 1,
+        "y": 0.5,
+        "z": 0
+      }
+    ],
+    "layout": {
+      "fixtures": [
+        {
+          "id": "fixture-1",
+          "name": "Main strip",
+          "def": {
+            "kind": "line",
+            "count": 64,
+            "start": {
+              "x": 0,
+              "y": 0.5,
+              "z": 0
+            },
+            "end": {
+              "x": 1,
+              "y": 0.5,
+              "z": 0
+            }
+          }
+        }
+      ]
+    }
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "fix",
+        "type": "setup/fixture",
+        "position": {
+          "x": 80,
+          "y": 380
+        },
+        "params": {
+          "fixtureId": "fixture-1"
+        }
+      },
+      {
+        "id": "clock",
+        "type": "time/bpm-clock",
+        "position": {
+          "x": 80,
+          "y": 80
+        },
+        "params": {
+          "bpm": 128,
+          "offset": 0
+        }
+      },
+      {
+        "id": "red",
+        "type": "generator/solid-colour",
+        "position": {
+          "x": 420,
+          "y": 80
+        },
+        "params": {
+          "colour": {
+            "r": 220,
+            "g": 40,
+            "b": 20
+          }
+        }
+      },
+      {
+        "id": "wave",
+        "type": "generator/wave",
+        "position": {
+          "x": 420,
+          "y": 230
+        },
+        "params": {
+          "colourA": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          "colourB": {
+            "r": 30,
+            "g": 80,
+            "b": 255
+          },
+          "axis": "x",
+          "frequency": 2,
+          "speed": 0.5
+        }
+      },
+      {
+        "id": "grad",
+        "type": "generator/gradient",
+        "position": {
+          "x": 420,
+          "y": 380
+        },
+        "params": {
+          "from": {
+            "r": 255,
+            "g": 80,
+            "b": 0
+          },
+          "to": {
+            "r": 30,
+            "g": 60,
+            "b": 255
+          },
+          "axis": "x",
+          "offset": 0,
+          "scale": 1
+        }
+      },
+      {
+        "id": "noise",
+        "type": "generator/noise",
+        "position": {
+          "x": 420,
+          "y": 530
+        },
+        "params": {
+          "noiseType": "perlin4d-time",
+          "colourA": {
+            "r": 10,
+            "g": 0,
+            "b": 40
+          },
+          "colourB": {
+            "r": 255,
+            "g": 40,
+            "b": 120
+          },
+          "scale": 5,
+          "speed": 1,
+          "wScale": 0,
+          "contrast": 1
+        }
+      },
+      {
+        "id": "seq",
+        "type": "sequence/sequence",
+        "position": {
+          "x": 760,
+          "y": 305
+        },
+        "params": {
+          "bpm": 128,
+          "loop": true,
+          "segments": [
+            {
+              "id": "seg0",
+              "duration": 4,
+              "transition": {
+                "type": "crossfade",
+                "duration": 1,
+                "curve": "ease-in-out"
+              }
+            },
+            {
+              "id": "seg1",
+              "duration": 4,
+              "transition": {
+                "type": "crossfade",
+                "duration": 1,
+                "curve": "ease-in-out"
+              }
+            },
+            {
+              "id": "seg2",
+              "duration": 4,
+              "transition": {
+                "type": "crossfade",
+                "duration": 1,
+                "curve": "ease-in-out"
+              }
+            },
+            {
+              "id": "seg3",
+              "duration": 4,
+              "transition": {
+                "type": "crossfade",
+                "duration": 1,
+                "curve": "ease-in-out"
+              }
+            }
+          ]
+        },
+        "preview": true
+      },
+      {
+        "id": "out",
+        "type": "output/pixel",
+        "position": {
+          "x": 1100,
+          "y": 305
+        },
+        "params": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e0a",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "red",
+        "toPort": "pixels"
+      },
+      {
+        "id": "e0b",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "wave",
+        "toPort": "pixels"
+      },
+      {
+        "id": "e0c",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "grad",
+        "toPort": "pixels"
+      },
+      {
+        "id": "e0d",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "noise",
+        "toPort": "pixels"
+      },
+      {
+        "id": "e0r",
+        "fromNode": "fix",
+        "fromPort": "resolution",
+        "toNode": "wave",
+        "toPort": "resolution"
+      },
+      {
+        "id": "e0s",
+        "fromNode": "fix",
+        "fromPort": "resolution",
+        "toNode": "grad",
+        "toPort": "resolution"
+      },
+      {
+        "id": "e0t",
+        "fromNode": "fix",
+        "fromPort": "resolution",
+        "toNode": "noise",
+        "toPort": "resolution"
+      },
+      {
+        "id": "e1",
+        "fromNode": "clock",
+        "fromPort": "beat",
+        "toNode": "seq",
+        "toPort": "beat"
+      },
+      {
+        "id": "e2",
+        "fromNode": "red",
+        "fromPort": "pixels",
+        "toNode": "seq",
+        "toPort": "segment_0"
+      },
+      {
+        "id": "e3",
+        "fromNode": "wave",
+        "fromPort": "pixels",
+        "toNode": "seq",
+        "toPort": "segment_1"
+      },
+      {
+        "id": "e4",
+        "fromNode": "grad",
+        "fromPort": "pixels",
+        "toNode": "seq",
+        "toPort": "segment_2"
+      },
+      {
+        "id": "e5",
+        "fromNode": "noise",
+        "fromPort": "pixels",
+        "toNode": "seq",
+        "toPort": "segment_3"
+      },
+      {
+        "id": "e6",
+        "fromNode": "seq",
+        "fromPort": "pixels",
+        "toNode": "out",
+        "toPort": "pixels"
+      }
+    ]
+  },
+  "settings": {
+    "engine": {
+      "startUniverse": 1,
+      "iface": null,
+      "targetFps": 44
+    }
+  }
+}

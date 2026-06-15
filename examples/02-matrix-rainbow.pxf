@@ -1,0 +1,903 @@
+{
+  "version": "1.4.0",
+  "meta": {
+    "name": "Matrix Rainbow",
+    "created": "2026-06-13T21:01:06.463Z",
+    "modified": "2026-06-13T21:01:06.463Z"
+  },
+  "patch": {
+    "points": [
+      {
+        "id": "fixture-1:0",
+        "x": 0,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:1",
+        "x": 1,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:2",
+        "x": 2,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:3",
+        "x": 3,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:4",
+        "x": 4,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:5",
+        "x": 5,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:6",
+        "x": 6,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:7",
+        "x": 7,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:8",
+        "x": 8,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:9",
+        "x": 9,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:10",
+        "x": 10,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:11",
+        "x": 11,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:12",
+        "x": 12,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:13",
+        "x": 13,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:14",
+        "x": 14,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:15",
+        "x": 15,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:16",
+        "x": 15,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:17",
+        "x": 14,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:18",
+        "x": 13,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:19",
+        "x": 12,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:20",
+        "x": 11,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:21",
+        "x": 10,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:22",
+        "x": 9,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:23",
+        "x": 8,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:24",
+        "x": 7,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:25",
+        "x": 6,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:26",
+        "x": 5,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:27",
+        "x": 4,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:28",
+        "x": 3,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:29",
+        "x": 2,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:30",
+        "x": 1,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:31",
+        "x": 0,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:32",
+        "x": 0,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:33",
+        "x": 1,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:34",
+        "x": 2,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:35",
+        "x": 3,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:36",
+        "x": 4,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:37",
+        "x": 5,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:38",
+        "x": 6,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:39",
+        "x": 7,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:40",
+        "x": 8,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:41",
+        "x": 9,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:42",
+        "x": 10,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:43",
+        "x": 11,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:44",
+        "x": 12,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:45",
+        "x": 13,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:46",
+        "x": 14,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:47",
+        "x": 15,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:48",
+        "x": 15,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:49",
+        "x": 14,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:50",
+        "x": 13,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:51",
+        "x": 12,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:52",
+        "x": 11,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:53",
+        "x": 10,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:54",
+        "x": 9,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:55",
+        "x": 8,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:56",
+        "x": 7,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:57",
+        "x": 6,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:58",
+        "x": 5,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:59",
+        "x": 4,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:60",
+        "x": 3,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:61",
+        "x": 2,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:62",
+        "x": 1,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:63",
+        "x": 0,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:64",
+        "x": 0,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:65",
+        "x": 1,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:66",
+        "x": 2,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:67",
+        "x": 3,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:68",
+        "x": 4,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:69",
+        "x": 5,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:70",
+        "x": 6,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:71",
+        "x": 7,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:72",
+        "x": 8,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:73",
+        "x": 9,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:74",
+        "x": 10,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:75",
+        "x": 11,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:76",
+        "x": 12,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:77",
+        "x": 13,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:78",
+        "x": 14,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:79",
+        "x": 15,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:80",
+        "x": 15,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:81",
+        "x": 14,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:82",
+        "x": 13,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:83",
+        "x": 12,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:84",
+        "x": 11,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:85",
+        "x": 10,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:86",
+        "x": 9,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:87",
+        "x": 8,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:88",
+        "x": 7,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:89",
+        "x": 6,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:90",
+        "x": 5,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:91",
+        "x": 4,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:92",
+        "x": 3,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:93",
+        "x": 2,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:94",
+        "x": 1,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:95",
+        "x": 0,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:96",
+        "x": 0,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:97",
+        "x": 1,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:98",
+        "x": 2,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:99",
+        "x": 3,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:100",
+        "x": 4,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:101",
+        "x": 5,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:102",
+        "x": 6,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:103",
+        "x": 7,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:104",
+        "x": 8,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:105",
+        "x": 9,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:106",
+        "x": 10,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:107",
+        "x": 11,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:108",
+        "x": 12,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:109",
+        "x": 13,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:110",
+        "x": 14,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:111",
+        "x": 15,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:112",
+        "x": 15,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:113",
+        "x": 14,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:114",
+        "x": 13,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:115",
+        "x": 12,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:116",
+        "x": 11,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:117",
+        "x": 10,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:118",
+        "x": 9,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:119",
+        "x": 8,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:120",
+        "x": 7,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:121",
+        "x": 6,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:122",
+        "x": 5,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:123",
+        "x": 4,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:124",
+        "x": 3,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:125",
+        "x": 2,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:126",
+        "x": 1,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:127",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    ],
+    "layout": {
+      "fixtures": [
+        {
+          "id": "fixture-1",
+          "name": "LED matrix",
+          "def": {
+            "kind": "matrix",
+            "cols": 16,
+            "rows": 8,
+            "spacingX": 1,
+            "spacingY": 1,
+            "origin": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "serpentine": true,
+            "startCorner": "bl",
+            "orientation": "rows"
+          }
+        }
+      ]
+    }
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "fix",
+        "type": "setup/fixture",
+        "position": {
+          "x": 80,
+          "y": 230
+        },
+        "params": {
+          "fixtureId": "fixture-1"
+        }
+      },
+      {
+        "id": "cyl",
+        "type": "spatial/cylindrical",
+        "position": {
+          "x": 420,
+          "y": 230
+        },
+        "params": {
+          "from": {
+            "r": 255,
+            "g": 0,
+            "b": 80
+          },
+          "to": {
+            "r": 0,
+            "g": 120,
+            "b": 255
+          },
+          "phase": 0,
+          "speed": 0.15,
+          "centreX": 0.5,
+          "centreY": 0.5
+        },
+        "preview": true
+      },
+      {
+        "id": "hsv",
+        "type": "colour/hsv-shift",
+        "position": {
+          "x": 760,
+          "y": 230
+        },
+        "params": {
+          "hue": 0,
+          "hueSpeed": 0.1,
+          "saturation": 1,
+          "value": 1
+        }
+      },
+      {
+        "id": "out",
+        "type": "output/pixel",
+        "position": {
+          "x": 1100,
+          "y": 230
+        },
+        "params": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e0",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "cyl",
+        "toPort": "pixels"
+      },
+      {
+        "id": "e0r",
+        "fromNode": "fix",
+        "fromPort": "resolution",
+        "toNode": "cyl",
+        "toPort": "resolution"
+      },
+      {
+        "id": "e1",
+        "fromNode": "cyl",
+        "fromPort": "pixels",
+        "toNode": "hsv",
+        "toPort": "pixels"
+      },
+      {
+        "id": "e2",
+        "fromNode": "hsv",
+        "fromPort": "pixels",
+        "toNode": "out",
+        "toPort": "pixels"
+      }
+    ]
+  },
+  "settings": {
+    "engine": {
+      "startUniverse": 1,
+      "iface": null,
+      "targetFps": 44
+    }
+  }
+}

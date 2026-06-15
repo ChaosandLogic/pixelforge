@@ -1,0 +1,54 @@
+{
+  "name": "pixelforge",
+  "version": "0.1.0",
+  "description": "Node-based LED sequencer with sACN output, 3D visualisation, and live effect authoring",
+  "author": "PixelForge",
+  "homepage": "https://pixelforge.app",
+  "main": "out/main/index.js",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "dev:player": "npm run build && cross-env PIXELFORGE_DEV_LICENSE=1 electron out/main/player.js",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "build:examples": "npx tsx scripts/build-examples.ts",
+    "license:server": "npx tsx services/licensing/server.ts",
+    "dist:editor": "npm run build && electron-builder --config electron-builder.editor.json",
+    "dist:player": "npm run build && electron-builder --config electron-builder.player.json"
+  },
+  "dependencies": {
+    "@sentry/electron": "^6.5.0",
+    "@xyflow/react": "^12.11.0",
+    "electron-updater": "^6.6.2",
+    "node-machine-id": "^1.1.12",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "sacn": "^4.6.2",
+    "three": "^0.184.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.184.1",
+    "@vitejs/plugin-react": "^5.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^42.4.0",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^5.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^7.3.5"
+  },
+  "build": {
+    "appId": "com.pixelforge.editor",
+    "productName": "PixelForge",
+    "mac": {
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "PixelForge analyzes audio input for reactive LED visuals.",
+        "NSLocalNetworkUsageDescription": "PixelForge sends LED pixel data to fixtures on your local network via sACN, Art-Net, or DDP."
+      }
+    }
+  }
+}

@@ -1,0 +1,1484 @@
+{
+  "version": "1.4.0",
+  "meta": {
+    "name": "Club Show (Matrix)",
+    "created": "2026-06-13T21:01:06.465Z",
+    "modified": "2026-06-13T21:01:06.465Z"
+  },
+  "patch": {
+    "points": [
+      {
+        "id": "fixture-1:0",
+        "x": 0,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:1",
+        "x": 1,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:2",
+        "x": 2,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:3",
+        "x": 3,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:4",
+        "x": 4,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:5",
+        "x": 5,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:6",
+        "x": 6,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:7",
+        "x": 7,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:8",
+        "x": 8,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:9",
+        "x": 9,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:10",
+        "x": 10,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:11",
+        "x": 11,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:12",
+        "x": 12,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:13",
+        "x": 13,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:14",
+        "x": 14,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:15",
+        "x": 15,
+        "y": 7,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:16",
+        "x": 15,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:17",
+        "x": 14,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:18",
+        "x": 13,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:19",
+        "x": 12,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:20",
+        "x": 11,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:21",
+        "x": 10,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:22",
+        "x": 9,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:23",
+        "x": 8,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:24",
+        "x": 7,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:25",
+        "x": 6,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:26",
+        "x": 5,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:27",
+        "x": 4,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:28",
+        "x": 3,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:29",
+        "x": 2,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:30",
+        "x": 1,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:31",
+        "x": 0,
+        "y": 6,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:32",
+        "x": 0,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:33",
+        "x": 1,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:34",
+        "x": 2,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:35",
+        "x": 3,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:36",
+        "x": 4,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:37",
+        "x": 5,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:38",
+        "x": 6,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:39",
+        "x": 7,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:40",
+        "x": 8,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:41",
+        "x": 9,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:42",
+        "x": 10,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:43",
+        "x": 11,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:44",
+        "x": 12,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:45",
+        "x": 13,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:46",
+        "x": 14,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:47",
+        "x": 15,
+        "y": 5,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:48",
+        "x": 15,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:49",
+        "x": 14,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:50",
+        "x": 13,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:51",
+        "x": 12,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:52",
+        "x": 11,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:53",
+        "x": 10,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:54",
+        "x": 9,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:55",
+        "x": 8,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:56",
+        "x": 7,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:57",
+        "x": 6,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:58",
+        "x": 5,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:59",
+        "x": 4,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:60",
+        "x": 3,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:61",
+        "x": 2,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:62",
+        "x": 1,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:63",
+        "x": 0,
+        "y": 4,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:64",
+        "x": 0,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:65",
+        "x": 1,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:66",
+        "x": 2,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:67",
+        "x": 3,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:68",
+        "x": 4,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:69",
+        "x": 5,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:70",
+        "x": 6,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:71",
+        "x": 7,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:72",
+        "x": 8,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:73",
+        "x": 9,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:74",
+        "x": 10,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:75",
+        "x": 11,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:76",
+        "x": 12,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:77",
+        "x": 13,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:78",
+        "x": 14,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:79",
+        "x": 15,
+        "y": 3,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:80",
+        "x": 15,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:81",
+        "x": 14,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:82",
+        "x": 13,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:83",
+        "x": 12,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:84",
+        "x": 11,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:85",
+        "x": 10,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:86",
+        "x": 9,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:87",
+        "x": 8,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:88",
+        "x": 7,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:89",
+        "x": 6,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:90",
+        "x": 5,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:91",
+        "x": 4,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:92",
+        "x": 3,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:93",
+        "x": 2,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:94",
+        "x": 1,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:95",
+        "x": 0,
+        "y": 2,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:96",
+        "x": 0,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:97",
+        "x": 1,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:98",
+        "x": 2,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:99",
+        "x": 3,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:100",
+        "x": 4,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:101",
+        "x": 5,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:102",
+        "x": 6,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:103",
+        "x": 7,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:104",
+        "x": 8,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:105",
+        "x": 9,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:106",
+        "x": 10,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:107",
+        "x": 11,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:108",
+        "x": 12,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:109",
+        "x": 13,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:110",
+        "x": 14,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:111",
+        "x": 15,
+        "y": 1,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:112",
+        "x": 15,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:113",
+        "x": 14,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:114",
+        "x": 13,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:115",
+        "x": 12,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:116",
+        "x": 11,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:117",
+        "x": 10,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:118",
+        "x": 9,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:119",
+        "x": 8,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:120",
+        "x": 7,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:121",
+        "x": 6,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:122",
+        "x": 5,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:123",
+        "x": 4,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:124",
+        "x": 3,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:125",
+        "x": 2,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:126",
+        "x": 1,
+        "y": 0,
+        "z": 0
+      },
+      {
+        "id": "fixture-1:127",
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    ],
+    "layout": {
+      "fixtures": [
+        {
+          "id": "fixture-1",
+          "name": "LED matrix",
+          "def": {
+            "kind": "matrix",
+            "cols": 16,
+            "rows": 8,
+            "spacingX": 1,
+            "spacingY": 1,
+            "origin": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "serpentine": true,
+            "startCorner": "bl",
+            "orientation": "rows"
+          }
+        }
+      ]
+    }
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "fix",
+        "type": "setup/fixture",
+        "position": {
+          "x": 80,
+          "y": 380
+        },
+        "params": {
+          "fixtureId": "fixture-1"
+        }
+      },
+      {
+        "id": "clock",
+        "type": "time/bpm-clock",
+        "position": {
+          "x": 80,
+          "y": 80
+        },
+        "params": {
+          "bpm": 128,
+          "offset": 0
+        }
+      },
+      {
+        "id": "audio",
+        "type": "audio/audio-in",
+        "position": {
+          "x": 80,
+          "y": 230
+        },
+        "params": {
+          "source": "file",
+          "device": "",
+          "file": "",
+          "monitor": true,
+          "lowMax": 250,
+          "midMax": 4000,
+          "gain": 1,
+          "attack": 0.01,
+          "release": 0.25
+        }
+      },
+      {
+        "id": "lfo1",
+        "type": "time/lfo",
+        "position": {
+          "x": 80,
+          "y": 530
+        },
+        "params": {
+          "waveform": "sine",
+          "frequency": 0.15,
+          "phase": 0,
+          "min": 0,
+          "max": 1
+        }
+      },
+      {
+        "id": "lfo2",
+        "type": "time/lfo",
+        "position": {
+          "x": 80,
+          "y": 680
+        },
+        "params": {
+          "waveform": "triangle",
+          "frequency": 0.4,
+          "phase": 0,
+          "min": 0,
+          "max": 1
+        }
+      },
+      {
+        "id": "cyl",
+        "type": "spatial/cylindrical",
+        "position": {
+          "x": 420,
+          "y": 80
+        },
+        "params": {
+          "from": {
+            "r": 255,
+            "g": 0,
+            "b": 80
+          },
+          "to": {
+            "r": 0,
+            "g": 120,
+            "b": 255
+          },
+          "phase": 0,
+          "speed": 0.12,
+          "centreX": 0.5,
+          "centreY": 0.5
+        }
+      },
+      {
+        "id": "rot1",
+        "type": "transform/rotate",
+        "position": {
+          "x": 760,
+          "y": 80
+        },
+        "params": {
+          "angle": 0,
+          "speed": 0.03,
+          "centreU": 0.5,
+          "centreV": 0.5
+        }
+      },
+      {
+        "id": "hsv1",
+        "type": "colour/hsv-shift",
+        "position": {
+          "x": 1100,
+          "y": 80
+        },
+        "params": {
+          "hue": 0,
+          "hueSpeed": 0.08,
+          "saturation": 1,
+          "value": 1
+        }
+      },
+      {
+        "id": "wave",
+        "type": "generator/wave",
+        "position": {
+          "x": 420,
+          "y": 230
+        },
+        "params": {
+          "colourA": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          "colourB": {
+            "r": 0,
+            "g": 200,
+            "b": 255
+          },
+          "axis": "x",
+          "frequency": 3,
+          "speed": 0.8
+        }
+      },
+      {
+        "id": "off",
+        "type": "transform/offset",
+        "position": {
+          "x": 760,
+          "y": 230
+        },
+        "params": {
+          "offset": 0,
+          "speed": 0
+        }
+      },
+      {
+        "id": "mir",
+        "type": "transform/mirror",
+        "position": {
+          "x": 1100,
+          "y": 230
+        },
+        "params": {
+          "mode": "flip"
+        }
+      },
+      {
+        "id": "msk",
+        "type": "transform/mask",
+        "position": {
+          "x": 1440,
+          "y": 230
+        },
+        "params": {
+          "start": 0.15,
+          "end": 0.45,
+          "softness": 0.12,
+          "offset": 0,
+          "invert": false
+        }
+      },
+      {
+        "id": "noise",
+        "type": "generator/noise",
+        "position": {
+          "x": 420,
+          "y": 380
+        },
+        "params": {
+          "noiseType": "perlin3d",
+          "colourA": {
+            "r": 10,
+            "g": 0,
+            "b": 40
+          },
+          "colourB": {
+            "r": 255,
+            "g": 40,
+            "b": 120
+          },
+          "scale": 6,
+          "speed": 1.2,
+          "wScale": 0,
+          "contrast": 1
+        }
+      },
+      {
+        "id": "pal",
+        "type": "colour/palette-map",
+        "position": {
+          "x": 760,
+          "y": 380
+        },
+        "params": {
+          "dark": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          "light": {
+            "r": 255,
+            "g": 255,
+            "b": 255
+          }
+        }
+      },
+      {
+        "id": "crv",
+        "type": "colour/curves",
+        "position": {
+          "x": 1100,
+          "y": 380
+        },
+        "params": {
+          "shadows": 0,
+          "midtones": 0.15,
+          "highlights": 0
+        }
+      },
+      {
+        "id": "lvl",
+        "type": "colour/levels",
+        "position": {
+          "x": 1440,
+          "y": 380
+        },
+        "params": {
+          "brightness": 1,
+          "contrast": 1.3,
+          "gamma": 1
+        }
+      },
+      {
+        "id": "dist",
+        "type": "spatial/distance-field",
+        "position": {
+          "x": 420,
+          "y": 530
+        },
+        "params": {
+          "from": {
+            "r": 255,
+            "g": 255,
+            "b": 255
+          },
+          "to": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          "scale": 1.2,
+          "centreX": 0.5,
+          "centreY": 0.5,
+          "centreZ": 0.5
+        }
+      },
+      {
+        "id": "strobe",
+        "type": "generator/strobe",
+        "position": {
+          "x": 420,
+          "y": 680
+        },
+        "params": {
+          "colour": {
+            "r": 255,
+            "g": 255,
+            "b": 255
+          },
+          "offColour": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          "rate": 8,
+          "duty": 0.2
+        }
+      },
+      {
+        "id": "hit",
+        "type": "composite/mix",
+        "position": {
+          "x": 760,
+          "y": 605
+        },
+        "params": {
+          "mode": "screen",
+          "amount": 0.6
+        }
+      },
+      {
+        "id": "seq",
+        "type": "sequence/sequence",
+        "position": {
+          "x": 1780,
+          "y": 305
+        },
+        "params": {
+          "bpm": 128,
+          "loop": true,
+          "segments": [
+            {
+              "id": "intro",
+              "duration": 8,
+              "transition": {
+                "type": "crossfade",
+                "duration": 2,
+                "curve": "ease-in-out"
+              }
+            },
+            {
+              "id": "build",
+              "duration": 16,
+              "transition": {
+                "type": "crossfade",
+                "duration": 2,
+                "curve": "ease-in-out"
+              }
+            },
+            {
+              "id": "drop",
+              "duration": 8,
+              "transition": {
+                "type": "crossfade",
+                "duration": 1,
+                "curve": "linear"
+              }
+            },
+            {
+              "id": "outro",
+              "duration": 8,
+              "transition": {
+                "type": "crossfade",
+                "duration": 4,
+                "curve": "ease-out"
+              }
+            }
+          ]
+        },
+        "preview": true
+      },
+      {
+        "id": "cc",
+        "type": "colour/correct",
+        "position": {
+          "x": 2120,
+          "y": 305
+        },
+        "params": {
+          "lift": 0,
+          "gamma": 1,
+          "gain": 1.1,
+          "temperature": 0.1
+        }
+      },
+      {
+        "id": "vig",
+        "type": "spatial/distance-field",
+        "position": {
+          "x": 2120,
+          "y": 530
+        },
+        "params": {
+          "from": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+          },
+          "to": {
+            "r": 40,
+            "g": 40,
+            "b": 60
+          },
+          "scale": 0.8,
+          "centreX": 0.5,
+          "centreY": 0.5,
+          "centreZ": 0.5
+        }
+      },
+      {
+        "id": "fin",
+        "type": "composite/over",
+        "position": {
+          "x": 2460,
+          "y": 380
+        },
+        "params": {
+          "opacity": 0.35
+        }
+      },
+      {
+        "id": "out",
+        "type": "output/pixel",
+        "position": {
+          "x": 2800,
+          "y": 380
+        },
+        "params": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "f0",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "cyl",
+        "toPort": "pixels"
+      },
+      {
+        "id": "f1",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "wave",
+        "toPort": "pixels"
+      },
+      {
+        "id": "f2",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "noise",
+        "toPort": "pixels"
+      },
+      {
+        "id": "f3",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "dist",
+        "toPort": "pixels"
+      },
+      {
+        "id": "f4",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "strobe",
+        "toPort": "pixels"
+      },
+      {
+        "id": "f5",
+        "fromNode": "fix",
+        "fromPort": "pixels",
+        "toNode": "vig",
+        "toPort": "pixels"
+      },
+      {
+        "id": "fr",
+        "fromNode": "fix",
+        "fromPort": "resolution",
+        "toNode": "cyl",
+        "toPort": "resolution"
+      },
+      {
+        "id": "fw",
+        "fromNode": "fix",
+        "fromPort": "resolution",
+        "toNode": "wave",
+        "toPort": "resolution"
+      },
+      {
+        "id": "fn",
+        "fromNode": "fix",
+        "fromPort": "resolution",
+        "toNode": "noise",
+        "toPort": "resolution"
+      },
+      {
+        "id": "fd",
+        "fromNode": "fix",
+        "fromPort": "resolution",
+        "toNode": "dist",
+        "toPort": "resolution"
+      },
+      {
+        "id": "fv",
+        "fromNode": "fix",
+        "fromPort": "resolution",
+        "toNode": "vig",
+        "toPort": "resolution"
+      },
+      {
+        "id": "a1",
+        "fromNode": "cyl",
+        "fromPort": "pixels",
+        "toNode": "rot1",
+        "toPort": "pixels"
+      },
+      {
+        "id": "a2",
+        "fromNode": "rot1",
+        "fromPort": "pixels",
+        "toNode": "hsv1",
+        "toPort": "pixels"
+      },
+      {
+        "id": "a3",
+        "fromNode": "lfo1",
+        "fromPort": "value",
+        "toNode": "rot1",
+        "toPort": "angle"
+      },
+      {
+        "id": "b1",
+        "fromNode": "wave",
+        "fromPort": "pixels",
+        "toNode": "off",
+        "toPort": "pixels"
+      },
+      {
+        "id": "b2",
+        "fromNode": "lfo2",
+        "fromPort": "value",
+        "toNode": "off",
+        "toPort": "translate"
+      },
+      {
+        "id": "b3",
+        "fromNode": "off",
+        "fromPort": "pixels",
+        "toNode": "mir",
+        "toPort": "pixels"
+      },
+      {
+        "id": "b4",
+        "fromNode": "mir",
+        "fromPort": "pixels",
+        "toNode": "msk",
+        "toPort": "pixels"
+      },
+      {
+        "id": "b5",
+        "fromNode": "lfo1",
+        "fromPort": "value",
+        "toNode": "msk",
+        "toPort": "offset"
+      },
+      {
+        "id": "c1",
+        "fromNode": "noise",
+        "fromPort": "pixels",
+        "toNode": "pal",
+        "toPort": "pixels"
+      },
+      {
+        "id": "c2",
+        "fromNode": "pal",
+        "fromPort": "pixels",
+        "toNode": "crv",
+        "toPort": "pixels"
+      },
+      {
+        "id": "c3",
+        "fromNode": "crv",
+        "fromPort": "pixels",
+        "toNode": "lvl",
+        "toPort": "pixels"
+      },
+      {
+        "id": "d1",
+        "fromNode": "dist",
+        "fromPort": "pixels",
+        "toNode": "hit",
+        "toPort": "a"
+      },
+      {
+        "id": "d2",
+        "fromNode": "strobe",
+        "fromPort": "pixels",
+        "toNode": "hit",
+        "toPort": "b"
+      },
+      {
+        "id": "d3",
+        "fromNode": "audio",
+        "fromPort": "high",
+        "toNode": "hit",
+        "toPort": "amount"
+      },
+      {
+        "id": "s0",
+        "fromNode": "hsv1",
+        "fromPort": "pixels",
+        "toNode": "seq",
+        "toPort": "segment_0"
+      },
+      {
+        "id": "s1",
+        "fromNode": "msk",
+        "fromPort": "pixels",
+        "toNode": "seq",
+        "toPort": "segment_1"
+      },
+      {
+        "id": "s2",
+        "fromNode": "lvl",
+        "fromPort": "pixels",
+        "toNode": "seq",
+        "toPort": "segment_2"
+      },
+      {
+        "id": "s3",
+        "fromNode": "hit",
+        "fromPort": "pixels",
+        "toNode": "seq",
+        "toPort": "segment_3"
+      },
+      {
+        "id": "s4",
+        "fromNode": "clock",
+        "fromPort": "beat",
+        "toNode": "seq",
+        "toPort": "beat"
+      },
+      {
+        "id": "s5",
+        "fromNode": "audio",
+        "fromPort": "low",
+        "toNode": "seq",
+        "toPort": "intensity"
+      },
+      {
+        "id": "p1",
+        "fromNode": "seq",
+        "fromPort": "pixels",
+        "toNode": "cc",
+        "toPort": "pixels"
+      },
+      {
+        "id": "p2",
+        "fromNode": "cc",
+        "fromPort": "pixels",
+        "toNode": "fin",
+        "toPort": "a"
+      },
+      {
+        "id": "p3",
+        "fromNode": "vig",
+        "fromPort": "pixels",
+        "toNode": "fin",
+        "toPort": "b"
+      },
+      {
+        "id": "p4",
+        "fromNode": "fin",
+        "fromPort": "pixels",
+        "toNode": "out",
+        "toPort": "pixels"
+      }
+    ]
+  },
+  "settings": {
+    "engine": {
+      "startUniverse": 1,
+      "iface": null,
+      "targetFps": 44
+    }
+  }
+}

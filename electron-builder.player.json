@@ -1,0 +1,13 @@
+{
+  "extends": "./electron-builder.editor.json",
+  "appId": "com.pixelforge.player",
+  "productName": "PixelForge Player",
+  "directories": {
+    "output": "release/player"
+  },
+  "extraMetadata": {
+    "main": "out/main/player.js",
+    "name": "pixelforge-player",
+    "description": "PixelForge show player for deployed LED installations"
+  }
+}
