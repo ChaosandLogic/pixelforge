@@ -1,9 +1,12 @@
 import { OUTPUT_NODE_TYPE } from '@shared/graph/nodes/output/PixelOutput'
 import { useGraphStore } from '@/store/graphStore'
 import { OutputSettingsForm } from '@/ui/OutputSettingsForm'
+import { useShallow } from 'zustand/react/shallow'
 
 export function PlayerOutputPanel(): React.JSX.Element {
-  const outputNodes = useGraphStore((s) => s.nodes.filter((n) => n.data.nodeType === OUTPUT_NODE_TYPE))
+  const outputNodes = useGraphStore(
+    useShallow((s) => s.nodes.filter((n) => n.data.nodeType === OUTPUT_NODE_TYPE))
+  )
 
   return (
     <aside className="player-output-panel">

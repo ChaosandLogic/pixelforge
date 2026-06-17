@@ -4,7 +4,9 @@ import { AUDIO_IN_INLINE_PARAMS } from '@shared/graph/nodes/audio/AudioIn'
 import { IMAGE_INLINE_PARAMS } from '@shared/graph/nodes/generators/ImageFile'
 import { VIDEO_INLINE_PARAMS } from '@shared/graph/nodes/generators/VideoFile'
 import { OUTPUT_INLINE_PARAMS } from '@shared/graph/nodes/output/PixelOutput'
+import { KEYBOARD_INLINE_PARAMS, KEYBOARD_IN_NODE_TYPE } from '@shared/graph/nodes/input/KeyboardIn'
 import { FIXTURE_INLINE_PARAMS } from '@shared/graph/nodes/setup/Fixture'
+import { KeyboardInspectorPanel } from '@/ui/KeyboardInspectorPanel'
 import { GRADIENT_NODE_TYPE } from '@shared/graph/nodes/generators/Gradient'
 import { parseGradientStops } from '@shared/colour/gradientStops'
 import {
@@ -277,6 +279,9 @@ export function Inspector(): React.JSX.Element {
               <span className="inspector-type">{def.type}</span>
             </div>
             <p className="inspector-desc">{def.description}</p>
+            {selected.data.nodeType === KEYBOARD_IN_NODE_TYPE && (
+              <KeyboardInspectorPanel nodeId={selected.id} params={selected.data.params} />
+            )}
             {selected.data.nodeType === GRADIENT_NODE_TYPE && (
               <div className="param-block gradient-inspector-block">
                 <div className="param-row gradient-param-row">
@@ -302,7 +307,8 @@ export function Inspector(): React.JSX.Element {
                     !AUDIO_IN_INLINE_PARAMS.has(p.name) &&
                     !IMAGE_INLINE_PARAMS.has(p.name) &&
                     !VIDEO_INLINE_PARAMS.has(p.name) &&
-                    !OUTPUT_INLINE_PARAMS.has(p.name)
+                    !OUTPUT_INLINE_PARAMS.has(p.name) &&
+                    !KEYBOARD_INLINE_PARAMS.has(p.name)
                 )
                 .map((p) => (
                   <ParamRow

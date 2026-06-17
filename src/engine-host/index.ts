@@ -178,6 +178,9 @@ function handleRendererMessage(msg: RendererToEngine): void {
     case 'midi-state':
       evaluator.setMidiState(msg.nodeId, msg.value, msg.velocity, msg.gate)
       break
+    case 'keyboard-state':
+      evaluator.setKeyboardState(msg.nodeId, msg.gate)
+      break
     case 'bake':
       handleBake(msg.requestId, msg.durationMs, msg.fps)
       break

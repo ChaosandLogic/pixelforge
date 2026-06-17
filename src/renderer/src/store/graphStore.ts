@@ -24,6 +24,7 @@ import { SEQUENCE_NODE_TYPE } from '@shared/graph/nodes/sequence/Sequence'
 import { SCHEDULE_NODE_TYPE } from '@shared/graph/nodes/schedule/Schedule'
 import { parseScheduleSlots } from '@shared/schedule/types'
 import { AUDIO_IN_NODE_TYPE } from '@shared/graph/nodes/audio/AudioIn'
+import { KEYBOARD_IN_NODE_TYPE } from '@shared/graph/nodes/input/KeyboardIn'
 import { IMAGE_NODE_TYPE } from '@shared/graph/nodes/generators/ImageFile'
 import { VIDEO_NODE_TYPE } from '@shared/graph/nodes/generators/VideoFile'
 import { FIXTURE_NODE_TYPE } from '@shared/graph/nodes/setup/Fixture'
@@ -131,10 +132,11 @@ function initialGraph(): { nodes: PfNode[]; edges: Edge[] } {
   return { nodes, edges }
 }
 
-function nodeComponentType(type: string): 'pf' | 'sequence' | 'schedule' | 'audio' | 'media' | 'output' | 'fixture' | 'component' {
+function nodeComponentType(type: string): 'pf' | 'sequence' | 'schedule' | 'audio' | 'keyboard' | 'media' | 'output' | 'fixture' | 'component' {
   if (type === SEQUENCE_NODE_TYPE) return 'sequence'
   if (type === SCHEDULE_NODE_TYPE) return 'schedule'
   if (type === AUDIO_IN_NODE_TYPE) return 'audio'
+  if (type === KEYBOARD_IN_NODE_TYPE) return 'keyboard'
   if (type === IMAGE_NODE_TYPE || type === VIDEO_NODE_TYPE) return 'media'
   if (type === OUTPUT_NODE_TYPE) return 'output'
   if (type === FIXTURE_NODE_TYPE) return 'fixture'

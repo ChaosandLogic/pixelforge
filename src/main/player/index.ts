@@ -1,5 +1,7 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'node:path'
+import type { ProjectFile } from '@shared/project'
+import type { StartupPlan } from '@shared/playerStartup'
 import { EngineLauncher } from '../engine/EngineLauncher'
 import { bootstrapProjectFromPath } from '../engine/ProjectBootstrap'
 import { registerLicenseIpc } from '../ipc/license'
@@ -7,16 +9,25 @@ import { registerAppIpc } from '../ipc/app'
 import { registerMediaIpc } from '../ipc/media'
 import { registerNetworkIpc } from '../ipc/network'
 import { registerPlayerProjectIpc } from '../ipc/playerProject'
+import { registerPlayerStartupIpc } from '../ipc/playerStartup'
 import { devBypassEnabled, LicenseManager, getDevLicenseStatus } from '../licensing/LicenseManager'
 import { initAutoUpdater } from '../updater'
 import { initCrashReporting } from '../crashReporting'
 import { requestLocalNetworkAccess } from '../localNetworkPermission'
 import { setupAppMenu } from '../menu'
 import { parsePlayerArgs } from './args'
+import { readShowStartupHints } from './showPath'
+import { syncLoginItem } from './loginItem'
+import { readPlayerStartupConfig } from './startupConfig'
+import { resolveStartupPlan, validateStartupPlan } from './startupPlan'
 
 const engine = new EngineLauncher()
 const licenseManager = new LicenseManager('player')
 const cli = parsePlayerArgs(process.argv.slice(1))
+
+let bootProjectPath: string | null = null
+let bootProject: ProjectFile | null = null
+let bootPlan: StartupPlan | null = null
 
 function createPlayerWindow(): void {
   const win = new BrowserWindow({
@@ -51,9 +62,25 @@ function createPlayerWindow(): void {
   }
 }
 
-async function runHeadless(): Promise<void> {
-  if (cli.project === null) {
-    console.error('Headless mode requires --project /path/to/show.pxf')
+async function applyPlanToEngine(plan: StartupPlan): Promise<ProjectFile | null> {
+  if (plan.projectPath === null) return null
+  validateStartupPlan(plan)
+  const project = await bootstrapProjectFromPath(engine, plan.projectPath)
+  if (plan.interface !== null) {
+    engine.sendToEngine({ type: 'set-config', config: { iface: plan.interface } })
+  }
+  if (plan.autoOutput) {
+    engine.sendToEngine({ type: 'output-start' })
+  }
+  bootProjectPath = plan.projectPath
+  bootProject = project
+  bootPlan = plan
+  return project
+}
+
+async function runHeadless(plan: StartupPlan): Promise<void> {
+  if (plan.projectPath === null) {
+    console.error('Headless mode requires a show path. Use --project, --show-dir, or configure Startup Show in Player settings.')
     app.exit(1)
     return
   }
@@ -73,44 +100,72 @@ async function runHeadless(): Promise<void> {
   })
 
   try {
-    const project = await bootstrapProjectFromPath(engine, cli.project)
-    if (cli.iface !== null) {
-      engine.sendToEngine({ type: 'set-config', config: { iface: cli.iface } })
-    }
-    if (cli.output) {
-      engine.sendToEngine({ type: 'output-start' })
-    }
-    console.log(`Running "${project.meta.name}" headless. Press Ctrl+C to stop.`)
+    const project = await applyPlanToEngine(plan)
+    console.log(`Running "${project!.meta.name}" headless. Press Ctrl+C to stop.`)
   } catch (err) {
     console.error('Failed to load project:', err instanceof Error ? err.message : err)
     app.exit(1)
   }
 }
 
+async function resolveBootPlan(): Promise<StartupPlan> {
+  const saved = await readPlayerStartupConfig()
+  let showHints = null
+  if (cli.showDir !== null) {
+    showHints = readShowStartupHints(cli.showDir)
+  } else if (saved.showPath !== null && saved.showPathKind === 'show-folder') {
+    showHints = readShowStartupHints(saved.showPath)
+  }
+  const plan = resolveStartupPlan({ cli, saved, showHints })
+  return plan
+}
+
 app.whenReady().then(async () => {
   initCrashReporting('player')
   requestLocalNetworkAccess()
   await licenseManager.init()
+
+  const saved = await readPlayerStartupConfig()
+  syncLoginItem(saved)
+
+  const plan = await resolveBootPlan()
+
   registerNetworkIpc()
   registerMediaIpc()
-  registerPlayerProjectIpc(engine, () => cli.project)
+  registerPlayerProjectIpc(engine, () => bootProjectPath)
+  registerPlayerStartupIpc(engine, {
+    getBootProject: () => bootProject,
+    getBootPlan: () => bootPlan,
+    applyPlan: applyPlanToEngine
+  })
   registerLicenseIpc('player', licenseManager)
   registerAppIpc()
   setupAppMenu('player', () =>
     devBypassEnabled() ? getDevLicenseStatus('player') : licenseManager.getStatus()
   )
 
-  if (cli.headless) {
+  if (plan.headless) {
     if (!devBypassEnabled() && !(await licenseManager.isUsable())) {
-      console.error('Valid Player license required. Activate PixelForge Player first or set PIXELFORGE_DEV_LICENSE=1 for development.')
+      console.error(
+        'Valid Player license required. Activate PixelForge Player first or set PIXELFORGE_DEV_LICENSE=1 for development.'
+      )
       app.exit(1)
       return
     }
-    await runHeadless()
+    await runHeadless(plan)
     return
   }
 
   engine.start()
+
+  if (plan.projectPath !== null) {
+    try {
+      await applyPlanToEngine(plan)
+    } catch (err) {
+      console.error('Failed to load startup show:', err instanceof Error ? err.message : err)
+    }
+  }
+
   createPlayerWindow()
   initAutoUpdater('player')
 

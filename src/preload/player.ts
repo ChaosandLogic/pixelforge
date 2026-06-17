@@ -1,11 +1,18 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { EngineConfig } from '@shared/messages'
 import type { LicenseStatus } from '@shared/licensing/types'
+import type { PlayerStartupConfig } from '@shared/playerStartup'
+import type { ProjectFile } from '@shared/project'
 
 const api = {
   getNetworkInterfaces: () => ipcRenderer.invoke('network:interfaces'),
   requestEnginePort: () => ipcRenderer.send('engine:request-port'),
   loadInitialProject: () => ipcRenderer.invoke('player:load-initial'),
+  getBootStatus: () =>
+    ipcRenderer.invoke('player:get-boot-status') as Promise<{
+      project: ProjectFile | null
+      autoOutput: boolean
+    }>,
   openProject: () => ipcRenderer.invoke('player:open-project'),
   startOutput: () => ipcRenderer.invoke('player:start-output'),
   stopOutput: () => ipcRenderer.invoke('player:stop-output'),
@@ -15,7 +22,16 @@ const api = {
   activateLicense: (licenseKey: string, email: string): Promise<LicenseStatus> =>
     ipcRenderer.invoke('license:activate', licenseKey, email),
   deactivateLicense: (): Promise<void> => ipcRenderer.invoke('license:deactivate'),
-  getAppVersion: () => ipcRenderer.invoke('app:version')
+  getAppVersion: () => ipcRenderer.invoke('app:version'),
+  getStartupConfig: (): Promise<PlayerStartupConfig> => ipcRenderer.invoke('player:get-startup-config'),
+  setStartupConfig: (config: PlayerStartupConfig): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('player:set-startup-config', config),
+  pickShow: (): Promise<{ path: string; kind: 'project' | 'show-folder' } | null> =>
+    ipcRenderer.invoke('player:pick-show'),
+  readShowHints: (showDir: string) => ipcRenderer.invoke('player:read-show-hints', showDir),
+  getLoginItemStatus: () => ipcRenderer.invoke('player:get-login-item-status'),
+  applyStartupNow: (): Promise<{ ok: boolean; project?: ProjectFile; error?: string }> =>
+    ipcRenderer.invoke('player:apply-startup-now')
 }
 
 contextBridge.exposeInMainWorld('pixelforgePlayer', api)
@@ -38,4 +54,8 @@ ipcRenderer.on('app:show-shortcuts', () => {
 
 ipcRenderer.on('app:show-license', () => {
   window.postMessage({ type: 'pixelforge-show-license' }, '*')
+})
+
+ipcRenderer.on('player:show-startup-panel', () => {
+  window.postMessage({ type: 'pixelforge-show-startup-panel' }, '*')
 })

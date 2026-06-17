@@ -15,7 +15,7 @@ import {
   sampleHold,
   sampleRamp
 } from '@shared/graph/time/state'
-import type { AudioLevels, EvalContext, GraphData, MediaFrame, MidiState, NodeData, OscState, PortValues } from '@shared/graph/types'
+import type { AudioLevels, EvalContext, GraphData, KeyboardState, MediaFrame, MidiState, NodeData, OscState, PortValues } from '@shared/graph/types'
 import { stringParam } from '@shared/graph/types'
 import type { FixtureRange } from '@shared/patch/layout'
 import { firstFixtureId, fixtureRangeById, indicesForFixture } from '@shared/patch/fixtureRoute'
@@ -70,6 +70,7 @@ export class Evaluator {
   private readonly mediaFrames = new Map<string, MediaFrame>()
   private readonly audioLevels = new Map<string, AudioLevels>()
   private readonly midiStates = new Map<string, MidiState>()
+  private readonly keyboardStates = new Map<string, KeyboardState>()
   private readonly oscStates = new Map<string, OscState>()
   private readonly smoothStates = new Map<string, number>()
   private readonly randomStates = new Map<string, { value: number; nextMs: number }>()
@@ -102,6 +103,7 @@ export class Evaluator {
       getMediaFrame: (nodeId) => this.mediaFrames.get(nodeId) ?? null,
       getAudioLevels: (nodeId) => this.audioLevels.get(nodeId) ?? null,
       getMidiState: (nodeId) => this.midiStates.get(nodeId) ?? null,
+      getKeyboardState: (nodeId) => this.keyboardStates.get(nodeId) ?? null,
       getOscState: (nodeId) => this.oscStates.get(nodeId) ?? null,
       smoothFloat: (value, smoothMs) => this.smoothFloat(this.ctx.nodeId, value, smoothMs),
       randomFloat: (min, max, rateHz, forceReroll) =>
@@ -295,6 +297,10 @@ export class Evaluator {
 
   setMidiState(nodeId: string, value: number, velocity: number, gate: number): void {
     this.midiStates.set(nodeId, { value, velocity, gate })
+  }
+
+  setKeyboardState(nodeId: string, gate: number): void {
+    this.keyboardStates.set(nodeId, { gate })
   }
 
   setOscState(nodeId: string, value: number): void {

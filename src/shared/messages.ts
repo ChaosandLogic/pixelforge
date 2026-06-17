@@ -53,6 +53,7 @@ export type RendererToEngine =
   | { type: 'media-frame'; nodeId: string; width: number; height: number; data: Uint8Array }
   | { type: 'audio-levels'; nodeId: string; low: number; mid: number; high: number; beat?: number }
   | { type: 'midi-state'; nodeId: string; value: number; velocity: number; gate: number }
+  | { type: 'keyboard-state'; nodeId: string; gate: number }
   | { type: 'trigger'; nodeId: string; port: string }
   | { type: 'bake'; requestId: number; durationMs: number; fps: number }
 

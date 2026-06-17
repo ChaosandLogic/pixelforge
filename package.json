@@ -12,6 +12,7 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "npx tsx --test src/main/player/startup.test.ts",
     "build:examples": "npx tsx scripts/build-examples.ts",
     "license:server": "npx tsx services/licensing/server.ts",
     "dist:editor": "npm run build && electron-builder --config electron-builder.editor.json",

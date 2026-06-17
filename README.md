@@ -35,6 +35,7 @@ npm run dev              # Editor with HMR
 npm run dev:player       # Player (build + launch)
 npm run license:server   # Local activation API (demo key PF-DEMO-EDITOR)
 npm run typecheck
+npm test
 npm run build
 npm run dist:editor      # macOS/Windows Editor installer
 npm run dist:player      # macOS/Windows Player installer
@@ -49,13 +50,41 @@ PIXELFORGE_DEV_LICENSE=1 npm run dev:player
 
 # Or run the built Player directly
 npm run build
-PIXELFORGE_DEV_LICENSE=1 npx electron out/main/player.js --project examples/01-scrolling-wave.pxf
+PIXELFORGE_DEV_LICENSE=1 npx electron out/main/player.js --project examples/01-scrolling-wave.pxf --auto-output
 ```
 
 Do **not** append the variable after `npm run` (e.g. `npm run dist:editor PIXELFORGE_DEV_LICENSE=1`) — npm forwards it to electron-builder and you get `Unknown argument`.
 
 - `PIXELFORGE_DEV_LICENSE=1` — skip license gates during local dev
 - `PIXELFORGE_SENTRY_DSN` — enable crash reporting
+
+## Rack / startup show (Player)
+
+Configure a show to load automatically when Player opens or at system login — no bash script required.
+
+**In Player (recommended):**
+
+1. Open **Startup Show** (toolbar or File menu).
+2. Browse to a `.pxf` file or exported show folder (`show.json` + bundled media).
+3. Choose **Windowed Player** or **Headless** (required before launch-at-login).
+4. Optionally pin the network interface and enable **Auto-start output**.
+5. Check **Launch at login** and click **Save**.
+
+Use **Apply now** to test without rebooting.
+
+**CLI equivalents (macOS / Windows):**
+
+```bash
+# Windowed Player with auto-output
+PixelForge\ Player.app --project /path/to/show.pxf --auto-output --interface 192.168.1.10
+
+# Rack / NUC headless mode
+PixelForge\ Player.app --headless --show-dir /path/to/show-folder --interface en0 --auto-output
+```
+
+Exported show folders can include optional startup hints in `show.json` (set when exporting from the Editor). Player prefills Startup Show settings from those hints when you pick the folder.
+
+On Linux, automatic login registration is limited — Player shows a manual autostart command you can add to your desktop session startup.
 
 ## Using it
 

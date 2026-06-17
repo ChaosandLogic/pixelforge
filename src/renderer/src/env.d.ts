@@ -4,6 +4,7 @@ import type { NetworkInterfaceInfo } from '@shared/messages'
 import type { LicenseStatus } from '@shared/licensing/types'
 import type { ExampleManifestEntry, ProjectFile } from '@shared/project'
 import type { ShowManifest } from '@shared/showExportTypes'
+import type { ShowStartupHints } from '@shared/playerStartup'
 
 declare global {
   interface Window {
@@ -12,7 +13,7 @@ declare global {
       requestEnginePort: () => void
       saveProject: (project: ProjectFile) => Promise<string | null>
       openProject: () => Promise<ProjectFile | null>
-      exportShow: (project: ProjectFile) => Promise<{ outputDir: string; manifest: ShowManifest } | null>
+      exportShow: (project: ProjectFile, startup?: ShowStartupHints) => Promise<{ outputDir: string; manifest: ShowManifest } | null>
       listExamples: () => Promise<ExampleManifestEntry[]>
       openExample: (filename: string) => Promise<ProjectFile | null>
       pickVideoFile: () => Promise<string | null>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 import { isOutputTransmitEnabled, OUTPUT_PROTOCOL_LABELS, type OutputProtocolKind } from '@shared/output/config'
 import { useEngineStore } from '@/store/engineStore'
 import { useGraphStore } from '@/store/graphStore'
@@ -24,16 +24,17 @@ export function OutputSettingsForm({
   const sacnHost = typeof params['sacnHost'] === 'string' ? params['sacnHost'] : ''
   const adapters = interfaces.filter((i) => !i.internal)
   const sacnHostInAdapters = adapters.some((i) => i.address === sacnHost)
-  const [pickCustomIp, setPickCustomIp] = useState(false)
 
-  // Derive custom-IP UI; only track explicit "Custom IP…" menu choice in state.
-  const needsCustomInput = sacnHost !== '' && !sacnHostInAdapters
-  const showCustomSacnInput = pickCustomIp || needsCustomInput
+  // Ref avoids useEffect/setState loops when adapters load; bump version only on user menu choice.
+  const forceCustomRef = useRef(false)
+  const [customMenuVersion, setCustomMenuVersion] = useState(0)
+  void customMenuVersion
+
+  if (sacnHostInAdapters) forceCustomRef.current = false
+
+  const showCustomSacnInput =
+    forceCustomRef.current || (sacnHost !== '' && !sacnHostInAdapters)
   const sacnSelectValue = showCustomSacnInput ? CUSTOM_HOST : sacnHost
-
-  useEffect(() => {
-    if (sacnHostInAdapters) setPickCustomIp(false)
-  }, [sacnHostInAdapters])
 
   if (node === undefined) {
     return <p className="panel-hint">Output node not found.</p>
@@ -84,10 +85,11 @@ export function OutputSettingsForm({
               onChange={(e) => {
                 const value = e.target.value
                 if (value === CUSTOM_HOST) {
-                  setPickCustomIp(true)
+                  forceCustomRef.current = true
+                  setCustomMenuVersion((v) => v + 1)
                   return
                 }
-                setPickCustomIp(false)
+                forceCustomRef.current = false
                 updateParam(nodeId, 'sacnHost', value)
               }}
             >

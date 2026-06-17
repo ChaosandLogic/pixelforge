@@ -8,31 +8,38 @@ import { OutputDiagnosticsPanel } from '@/ui/OutputDiagnosticsPanel'
 import { StatusBar } from '@/ui/StatusBar'
 import { PlayerLayoutPreview } from '@/player/PlayerLayoutPreview'
 import { PlayerOutputPanel } from '@/player/PlayerOutputPanel'
+import { PlayerStartupPanel } from '@/player/PlayerStartupPanel'
 import { useEngineStore } from '@/store/engineStore'
 import { loadProjectIntoStores } from '@/project/loadProject'
 
 type AboutMode = 'about' | 'shortcuts' | null
 
 function PlayerShell({
+  projectName,
+  onProjectNameChange,
   onShowAbout,
-  onShowLicense
+  onShowLicense,
+  onShowStartup
 }: {
+  projectName: string
+  onProjectNameChange: (name: string) => void
   onShowAbout: () => void
   onShowLicense: () => void
+  onShowStartup: () => void
 }): React.JSX.Element {
-  const [projectName, setProjectName] = useState('No show loaded')
   const setOutputActive = useEngineStore((s) => s.setOutputActive)
   const outputActive = useEngineStore((s) => s.status.outputActive)
 
-  const loadProject = (project: ProjectFile): void => {
+  const loadProject = (project: ProjectFile, autoOutput = false): void => {
     loadProjectIntoStores(project)
-    setProjectName(project.meta.name)
+    onProjectNameChange(project.meta.name)
+    if (autoOutput) setOutputActive(true)
   }
 
   useEffect(() => {
     if (window.pixelforgePlayer === undefined) return
-    void window.pixelforgePlayer.loadInitialProject().then((project) => {
-      if (project !== null) loadProject(project)
+    void window.pixelforgePlayer.getBootStatus().then(({ project, autoOutput }) => {
+      if (project !== null) loadProject(project, autoOutput)
     })
   }, [])
 
@@ -53,6 +60,9 @@ function PlayerShell({
           <span className="tool-label">{projectName}</span>
           <button className="tool-btn" onClick={() => void openShow()}>
             Open Show
+          </button>
+          <button className="tool-btn" onClick={onShowStartup} title="Configure show to load at startup">
+            Startup Show
           </button>
           <button
             className={`tool-btn ${outputActive ? 'active' : ''}`}
@@ -86,6 +96,8 @@ function PlayerShell({
 export function PlayerApp(): React.JSX.Element {
   const [aboutMode, setAboutMode] = useState<AboutMode>(null)
   const [licenseOpen, setLicenseOpen] = useState(false)
+  const [startupOpen, setStartupOpen] = useState(false)
+  const [projectName, setProjectName] = useState('No show loaded')
 
   useEffect(() => {
     const onMessage = (event: MessageEvent): void => {
@@ -93,6 +105,7 @@ export function PlayerApp(): React.JSX.Element {
       if (data?.type === 'pixelforge-show-about') setAboutMode('about')
       if (data?.type === 'pixelforge-show-shortcuts') setAboutMode('shortcuts')
       if (data?.type === 'pixelforge-show-license') setLicenseOpen(true)
+      if (data?.type === 'pixelforge-show-startup-panel') setStartupOpen(true)
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
@@ -101,10 +114,21 @@ export function PlayerApp(): React.JSX.Element {
   return (
     <>
       <LicenseGate product="player" api="player">
-        <PlayerShell onShowAbout={() => setAboutMode('about')} onShowLicense={() => setLicenseOpen(true)} />
+        <PlayerShell
+          projectName={projectName}
+          onProjectNameChange={setProjectName}
+          onShowAbout={() => setAboutMode('about')}
+          onShowLicense={() => setLicenseOpen(true)}
+          onShowStartup={() => setStartupOpen(true)}
+        />
       </LicenseGate>
       <AboutDialog product="player" mode={aboutMode} onClose={() => setAboutMode(null)} />
       <LicenseDialog product="player" api="player" open={licenseOpen} onClose={() => setLicenseOpen(false)} />
+      <PlayerStartupPanel
+        open={startupOpen}
+        onClose={() => setStartupOpen(false)}
+        onApplied={setProjectName}
+      />
     </>
   )
 }

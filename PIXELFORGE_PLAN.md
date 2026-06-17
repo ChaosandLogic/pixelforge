@@ -389,8 +389,18 @@ This avoids a 4-channel colour type through every node.
 The engine host accepts a project file path as a CLI argument and runs without a renderer window. Main process can launch it directly for rack installs:
 
 ```
-pixelforge --headless /path/to/show.pxf --interface en0
+PixelForge Player --headless --project /path/to/show.pxf --interface en0 --auto-output
+PixelForge Player --headless --show-dir /path/to/show-folder --auto-output
 ```
+
+### Startup Show
+
+Player can load a specific show automatically on launch and register **Launch at login** (macOS/Windows) so rack PCs reboot into a running show without bash scripts.
+
+- **Startup Show** panel in Player: pick `.pxf` or exported show folder, pin network interface, auto-start output, choose windowed vs headless, enable launch at login.
+- Settings persist in `player-startup.json` under user data; login item args mirror CLI flags.
+- Exported `show.json` can include optional `startup` hints (interface, autoOutput, headless) prefilled when selecting a show folder on site.
+- CLI: `--project`, `--show-dir`, `--auto-output`, `--interface`, `--headless`.
 
 ---
 
@@ -530,6 +540,7 @@ The sequence node is the primary way users arrange looks over time.
 - [x] Crash reporting (Sentry — opt-in via `PIXELFORGE_SENTRY_DSN`)
 - [x] Mac + Windows installers (electron-builder: `npm run dist:editor` / `dist:player`)
 - [x] Headless mode CLI (`--headless`, `--project`, `--interface`) on Player
+- [x] Startup Show — launch at login, auto-load show, CLI `--show-dir` / `--auto-output`
 - [x] Onboarding — first-run dialog + example patches
 - [ ] Keyboard shortcuts (documented, reassignable) — partial: undo/redo/sequence keys; Help doc deferred
 - [x] Performance profiler — per-node frame time display

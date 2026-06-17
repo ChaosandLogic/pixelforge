@@ -116,7 +116,18 @@ export function setupAppMenu(product: AppProduct, getStatus: GetLicenseStatus): 
       : []),
     {
       label: 'File',
-      submenu: [isMac ? { role: 'close' as const } : { role: 'quit' as const }]
+      submenu: [
+        ...(product === 'player'
+          ? [
+              {
+                label: 'Startup Show…',
+                click: () => sendToFocusedWindow('player:show-startup-panel')
+              },
+              { type: 'separator' as const }
+            ]
+          : []),
+        isMac ? { role: 'close' as const } : { role: 'quit' as const }
+      ]
     },
     {
       label: 'Edit',

@@ -3,6 +3,7 @@ import { basename, dirname, join, resolve } from 'node:path'
 import type { GraphData } from '@shared/graph/types'
 import type { ProjectFile } from '@shared/project'
 import type { ShowManifest } from '@shared/showExportTypes'
+import type { ShowStartupHints } from '@shared/playerStartup'
 
 const MEDIA_PARAM_NAMES = new Set(['file', 'path', 'audioFile', 'imageFile', 'videoFile', 'stlPath'])
 
@@ -76,7 +77,8 @@ export function relativizeProjectForExport(
 export async function exportShowBundle(
   project: ProjectFile,
   sourceProjectPath: string,
-  outputDir: string
+  outputDir: string,
+  startup?: ShowStartupHints
 ): Promise<ShowManifest> {
   const assets = collectProjectAssets(project, sourceProjectPath)
   const projectDir = dirname(resolve(sourceProjectPath))
@@ -100,7 +102,8 @@ export async function exportShowBundle(
     name: project.meta.name,
     project: projectFilename,
     exportedAt: new Date().toISOString(),
-    assets: copiedAssets
+    assets: copiedAssets,
+    ...(startup !== undefined ? { startup } : {})
   }
   await writeFile(join(outputDir, 'show.json'), JSON.stringify(manifest, null, 2), 'utf-8')
   return manifest

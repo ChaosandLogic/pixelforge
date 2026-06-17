@@ -142,7 +142,7 @@ export function LayoutDataPreview(): React.JSX.Element {
 
     let raf = 0
 
-    const resize = (): void => {
+    const draw = (): void => {
       const { clientWidth, clientHeight } = canvas
       const dpr = window.devicePixelRatio
       const w = Math.max(1, Math.floor(clientWidth * dpr))
@@ -152,23 +152,17 @@ export function LayoutDataPreview(): React.JSX.Element {
         canvas.height = h
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       }
-    }
 
-    const draw = (): void => {
-      resize()
       const { frame, framePixelCount } = useEngineStore.getState()
       const { points: pts, layout: lay } = usePatchStore.getState()
       drawLayout(ctx, canvas.clientWidth, canvas.clientHeight, pts, lay?.fixtures ?? [], frame, framePixelCount)
       raf = requestAnimationFrame(draw)
     }
 
-    const observer = new ResizeObserver(() => resize())
-    observer.observe(canvas)
     raf = requestAnimationFrame(draw)
 
     return () => {
       cancelAnimationFrame(raf)
-      observer.disconnect()
     }
   }, [])
 

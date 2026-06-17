@@ -92,6 +92,11 @@ export interface MidiState {
   gate: number
 }
 
+export interface KeyboardState {
+  /** 1 while the bound key is held, 0 otherwise. */
+  gate: number
+}
+
 export interface OscState {
   value: number
 }
@@ -116,6 +121,7 @@ export interface EvalContext {
   /** Latest band levels for a node (AudioIn), or null if none yet. */
   getAudioLevels(nodeId: string): AudioLevels | null
   getMidiState(nodeId: string): MidiState | null
+  getKeyboardState(nodeId: string): KeyboardState | null
   getOscState(nodeId: string): OscState | null
   /** Exponential low-pass smoothing for float signals. */
   smoothFloat(value: number, smoothMs: number): number

@@ -5,8 +5,9 @@ import { useUiStore } from '@/store/uiStore'
 export function StatusBar(): React.JSX.Element {
   const status = useEngineStore((s) => s.status)
   const profilerEnabled = useUiStore((s) => s.profilerEnabled)
-  const nodeTimings = useEngineStore((s) => s.nodeTimings)
-  const evalMs = Object.values(nodeTimings).reduce((sum, ms) => sum + ms, 0)
+  const evalMs = useEngineStore((s) =>
+    profilerEnabled ? Object.values(s.nodeTimings).reduce((sum, ms) => sum + ms, 0) : 0
+  )
 
   return (
     <footer className="status-bar">

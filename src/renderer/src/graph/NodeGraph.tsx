@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
-import { Background, BackgroundVariant, Controls, ReactFlow, ReactFlowProvider } from '@xyflow/react'
+import { useEffect, useMemo } from 'react'
+import { Background, BackgroundVariant, Controls, ReactFlow, ReactFlowProvider, type EdgeChange } from '@xyflow/react'
 import { isValidConnection, useGraphStore } from '@/store/graphStore'
+import { buildParamBindingEdges, isBindingEdgeId } from '@/graph/bindingEdges'
 import { AddNodeMenu } from './AddNodeMenu'
 import { PfNode } from './components/PfNode'
 import { SequenceNode } from './components/SequenceNode'
@@ -10,6 +11,7 @@ import { OutputNode } from './components/OutputNode'
 import { FixtureNode } from './components/FixtureNode'
 import { ComponentNode } from './components/ComponentNode'
 import { ScheduleNode } from './components/ScheduleNode'
+import { KeyboardInNode } from './components/KeyboardInNode'
 import { engineBridge } from '@/engine/bridge'
 import { SEQUENCE_NODE_TYPE } from '@shared/graph/nodes/sequence/Sequence'
 
@@ -18,6 +20,7 @@ const nodeTypes = {
   sequence: SequenceNode,
   schedule: ScheduleNode,
   audio: AudioInNode,
+  keyboard: KeyboardInNode,
   media: MediaFileNode,
   output: OutputNode,
   fixture: FixtureNode,
@@ -37,6 +40,14 @@ function GraphCanvas(): React.JSX.Element {
   const redo = useGraphStore((s) => s.redo)
   const copySelectedNodes = useGraphStore((s) => s.copySelectedNodes)
   const pasteNodes = useGraphStore((s) => s.pasteNodes)
+
+  const bindingEdges = useMemo(() => buildParamBindingEdges(nodes), [nodes])
+  const displayEdges = useMemo(() => [...edges, ...bindingEdges], [edges, bindingEdges])
+
+  const handleEdgesChange = (changes: EdgeChange[]): void => {
+    const dataChanges = changes.filter((c) => !('id' in c && isBindingEdgeId(c.id)))
+    if (dataChanges.length > 0) onEdgesChange(dataChanges)
+  }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -95,9 +106,9 @@ function GraphCanvas(): React.JSX.Element {
       )}
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={displayEdges}
         onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
+        onEdgesChange={handleEdgesChange}
         onConnect={connect}
         isValidConnection={isValidConnection}
         nodeTypes={nodeTypes}
@@ -105,6 +116,7 @@ function GraphCanvas(): React.JSX.Element {
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
         defaultEdgeOptions={{ animated: false }}
+        elevateEdgesOnSelect
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} />
         <Controls showInteractive={false} />

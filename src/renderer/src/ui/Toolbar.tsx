@@ -6,6 +6,8 @@ import { usePatchStore } from '@/store/patchStore'
 import { useUiStore } from '@/store/uiStore'
 import { useVisualiserStore } from '@/store/visualiserStore'
 import { loadProjectIntoStores } from '@/project/loadProject'
+import { ExportShowDialog } from '@/ui/ExportShowDialog'
+import type { ShowStartupHints } from '@shared/playerStartup'
 
 function loadProject(project: ProjectFile): void {
   loadProjectIntoStores(project)
@@ -27,7 +29,9 @@ export function Toolbar({
   const redo = useGraphStore((s) => s.redo)
   const canUndo = useGraphStore((s) => s.past.length > 0)
   const canRedo = useGraphStore((s) => s.future.length > 0)
+  const config = useEngineStore((s) => s.config)
   const profilerEnabled = useUiStore((s) => s.profilerEnabled)
+  const [exportOpen, setExportOpen] = useState(false)
   const setProfilerEnabled = useUiStore((s) => s.setProfilerEnabled)
 
   const [examples, setExamples] = useState<ExampleManifestEntry[]>([])
@@ -71,7 +75,7 @@ export function Toolbar({
     await window.pixelforge.saveProject(project)
   }
 
-  const exportShow = async (): Promise<void> => {
+  const exportShow = async (startup?: ShowStartupHints): Promise<void> => {
     const graph = useGraphStore.getState().toGraphData()
     const { points, layout } = usePatchStore.getState()
     const patch = layout !== null ? { points, layout } : { points }
@@ -79,7 +83,7 @@ export function Toolbar({
       ...createProjectFile('untitled', graph, patch, useEngineStore.getState().config),
       visualiser: useVisualiserStore.getState().toSettings()
     }
-    const result = await window.pixelforge.exportShow(project)
+    const result = await window.pixelforge.exportShow(project, startup)
     if (result !== null) {
       alert(`Show exported to ${result.outputDir}`)
     }
@@ -113,7 +117,7 @@ export function Toolbar({
           <button className="tool-btn" onClick={() => void saveProject()} title="Save project">
             Save
           </button>
-          <button className="tool-btn" onClick={() => void exportShow()} title="Export portable show folder for Player">
+          <button className="tool-btn" onClick={() => setExportOpen(true)} title="Export portable show folder for Player">
             Export Show
           </button>
         </div>
@@ -213,6 +217,12 @@ export function Toolbar({
           {status.outputActive ? 'Output ON' : 'Output OFF'}
         </button>
       </div>
+      <ExportShowDialog
+        open={exportOpen}
+        interfaceAddress={config.iface}
+        onClose={() => setExportOpen(false)}
+        onConfirm={(startup) => void exportShow(startup)}
+      />
     </header>
   )
 }

@@ -63,6 +63,7 @@ import { Text } from './generators/Text'
 import { Fire } from './generators/Fire'
 import { PixelSort } from './transforms/PixelSort'
 import { MidiIn } from './input/MidiIn'
+import { KeyboardIn } from './input/KeyboardIn'
 import { OscIn } from './input/OscIn'
 import { PixelOutput } from './output/PixelOutput'
 
@@ -129,6 +130,7 @@ export function registerStandardNodes(): void {
   registerNodeType(AudioIn)
   registerNodeType(Beat)
   registerNodeType(MidiIn)
+  registerNodeType(KeyboardIn)
   registerNodeType(OscIn)
   registerNodeType(Sequence)
   registerNodeType(Schedule)

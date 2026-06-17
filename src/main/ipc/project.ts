@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { migrateProjectFile, type ExampleManifestEntry, type ProjectFile } from '@shared/project'
 import { exportShowBundle } from '../export/showExport'
 import type { ShowManifest } from '@shared/showExportTypes'
+import type { ShowStartupHints } from '@shared/playerStartup'
 
 let lastProjectPath: string | null = null
 
@@ -65,7 +66,11 @@ export function registerProjectIpc(): void {
 
   ipcMain.handle(
     'project:export-show',
-    async (_event, project: ProjectFile): Promise<{ outputDir: string; manifest: ShowManifest } | null> => {
+    async (
+      _event,
+      project: ProjectFile,
+      startup?: ShowStartupHints
+    ): Promise<{ outputDir: string; manifest: ShowManifest } | null> => {
       const dirResult = await dialog.showOpenDialog({
         title: 'Export Show for Player',
         properties: ['openDirectory', 'createDirectory']
@@ -84,7 +89,7 @@ export function registerProjectIpc(): void {
       }
       if (sourcePath === null) sourcePath = join(outputDir, 'show.pxf')
 
-      const manifest = await exportShowBundle(project, sourcePath, outputDir)
+      const manifest = await exportShowBundle(project, sourcePath, outputDir, startup)
       return { outputDir, manifest }
     }
   )
