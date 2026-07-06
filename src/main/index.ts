@@ -14,6 +14,10 @@ import { requestLocalNetworkAccess } from './localNetworkPermission'
 
 const engine = new EngineLauncher()
 
+// Packaged builds get their icon from electron-builder; this only dresses up the
+// dev window/dock so `npm run dev` doesn't show the default Electron icon.
+const devIconPath = join(__dirname, '../../build/icon.png')
+
 process.on('unhandledRejection', (reason) => {
   console.error('[main] Unhandled promise rejection:', reason)
 })
@@ -30,6 +34,7 @@ function createWindow(): void {
     show: false,
     backgroundColor: '#0e1116',
     title: 'PixelForge',
+    ...(app.isPackaged ? {} : { icon: devIconPath }),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -52,6 +57,7 @@ function createWindow(): void {
 
 app.whenReady().then(async () => {
   initCrashReporting('editor')
+  if (!app.isPackaged && process.platform === 'darwin') app.dock?.setIcon(devIconPath)
   requestLocalNetworkAccess()
   engine.start()
   registerNetworkIpc()

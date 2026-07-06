@@ -22,6 +22,10 @@ import { resolveStartupPlan, validateStartupPlan } from './startupPlan'
 const engine = new EngineLauncher()
 const cli = parsePlayerArgs(process.argv.slice(1))
 
+// Packaged builds get their icon from electron-builder; this only dresses up the
+// dev window/dock so `npm run dev:player` doesn't show the default Electron icon.
+const devIconPath = join(__dirname, '../../build/icon-player.png')
+
 process.on('unhandledRejection', (reason) => {
   console.error('[player] Unhandled promise rejection:', reason)
 })
@@ -42,6 +46,7 @@ function createPlayerWindow(): void {
     show: false,
     backgroundColor: '#0e1116',
     title: 'PixelForge Player',
+    ...(app.isPackaged ? {} : { icon: devIconPath }),
     webPreferences: {
       preload: join(__dirname, '../preload/player.js'),
       sandbox: false
@@ -126,6 +131,7 @@ async function resolveBootPlan(): Promise<StartupPlan> {
 
 app.whenReady().then(async () => {
   initCrashReporting('player')
+  if (!app.isPackaged && process.platform === 'darwin') app.dock?.setIcon(devIconPath)
   requestLocalNetworkAccess()
 
   const saved = await readPlayerStartupConfig()
