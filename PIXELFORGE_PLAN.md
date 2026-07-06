@@ -534,7 +534,7 @@ The sequence node is the primary way users arrange looks over time.
 ### Milestone 7 — Polish + Distribution
 **Goal:** Shippable to early customers.
 
-- [x] Licensing system (Editor paid license + Player slot pool via online activation API)
+- [x] Licensing system — removed; PixelForge is fully open source under AGPL-3.0
 - [x] PixelForge Player — separate installer, minimal UI, headless CLI
 - [x] Auto-updater (electron-updater)
 - [x] Crash reporting (Sentry — opt-in via `PIXELFORGE_SENTRY_DSN`)
@@ -549,7 +549,7 @@ The sequence node is the primary way users arrange looks over time.
 - [x] Project file migration system (1.0 → 1.3 incremental chain)
 - [x] Export show bundle for Player deployment
 
-**Exit criteria:** Installable Editor + Player; Player runs shows with slot-licensed activation; headless rack mode works.
+**Exit criteria:** Installable Editor + Player; Player runs shows without activation gates; headless rack mode works.
 
 ---
 
@@ -596,8 +596,7 @@ The sequence node is the primary way users arrange looks over time.
     "three": "^0.170",
     "zustand": "^5",
     "sacn": "^3",
-    "culori": "^4",
-    "node-machine-id": "^1"
+    "culori": "^4"
   },
   "devDependencies": {
     "electron": "^34",

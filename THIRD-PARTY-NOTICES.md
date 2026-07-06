@@ -31,7 +31,6 @@ copyleft obligations on this project.
 | sacn | Apache-2.0 | https://github.com/k-yle/sACN |
 | @sentry/electron | MIT | https://github.com/getsentry/sentry-electron |
 | electron-updater | MIT | https://github.com/electron-userland/electron-builder |
-| node-machine-id | MIT | https://github.com/automation-stack/node-machine-id |
 | electron | MIT | https://www.electronjs.org |
 
 ## Regenerating the full attribution list

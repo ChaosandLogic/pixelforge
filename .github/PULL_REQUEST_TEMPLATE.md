@@ -23,6 +23,6 @@
 ## Checklist
 
 - [ ] I have read [CONTRIBUTING.md](../CONTRIBUTING.md)
-- [ ] I agree to the [Contributor License Agreement](../CLA.md)
-- [ ] No secrets, certificates, or production keys are included
+- [ ] I agree my contribution is licensed under the project's AGPL-3.0 license
+- [ ] No secrets or certificates are included
 - [ ] Changes are focused and follow the existing code style

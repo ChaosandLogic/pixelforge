@@ -1,6 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { EngineConfig } from '@shared/messages'
-import type { LicenseStatus } from '@shared/licensing/types'
 import type { PlayerStartupConfig } from '@shared/playerStartup'
 import type { ProjectFile } from '@shared/project'
 
@@ -18,10 +17,6 @@ const api = {
   stopOutput: () => ipcRenderer.invoke('player:stop-output'),
   setEngineConfig: (config: Partial<EngineConfig>) => ipcRenderer.invoke('player:set-config', config),
   readMediaFile: (path: string) => ipcRenderer.invoke('media:read', path),
-  getLicenseStatus: (): Promise<LicenseStatus> => ipcRenderer.invoke('license:status'),
-  activateLicense: (licenseKey: string, email: string): Promise<LicenseStatus> =>
-    ipcRenderer.invoke('license:activate', licenseKey, email),
-  deactivateLicense: (): Promise<void> => ipcRenderer.invoke('license:deactivate'),
   getAppVersion: () => ipcRenderer.invoke('app:version'),
   getStartupConfig: (): Promise<PlayerStartupConfig> => ipcRenderer.invoke('player:get-startup-config'),
   setStartupConfig: (config: PlayerStartupConfig): Promise<{ ok: boolean; error?: string }> =>
@@ -50,10 +45,6 @@ ipcRenderer.on('app:show-about', () => {
 
 ipcRenderer.on('app:show-shortcuts', () => {
   window.postMessage({ type: 'pixelforge-show-shortcuts' }, '*')
-})
-
-ipcRenderer.on('app:show-license', () => {
-  window.postMessage({ type: 'pixelforge-show-license' }, '*')
 })
 
 ipcRenderer.on('player:show-startup-panel', () => {

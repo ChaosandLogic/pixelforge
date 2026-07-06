@@ -20,9 +20,6 @@ export interface PlayerApi {
   stopOutput: () => Promise<void>
   setEngineConfig: (config: Partial<EngineConfig>) => Promise<void>
   readMediaFile: (path: string) => Promise<ArrayBuffer>
-  getLicenseStatus: () => Promise<import('@shared/licensing/types').LicenseStatus>
-  activateLicense: (licenseKey: string, email: string) => Promise<import('@shared/licensing/types').LicenseStatus>
-  deactivateLicense: () => Promise<void>
   getAppVersion: () => Promise<string>
   getStartupConfig: () => Promise<PlayerStartupConfig>
   setStartupConfig: (config: PlayerStartupConfig) => Promise<{ ok: boolean; error?: string }>

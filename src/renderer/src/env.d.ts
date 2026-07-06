@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 
 import type { NetworkInterfaceInfo } from '@shared/messages'
-import type { LicenseStatus } from '@shared/licensing/types'
 import type { ExampleManifestEntry, ProjectFile } from '@shared/project'
 import type { EspExportPayload, EspExportResult } from '@shared/espExportTypes'
 import type { FseqExportPayload, FseqExportResult } from '@shared/fseqExportTypes'
@@ -28,9 +27,6 @@ declare global {
       readMediaFile: (path: string) => Promise<ArrayBuffer>
       openTextFile: (extensions: string[]) => Promise<{ name: string; content: string } | null>
       saveTextFile: (content: string, defaultName: string) => Promise<string | null>
-      getLicenseStatus: () => Promise<LicenseStatus>
-      activateLicense: (licenseKey: string, email: string) => Promise<LicenseStatus>
-      deactivateLicense: () => Promise<void>
       getOnboardingSeen: () => Promise<boolean>
       setOnboardingSeen: () => Promise<void>
       getAppVersion: () => Promise<string>

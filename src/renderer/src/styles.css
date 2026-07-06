@@ -72,6 +72,11 @@ body {
   box-shadow: 0 0 10px rgba(255, 122, 26, 0.6);
 }
 
+.brand-mark.player {
+  background: linear-gradient(135deg, #26d4c8, #3ba7ff);
+  box-shadow: 0 0 10px rgba(38, 212, 200, 0.6);
+}
+
 .toolbar-controls {
   display: flex;
   align-items: center;
@@ -2170,56 +2175,7 @@ body {
   font-weight: 500;
 }
 
-/* ---- licensing ---- */
-
-.license-gate {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100%;
-  padding: 32px;
-  background: var(--bg);
-}
-
-.license-card {
-  width: min(420px, 100%);
-  padding: 28px;
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.license-card h1 {
-  font-size: 20px;
-}
-
-.license-lead,
-.license-message,
-.license-error {
-  color: var(--text-dim);
-  line-height: 1.5;
-}
-
-.license-error {
-  color: var(--red);
-}
-
-.license-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.license-field input {
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--bg-inset);
-  color: var(--text);
-}
+/* ---- buttons ---- */
 
 .tool-btn.primary {
   background: var(--accent);
@@ -2230,50 +2186,6 @@ body {
 .tool-btn.ghost {
   background: transparent;
   border: 1px solid var(--border);
-}
-
-.license-dialog h2 {
-  margin-bottom: 12px;
-}
-
-.license-detail-list {
-  display: grid;
-  gap: 8px;
-  margin: 12px 0;
-}
-
-.license-detail-list div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 10px;
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-
-.license-detail-list dt {
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-.license-detail-list dd {
-  font-size: 12px;
-  color: var(--text);
-  text-align: right;
-  word-break: break-all;
-}
-
-.license-ok {
-  color: var(--accent);
-}
-
-.license-bad {
-  color: #e07070;
-}
-
-.license-dialog-actions {
-  gap: 8px;
 }
 
 /* ---- onboarding ---- */
@@ -2534,10 +2446,12 @@ body {
 }
 
 .about-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
+  width: 48px;
+  height: 48px;
+  border-radius: 11px;
   flex-shrink: 0;
+  background: url('./assets/logo.png') center / cover no-repeat;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
 }
 
 .about-card h2 {

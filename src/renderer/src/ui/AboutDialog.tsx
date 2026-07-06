@@ -58,8 +58,8 @@ export function AboutDialog({ product, mode, onClose }: AboutDialogProps): React
             </ul>
             <p className="about-footnote">
               {product === 'editor'
-                ? `${APP_NAME} Editor requires a license. Deploy shows with ${APP_PLAYER_NAME} — each install uses a Player slot from your license pool.`
-                : `${APP_PLAYER_NAME} runs exported shows on site. Activate with your Editor license key.`}
+                ? `Author shows in ${APP_NAME} Editor and deploy them on site with ${APP_PLAYER_NAME}.`
+                : `${APP_PLAYER_NAME} runs exported shows on site.`}
             </p>
             <p className="about-copyright">{APP_COPYRIGHT}</p>
           </>

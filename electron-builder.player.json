@@ -5,6 +5,15 @@
   "directories": {
     "output": "release/player"
   },
+  "mac": {
+    "icon": "build/icon-player.png"
+  },
+  "win": {
+    "icon": "build/icon-player.png"
+  },
+  "linux": {
+    "icon": "build/icon-player.png"
+  },
   "extraMetadata": {
     "main": "out/main/player.js",
     "name": "pixelforge-player",

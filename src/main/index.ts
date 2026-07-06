@@ -3,19 +3,16 @@ import { join } from 'node:path'
 import { registerAppIpc } from './ipc/app'
 import { EngineLauncher } from './engine/EngineLauncher'
 import { registerFileIpc } from './ipc/files'
-import { registerLicenseIpc } from './ipc/license'
 import { registerMediaIpc } from './ipc/media'
 import { registerNetworkIpc } from './ipc/network'
 import { registerProjectIpc } from './ipc/project'
 import { initAutoUpdater } from './updater'
 import { initCrashReporting } from './crashReporting'
-import { LicenseManager, devBypassEnabled, getDevLicenseStatus } from './licensing/LicenseManager'
 import { registerOnboardingIpc } from './ipc/onboarding'
 import { setupAppMenu } from './menu'
 import { requestLocalNetworkAccess } from './localNetworkPermission'
 
 const engine = new EngineLauncher()
-const licenseManager = new LicenseManager('editor')
 
 process.on('unhandledRejection', (reason) => {
   console.error('[main] Unhandled promise rejection:', reason)
@@ -56,28 +53,17 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   initCrashReporting('editor')
   requestLocalNetworkAccess()
-  await licenseManager.init()
   engine.start()
   registerNetworkIpc()
   registerProjectIpc()
   registerMediaIpc()
   registerFileIpc()
-  registerLicenseIpc('editor', licenseManager)
   registerOnboardingIpc()
   registerAppIpc()
-  setupAppMenu('editor', () =>
-    devBypassEnabled() ? getDevLicenseStatus('editor') : licenseManager.getStatus()
-  )
+  setupAppMenu('editor')
 
   ipcMain.on('engine:request-port', (event) => {
-    void (async () => {
-      // Defense-in-depth: the engine port (and therefore all DMX output) is
-      // only handed to the renderer when the license is usable. The renderer
-      // LicenseGate blocks the UI too, but this stops a patched/DevTools
-      // renderer from reaching the engine host directly.
-      if (!devBypassEnabled() && !(await licenseManager.isUsableOffline())) return
-      engine.connectRenderer(event.sender)
-    })()
+    engine.connectRenderer(event.sender)
   })
 
   createWindow()
@@ -95,6 +81,5 @@ app.on('window-all-closed', () => {
 })
 
 app.on('will-quit', () => {
-  licenseManager.dispose()
   engine.stop()
 })

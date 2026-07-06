@@ -1,7 +1,7 @@
 import { app } from 'electron'
-import type { LicenseProduct } from '@shared/licensing/types'
+import type { Product } from '@shared/appInfo'
 
-export function initCrashReporting(product: LicenseProduct): void {
+export function initCrashReporting(product: Product): void {
   if (process.env['PIXELFORGE_SENTRY_DSN'] === undefined) return
 
   void import('@sentry/electron/main')

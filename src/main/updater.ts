@@ -1,8 +1,8 @@
 import { autoUpdater } from 'electron-updater'
 import { app, dialog } from 'electron'
-import type { LicenseProduct } from '@shared/licensing/types'
+import type { Product } from '@shared/appInfo'
 
-export function initAutoUpdater(product: LicenseProduct): void {
+export function initAutoUpdater(product: Product): void {
   if (!app.isPackaged) return
   if (process.env['PIXELFORGE_SKIP_UPDATER'] === '1') return
 

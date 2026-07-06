@@ -3,17 +3,11 @@
 Thanks for your interest in improving PixelForge! This document explains how to
 build, test, and submit changes.
 
-## Contributor License Agreement (required)
+## Licensing of contributions
 
-PixelForge is dual-licensed (AGPL-3.0 + a commercial license — see
-[`COMMERCIAL-LICENSE.md`](COMMERCIAL-LICENSE.md)). To keep that model viable, all
-contributors must agree to the [Contributor License Agreement](CLA.md) before
-their first pull request can be merged. Our CLA bot will prompt you on your first
-PR; agreeing is a one-time step.
-
-In short: you keep copyright to your contribution, but grant the project the
-rights needed to distribute it under both the AGPL-3.0 and the commercial
-license.
+PixelForge is licensed under the **GNU AGPL-3.0**. By submitting a pull request
+you agree that your contribution is provided under the same AGPL-3.0 license
+(inbound = outbound). Please only submit code you have the right to contribute.
 
 ## Development setup
 
@@ -23,7 +17,6 @@ Requires Node.js 20+ and npm.
 npm install
 npm run dev            # Editor with hot reload
 npm run dev:player     # Build + launch the Player
-npm run license:server # Local activation API (demo key PF-DEMO-EDITOR)
 ```
 
 ## Before you open a PR
@@ -41,8 +34,7 @@ npm run build
 - Add or update tests under `src/**/*.test.ts` for engine, export, and format
   logic. New node types and export/loop behaviour should come with tests.
 - Do not add narration comments; comment only non-obvious intent.
-- Never commit secrets, signing certificates, or a production signing key. The
-  keypair in `services/licensing/server.ts` is a throwaway **dev** key only.
+- Never commit secrets or signing certificates.
 
 ## Architecture
 

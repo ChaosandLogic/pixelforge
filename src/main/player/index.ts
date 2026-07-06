@@ -4,13 +4,11 @@ import type { ProjectFile } from '@shared/project'
 import type { StartupPlan } from '@shared/playerStartup'
 import { EngineLauncher } from '../engine/EngineLauncher'
 import { bootstrapProjectFromPath } from '../engine/ProjectBootstrap'
-import { registerLicenseIpc } from '../ipc/license'
 import { registerAppIpc } from '../ipc/app'
 import { registerMediaIpc } from '../ipc/media'
 import { registerNetworkIpc } from '../ipc/network'
 import { registerPlayerProjectIpc } from '../ipc/playerProject'
 import { registerPlayerStartupIpc } from '../ipc/playerStartup'
-import { devBypassEnabled, LicenseManager, getDevLicenseStatus } from '../licensing/LicenseManager'
 import { initAutoUpdater } from '../updater'
 import { initCrashReporting } from '../crashReporting'
 import { requestLocalNetworkAccess } from '../localNetworkPermission'
@@ -22,7 +20,6 @@ import { readPlayerStartupConfig } from './startupConfig'
 import { resolveStartupPlan, validateStartupPlan } from './startupPlan'
 
 const engine = new EngineLauncher()
-const licenseManager = new LicenseManager('player')
 const cli = parsePlayerArgs(process.argv.slice(1))
 
 process.on('unhandledRejection', (reason) => {
@@ -69,10 +66,6 @@ function createPlayerWindow(): void {
   }
 }
 
-async function licenseUsable(): Promise<boolean> {
-  return devBypassEnabled() || licenseManager.isUsableOffline()
-}
-
 async function applyPlanToEngine(plan: StartupPlan): Promise<ProjectFile | null> {
   if (plan.projectPath === null) return null
   validateStartupPlan(plan)
@@ -80,7 +73,7 @@ async function applyPlanToEngine(plan: StartupPlan): Promise<ProjectFile | null>
   if (plan.interface !== null) {
     engine.sendToEngine({ type: 'set-config', config: { iface: plan.interface } })
   }
-  if (plan.autoOutput && (await licenseUsable())) {
+  if (plan.autoOutput) {
     engine.sendToEngine({ type: 'output-start' })
   }
   bootProjectPath = plan.projectPath
@@ -134,7 +127,6 @@ async function resolveBootPlan(): Promise<StartupPlan> {
 app.whenReady().then(async () => {
   initCrashReporting('player')
   requestLocalNetworkAccess()
-  await licenseManager.init()
 
   const saved = await readPlayerStartupConfig()
   syncLoginItem(saved)
@@ -149,20 +141,10 @@ app.whenReady().then(async () => {
     getBootPlan: () => bootPlan,
     applyPlan: applyPlanToEngine
   })
-  registerLicenseIpc('player', licenseManager)
   registerAppIpc()
-  setupAppMenu('player', () =>
-    devBypassEnabled() ? getDevLicenseStatus('player') : licenseManager.getStatus()
-  )
+  setupAppMenu('player')
 
   if (plan.headless) {
-    if (!(await licenseUsable())) {
-      console.error(
-        'Valid Player license required. Activate PixelForge Player first or set PIXELFORGE_DEV_LICENSE=1 for development.'
-      )
-      app.exit(1)
-      return
-    }
     await runHeadless(plan)
     return
   }
@@ -181,10 +163,7 @@ app.whenReady().then(async () => {
   initAutoUpdater('player')
 
   ipcMain.on('engine:request-port', (event) => {
-    void (async () => {
-      if (!(await licenseUsable())) return
-      engine.connectRenderer(event.sender)
-    })()
+    engine.connectRenderer(event.sender)
   })
 
   app.on('activate', () => {
@@ -200,6 +179,5 @@ app.on('window-all-closed', () => {
 })
 
 app.on('will-quit', () => {
-  licenseManager.dispose()
   engine.stop()
 })

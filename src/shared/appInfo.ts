@@ -2,6 +2,10 @@ export const APP_NAME = 'PixelForge'
 export const APP_EDITOR_NAME = 'PixelForge Editor'
 export const APP_PLAYER_NAME = 'PixelForge Player'
 
+/** Which application this process is — used for update channels, Sentry release
+ * tags, and window/menu naming. */
+export type Product = 'editor' | 'player'
+
 export const APP_TAGLINE =
   'Node-based LED sequencer with sACN output, 3D visualisation, and live effect authoring.'
 

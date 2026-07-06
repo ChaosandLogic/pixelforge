@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ProjectFile } from '@shared/project'
 import { AboutDialog } from '@/ui/AboutDialog'
-import { LicenseDialog } from '@/ui/LicenseDialog'
-import { LicenseGate } from '@/ui/LicenseGate'
 import { NetworkPanel } from '@/ui/NetworkPanel'
 import { OutputDiagnosticsPanel } from '@/ui/OutputDiagnosticsPanel'
 import { StatusBar } from '@/ui/StatusBar'
@@ -18,13 +16,11 @@ function PlayerShell({
   projectName,
   onProjectNameChange,
   onShowAbout,
-  onShowLicense,
   onShowStartup
 }: {
   projectName: string
   onProjectNameChange: (name: string) => void
   onShowAbout: () => void
-  onShowLicense: () => void
   onShowStartup: () => void
 }): React.JSX.Element {
   const setOutputActive = useEngineStore((s) => s.setOutputActive)
@@ -53,7 +49,7 @@ function PlayerShell({
     <div className="app player-app">
       <header className="toolbar">
         <div className="brand">
-          <span className="brand-mark" />
+          <span className="brand-mark player" />
           PixelForge Player
         </div>
         <div className="toolbar-controls">
@@ -69,9 +65,6 @@ function PlayerShell({
             onClick={() => setOutputActive(!outputActive)}
           >
             {outputActive ? 'Output ON' : 'Output OFF'}
-          </button>
-          <button className="tool-btn" onClick={onShowLicense} title="License status">
-            License
           </button>
           <button className="tool-btn" onClick={onShowAbout} title="About PixelForge Player">
             About
@@ -95,7 +88,6 @@ function PlayerShell({
 
 export function PlayerApp(): React.JSX.Element {
   const [aboutMode, setAboutMode] = useState<AboutMode>(null)
-  const [licenseOpen, setLicenseOpen] = useState(false)
   const [startupOpen, setStartupOpen] = useState(false)
   const [projectName, setProjectName] = useState('No show loaded')
 
@@ -104,7 +96,6 @@ export function PlayerApp(): React.JSX.Element {
       const data = event.data as { type?: string } | undefined
       if (data?.type === 'pixelforge-show-about') setAboutMode('about')
       if (data?.type === 'pixelforge-show-shortcuts') setAboutMode('shortcuts')
-      if (data?.type === 'pixelforge-show-license') setLicenseOpen(true)
       if (data?.type === 'pixelforge-show-startup-panel') setStartupOpen(true)
     }
     window.addEventListener('message', onMessage)
@@ -113,17 +104,13 @@ export function PlayerApp(): React.JSX.Element {
 
   return (
     <>
-      <LicenseGate product="player" api="player">
-        <PlayerShell
-          projectName={projectName}
-          onProjectNameChange={setProjectName}
-          onShowAbout={() => setAboutMode('about')}
-          onShowLicense={() => setLicenseOpen(true)}
-          onShowStartup={() => setStartupOpen(true)}
-        />
-      </LicenseGate>
+      <PlayerShell
+        projectName={projectName}
+        onProjectNameChange={setProjectName}
+        onShowAbout={() => setAboutMode('about')}
+        onShowStartup={() => setStartupOpen(true)}
+      />
       <AboutDialog product="player" mode={aboutMode} onClose={() => setAboutMode(null)} />
-      <LicenseDialog product="player" api="player" open={licenseOpen} onClose={() => setLicenseOpen(false)} />
       <PlayerStartupPanel
         open={startupOpen}
         onClose={() => setStartupOpen(false)}

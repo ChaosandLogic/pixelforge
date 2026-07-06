@@ -1,6 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { NetworkInterfaceInfo } from '@shared/messages'
-import type { LicenseStatus } from '@shared/licensing/types'
 import type { ExampleManifestEntry, ProjectFile } from '@shared/project'
 import type { EspExportPayload, EspExportResult } from '@shared/espExportTypes'
 import type { FseqExportPayload, FseqExportResult } from '@shared/fseqExportTypes'
@@ -25,9 +24,6 @@ export interface PixelForgeApi {
   readMediaFile: (path: string) => Promise<ArrayBuffer>
   openTextFile: (extensions: string[]) => Promise<{ name: string; content: string } | null>
   saveTextFile: (content: string, defaultName: string) => Promise<string | null>
-  getLicenseStatus: () => Promise<LicenseStatus>
-  activateLicense: (licenseKey: string, email: string) => Promise<LicenseStatus>
-  deactivateLicense: () => Promise<void>
   getOnboardingSeen: () => Promise<boolean>
   setOnboardingSeen: () => Promise<void>
   getAppVersion: () => Promise<string>
@@ -51,9 +47,6 @@ const api: PixelForgeApi = {
   readMediaFile: (path) => ipcRenderer.invoke('media:read', path),
   openTextFile: (extensions) => ipcRenderer.invoke('files:open-text', extensions),
   saveTextFile: (content, defaultName) => ipcRenderer.invoke('files:save-text', content, defaultName),
-  getLicenseStatus: () => ipcRenderer.invoke('license:status'),
-  activateLicense: (licenseKey, email) => ipcRenderer.invoke('license:activate', licenseKey, email),
-  deactivateLicense: () => ipcRenderer.invoke('license:deactivate'),
   getOnboardingSeen: () => ipcRenderer.invoke('onboarding:seen'),
   setOnboardingSeen: () => ipcRenderer.invoke('onboarding:set-seen'),
   getAppVersion: () => ipcRenderer.invoke('app:version')
@@ -75,8 +68,4 @@ ipcRenderer.on('app:show-about', () => {
 
 ipcRenderer.on('app:show-shortcuts', () => {
   window.postMessage({ type: 'pixelforge-show-shortcuts' }, '*')
-})
-
-ipcRenderer.on('app:show-license', () => {
-  window.postMessage({ type: 'pixelforge-show-license' }, '*')
 })

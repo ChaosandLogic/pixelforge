@@ -1,8 +1,7 @@
 # Trademark Policy
 
 The name **"PixelForge"** and the PixelForge logo (the "Marks") are trademarks of
-the PixelForge project maintainer(s). The Marks are **not** licensed under the
-AGPL-3.0 or the commercial license that cover the source code.
+the PixelForge project maintainer(s). The Marks are **not** licensed under the AGPL-3.0 that covers the source code.
 
 ## What the AGPL-3.0 does and does not grant
 

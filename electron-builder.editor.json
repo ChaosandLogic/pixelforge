@@ -12,13 +12,18 @@
   "mac": {
     "category": "public.app-category.developer-tools",
     "target": ["dmg", "zip"],
+    "icon": "build/icon.png",
     "extendInfo": {
       "NSMicrophoneUsageDescription": "PixelForge analyzes audio input for reactive LED visuals.",
       "NSLocalNetworkUsageDescription": "PixelForge sends LED pixel data to fixtures on your local network via sACN, Art-Net, or DDP."
     }
   },
   "win": {
-    "target": ["nsis"]
+    "target": ["nsis"],
+    "icon": "build/icon.png"
+  },
+  "linux": {
+    "icon": "build/icon.png"
   },
   "publish": {
     "provider": "github",

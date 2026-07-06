@@ -4,12 +4,9 @@ Node-based LED sequencer with sACN output, 3D visualisation, and live effect aut
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 
-PixelForge is free and open source under the **GNU AGPL-3.0**. You can build and
-run everything in this repository yourself at no cost. Pre-built, code-signed
-installers, automatic updates, Player activation licenses, and support are
-available at **[pixelforge.app](https://pixelforge.app)**. A separate commercial
-license is available for proprietary use — see
-[COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+PixelForge is free and open source under the **GNU AGPL-3.0**. Everything — the
+Editor, the Player, and the engine — is in this repository and free to build,
+run, and modify.
 
 See [PIXELFORGE_PLAN.md](PIXELFORGE_PLAN.md) for the full development plan.
 
@@ -42,7 +39,6 @@ Engine host (utilityProcess)
 npm install
 npm run dev              # Editor with HMR
 npm run dev:player       # Player (build + launch)
-npm run license:server   # Local activation API (demo key PF-DEMO-EDITOR)
 npm run typecheck
 npm test
 npm run build
@@ -51,21 +47,16 @@ npm run dist:player      # macOS/Windows Player installer
 npm run build:examples
 ```
 
-**Environment variables** (for *running* the app, not building installers):
+Run the built Player directly with a show:
 
 ```bash
-# macOS / Linux — put the variable *before* the command
-PIXELFORGE_DEV_LICENSE=1 npm run dev:player
-
-# Or run the built Player directly
 npm run build
-PIXELFORGE_DEV_LICENSE=1 npx electron out/main/player.js --project examples/01-scrolling-wave.pxf --auto-output
+npx electron out/main/player.js --project examples/01-scrolling-wave.pxf --auto-output
 ```
 
-Do **not** append the variable after `npm run` (e.g. `npm run dist:editor PIXELFORGE_DEV_LICENSE=1`) — npm forwards it to electron-builder and you get `Unknown argument`.
+**Environment variables:**
 
-- `PIXELFORGE_DEV_LICENSE=1` — skip license gates during local dev
-- `PIXELFORGE_SENTRY_DSN` — enable crash reporting
+- `PIXELFORGE_SENTRY_DSN` — enable crash reporting (optional)
 
 ## Rack / startup show (Player)
 
@@ -117,18 +108,14 @@ src/
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and note
-that a one-time [Contributor License Agreement](CLA.md) is required (it keeps the
-dual-licensing model viable). Security issues should follow
-[SECURITY.md](SECURITY.md) rather than public issues.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md).
+Security issues should follow [SECURITY.md](SECURITY.md) rather than public issues.
 
 ## License
 
 PixelForge is licensed under the [GNU Affero General Public License v3.0](LICENSE).
 If you run a modified version and expose it to users over a network, the AGPL
-requires you to make your source available to them. For proprietary/commercial
-use without these obligations, a commercial license is available — see
-[COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+requires you to make your source available to them.
 
 Third-party dependencies are listed in
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

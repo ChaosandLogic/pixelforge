@@ -4,20 +4,11 @@ import {
   APP_EDITOR_NAME,
   APP_NAME,
   APP_PLAYER_NAME,
-  APP_TAGLINE
+  APP_TAGLINE,
+  type Product
 } from '@shared/appInfo'
-import { formatLicenseMenuSummary } from '@shared/licensing/formatMenuLabel'
-import type { LicenseStatus } from '@shared/licensing/types'
 
-export type AppProduct = 'editor' | 'player'
-
-type GetLicenseStatus = () => Promise<LicenseStatus>
-
-const APP_LICENSE_STATUS_ID = 'license-status-app'
-const HELP_LICENSE_STATUS_ID = 'license-status-help'
-
-let currentProduct: AppProduct | null = null
-let getLicenseStatus: GetLicenseStatus | null = null
+export type AppProduct = Product
 
 function sendToFocusedWindow(channel: string): void {
   const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
@@ -37,44 +28,13 @@ export function configureAboutPanel(product: AppProduct): void {
   })
 }
 
-async function refreshLicenseMenuLabels(): Promise<void> {
-  if (currentProduct === null || getLicenseStatus === null) return
-  const status = await getLicenseStatus()
-  const label = formatLicenseMenuSummary(status, currentProduct)
-  const menu = Menu.getApplicationMenu()
-  const appItem = menu?.getMenuItemById(APP_LICENSE_STATUS_ID)
-  const helpItem = menu?.getMenuItemById(HELP_LICENSE_STATUS_ID)
-  if (appItem) appItem.label = label
-  if (helpItem) helpItem.label = label
-}
-
-export function setupAppMenu(product: AppProduct, getStatus: GetLicenseStatus): void {
-  currentProduct = product
-  getLicenseStatus = getStatus
+export function setupAppMenu(product: AppProduct): void {
   configureAboutPanel(product)
 
   const productName = product === 'editor' ? APP_EDITOR_NAME : APP_PLAYER_NAME
   const isMac = process.platform === 'darwin'
 
-  const licenseStatusItem = {
-    id: APP_LICENSE_STATUS_ID,
-    label: 'License: …',
-    enabled: false
-  }
-
-  const manageLicenseItem = {
-    label: 'Manage License…',
-    click: () => sendToFocusedWindow('app:show-license')
-  }
-
   const helpSubmenu: Electron.MenuItemConstructorOptions[] = [
-    {
-      id: HELP_LICENSE_STATUS_ID,
-      label: 'License: …',
-      enabled: false
-    },
-    manageLicenseItem,
-    { type: 'separator' },
     {
       label: `About ${APP_NAME}`,
       click: () => sendToFocusedWindow('app:show-about')
@@ -99,9 +59,6 @@ export function setupAppMenu(product: AppProduct, getStatus: GetLicenseStatus): 
             label: productName,
             submenu: [
               { role: 'about' as const },
-              { type: 'separator' as const },
-              licenseStatusItem,
-              manageLicenseItem,
               { type: 'separator' as const },
               { role: 'services' as const },
               { type: 'separator' as const },
@@ -162,13 +119,5 @@ export function setupAppMenu(product: AppProduct, getStatus: GetLicenseStatus): 
   ]
 
   const menu = Menu.buildFromTemplate(template)
-  menu.on('menu-will-show', () => {
-    void refreshLicenseMenuLabels()
-  })
   Menu.setApplicationMenu(menu)
-  void refreshLicenseMenuLabels()
-}
-
-export function refreshAppMenu(): void {
-  void refreshLicenseMenuLabels()
 }

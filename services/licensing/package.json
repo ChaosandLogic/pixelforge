@@ -1,8 +1,0 @@
-{
-  "name": "pixelforge-licensing",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "start": "npx tsx server.ts"
-  }
-}

@@ -18,12 +18,10 @@ function loadProject(project: ProjectFile): void {
 
 export function Toolbar({
   onShowAbout,
-  onShowShortcuts,
-  onShowLicense
+  onShowShortcuts
 }: {
   onShowAbout: () => void
   onShowShortcuts: () => void
-  onShowLicense: () => void
 }): React.JSX.Element {
   const status = useEngineStore((s) => s.status)
   const setOutputActive = useEngineStore((s) => s.setOutputActive)
@@ -257,21 +255,11 @@ export function Toolbar({
                 className="examples-item"
                 onClick={() => {
                   setHelpOpen(false)
-                  onShowLicense()
-                }}
-              >
-                <span className="examples-item-name">Manage license</span>
-                <span className="examples-item-desc">Status, slots, and deactivation</span>
-              </button>
-              <button
-                className="examples-item"
-                onClick={() => {
-                  setHelpOpen(false)
                   onShowAbout()
                 }}
               >
                 <span className="examples-item-name">About PixelForge</span>
-                <span className="examples-item-desc">Version, licensing, and features</span>
+                <span className="examples-item-desc">Version and features</span>
               </button>
               <button
                 className="examples-item"
