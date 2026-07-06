@@ -1,3 +1,10 @@
+import {
+  beginScopedPixelOutput,
+  pixelScopeFromSrc,
+  readScopedRgb,
+  scopedNormalizedU,
+  writeScopedRgb
+} from '../../pixelScope'
 import { floatInput, floatParam, pixelsInput, type NodeTypeDef } from '../../types'
 
 function smoothstep(edge0: number, edge1: number, x: number): number {
@@ -29,27 +36,26 @@ export const Mask: NodeTypeDef = {
   ],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
 
+    const scope = pixelScopeFromSrc(src, ctx)
+    const out = beginScopedPixelOutput(ctx)
     const start = floatParam(params, 'start', 0.25)
     const end = floatParam(params, 'end', 0.75)
     const soft = floatParam(params, 'softness', 0.1)
     const offset = floatInput(inputs, params, 'offset')
     const invert = params['invert'] === true
-    const n = ctx.pixelCount
-    const denom = Math.max(1, n - 1)
 
-    for (let i = 0; i < n; i++) {
-      const u = i / denom - offset
+    for (let i = 0; i < scope.count; i++) {
+      const u = scopedNormalizedU(scope, i) - offset
       let m = smoothstep(start - soft, start, u) * (1 - smoothstep(end, end + soft, u))
       if (invert) m = 1 - m
-      out[i * 3] = (src[i * 3] ?? 0) * m
-      out[i * 3 + 1] = (src[i * 3 + 1] ?? 0) * m
-      out[i * 3 + 2] = (src[i * 3 + 2] ?? 0) * m
+      const [r, g, b] = readScopedRgb(src, scope, i)
+      writeScopedRgb(out, scope, i, r * m, g * m, b * m)
     }
     return { pixels: out }
   }

@@ -3,6 +3,8 @@
 import type { NetworkInterfaceInfo } from '@shared/messages'
 import type { LicenseStatus } from '@shared/licensing/types'
 import type { ExampleManifestEntry, ProjectFile } from '@shared/project'
+import type { EspExportPayload, EspExportResult } from '@shared/espExportTypes'
+import type { FseqExportPayload, FseqExportResult } from '@shared/fseqExportTypes'
 import type { ShowManifest } from '@shared/showExportTypes'
 import type { ShowStartupHints } from '@shared/playerStartup'
 
@@ -14,6 +16,8 @@ declare global {
       saveProject: (project: ProjectFile) => Promise<string | null>
       openProject: () => Promise<ProjectFile | null>
       exportShow: (project: ProjectFile, startup?: ShowStartupHints) => Promise<{ outputDir: string; manifest: ShowManifest } | null>
+      exportEsp: (payload: EspExportPayload) => Promise<EspExportResult | null>
+      exportFseq: (payload: FseqExportPayload) => Promise<FseqExportResult | null>
       listExamples: () => Promise<ExampleManifestEntry[]>
       openExample: (filename: string) => Promise<ProjectFile | null>
       pickVideoFile: () => Promise<string | null>

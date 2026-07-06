@@ -1,3 +1,4 @@
+import { mapScopedPixels } from '../../pixelScope'
 import { floatParam, pixelsInput, type NodeTypeDef } from '../../types'
 
 export const Levels: NodeTypeDef = {
@@ -14,8 +15,8 @@ export const Levels: NodeTypeDef = {
   ],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
@@ -24,12 +25,17 @@ export const Levels: NodeTypeDef = {
     const contrast = floatParam(params, 'contrast', 1)
     const invGamma = 1 / Math.max(0.001, floatParam(params, 'gamma', 1))
 
-    for (let i = 0; i < ctx.pixelCount * 3; i++) {
-      let v = (src[i] as number) * brightness
-      v = (v - 0.5) * contrast + 0.5
-      v = v < 0 ? 0 : v > 1 ? 1 : v
-      out[i] = Math.pow(v, invGamma)
+    return {
+      pixels: mapScopedPixels(src, ctx, (r, g, b) => {
+        const channels = [r, g, b]
+        for (let c = 0; c < 3; c++) {
+          let v = channels[c]! * brightness
+          v = (v - 0.5) * contrast + 0.5
+          v = v < 0 ? 0 : v > 1 ? 1 : v
+          channels[c] = Math.pow(v, invGamma)
+        }
+        return [channels[0]!, channels[1]!, channels[2]!]
+      })
     }
-    return { pixels: out }
   }
 }

@@ -4,15 +4,23 @@
   "description": "Node-based LED sequencer with sACN output, 3D visualisation, and live effect authoring",
   "author": "PixelForge",
   "homepage": "https://pixelforge.app",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pixelforge/pixelforge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pixelforge/pixelforge/issues"
+  },
   "main": "out/main/index.js",
   "private": true,
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "cross-env PIXELFORGE_DEV_LICENSE=1 electron-vite dev",
     "dev:player": "npm run build && cross-env PIXELFORGE_DEV_LICENSE=1 electron out/main/player.js",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
-    "test": "npx tsx --test src/main/player/startup.test.ts",
+    "test": "npx tsx --tsconfig tsconfig.node.json --test src/main/player/startup.test.ts src/engine-host/aled.test.ts src/engine-host/bake.test.ts src/engine-host/evaluator.test.ts src/engine-host/fseq.test.ts src/engine-host/generatorScope.test.ts src/engine-host/loopPeriod.test.ts src/engine-host/pixelScope.test.ts src/engine-host/ports.test.ts src/engine-host/timeline.test.ts",
     "build:examples": "npx tsx scripts/build-examples.ts",
     "license:server": "npx tsx services/licensing/server.ts",
     "dist:editor": "npm run build && electron-builder --config electron-builder.editor.json",

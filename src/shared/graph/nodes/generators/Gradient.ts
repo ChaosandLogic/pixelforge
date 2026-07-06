@@ -4,12 +4,18 @@ import {
   mapGradientPosition,
   parseGradientStops
 } from '../../../colour/gradientStops'
-import { axisPosition, parseSpatialAxis, SPATIAL_AXIS_OPTIONS } from '../../spatial'
+import {
+  axisPosition,
+  GRADIENT_AXIS_OPTIONS,
+  parseGradientAxis,
+  radialDistance
+} from '../../spatial'
 import {
   beginScopedOutput,
   generatorScope,
   scopeAxisPosition,
-  scopePatchIndex
+  scopePatchIndex,
+  scopeUv
 } from '../../generatorScope'
 import { floatInput, floatParam, stringParam, type NodeTypeDef } from '../../types'
 
@@ -21,7 +27,7 @@ export const Gradient: NodeTypeDef = {
   type: GRADIENT_NODE_TYPE,
   label: 'Gradient',
   category: 'generator',
-  description: 'Multi-stop colour ramp across a spatial axis (Oklab)',
+  description: 'Multi-stop colour ramp across a spatial axis or circular field (Oklab)',
   inputs: [
     { name: 'pixels', label: 'Pixels', type: 'pixels' },
     { name: 'resolution', label: 'Resolution', type: 'resolution' },
@@ -35,8 +41,11 @@ export const Gradient: NodeTypeDef = {
       label: 'Axis',
       type: 'select',
       default: 'x',
-      options: [...SPATIAL_AXIS_OPTIONS]
+      options: [...GRADIENT_AXIS_OPTIONS]
     },
+    { name: 'centreX', label: 'Centre X', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 },
+    { name: 'centreY', label: 'Centre Y', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 },
+    { name: 'centreZ', label: 'Centre Z', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 },
     { name: 'offset', label: 'Offset', type: 'float', default: 0, min: -1, max: 1, step: 0.01 },
     { name: 'scale', label: 'Scale', type: 'float', default: 1, min: 0.1, max: 10, step: 0.1 },
     { name: 'phase', label: 'Phase', type: 'float', default: 0, min: -2, max: 2, step: 0.01 },
@@ -54,7 +63,10 @@ export const Gradient: NodeTypeDef = {
       }))
     )
 
-    const axis = parseSpatialAxis(stringParam(params, 'axis', 'x'))
+    const axis = parseGradientAxis(stringParam(params, 'axis', 'x'))
+    const centreX = floatParam(params, 'centreX', 0.5)
+    const centreY = floatParam(params, 'centreY', 0.5)
+    const centreZ = floatParam(params, 'centreZ', 0.5)
     const offset = floatParam(params, 'offset')
     const scale = floatParam(params, 'scale', 1)
     const mirror = params['mirror'] === true
@@ -65,9 +77,17 @@ export const Gradient: NodeTypeDef = {
     const scope = generatorScope(inputs, ctx)
     const out = beginScopedOutput(ctx)
     for (let i = 0; i < scope.count; i++) {
-      const pos = scope.fullPatch
-        ? axisPosition(ctx.positions, i, scope.resolution, axis, scope.count)
-        : scopeAxisPosition(ctx.positions, i, scope, axis)
+      let pos: number
+      if (axis === 'circular') {
+        const global = scopePatchIndex(scope, i)
+        const { u, v } = scopeUv(ctx.positions, i, scope)
+        const z = ctx.positions[global * 3 + 2] ?? 0.5
+        pos = radialDistance(u, v, z, centreX, centreY, centreZ)
+      } else {
+        pos = scope.fullPatch
+          ? axisPosition(ctx.positions, i, scope.resolution, axis, scope.count)
+          : scopeAxisPosition(ctx.positions, i, scope, axis)
+      }
       const t = mapGradientPosition(pos, offset, scale, phase, mirror)
       ramp.sample(t, out, scopePatchIndex(scope, i) * 3)
     }

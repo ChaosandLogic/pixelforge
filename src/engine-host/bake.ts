@@ -1,4 +1,4 @@
-import { CHANNELS_PER_PIXEL, MAX_BAKE_BYTES } from '@shared/messages'
+import { CHANNELS_PER_PIXEL, MAX_BAKE_BYTES, MAX_BAKE_FPS } from '@shared/messages'
 import { OUTPUT_NODE_TYPE } from '@shared/graph/nodes'
 import type { AudioLevels, GraphData, MediaFrame } from '@shared/graph/types'
 import { BufferPool } from './evaluator/BufferPool'
@@ -27,6 +27,12 @@ export interface BakeOutput {
   frameCount: number
   pixelCount: number
   fps: number
+  /**
+   * One extra frame rendered at the loop boundary (t = frameCount/fps): the
+   * content that plays immediately after the last frame when looping. Compared
+   * against frame 0 to measure the true seam. Never included in the export.
+   */
+  seamFrame: Uint8Array | null
   error: string | null
 }
 
@@ -37,12 +43,13 @@ export interface BakeOutput {
  * offsets) are untouched.
  */
 export function bakeFrames(input: BakeInput): BakeOutput {
-  const fps = Math.min(120, Math.max(1, input.fps))
+  const fps = Math.min(MAX_BAKE_FPS, Math.max(1, input.fps))
   const fail = (error: string): BakeOutput => ({
     frames: new Uint8Array(0),
     frameCount: 0,
     pixelCount: input.pixelCount,
     fps,
+    seamFrame: null,
     error
   })
 
@@ -92,5 +99,15 @@ export function bakeFrames(input: BakeInput): BakeOutput {
     frames.set(view, f * bytesPerFrame)
   }
 
-  return { frames, frameCount, pixelCount: input.pixelCount, fps, error: null }
+  // Render one more step at the loop boundary so the seam can be measured
+  // against the frame that would actually play on wrap (not the last frame,
+  // which is one motion step short). Excluded from the exported animation.
+  let seamFrame: Uint8Array | null = null
+  if (frameCount >= 1 && bytesPerFrame > 0) {
+    evaluator.evaluate(frameCount * deltaMs, deltaMs)
+    seamFrame = new Uint8Array(bytesPerFrame)
+    seamFrame.set(view)
+  }
+
+  return { frames, frameCount, pixelCount: input.pixelCount, fps, seamFrame, error: null }
 }

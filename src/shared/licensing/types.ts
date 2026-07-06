@@ -81,9 +81,14 @@ export interface DeactivateRequest {
 export const DEFAULT_GRACE_OFFLINE_DAYS = 14
 export const HEARTBEAT_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000
 
-/** Dev/test public key — replace for production deployments. */
+/**
+ * Public half of the throwaway DEV keypair used by the local licensing server.
+ * This is published in the open source repo on purpose so local development
+ * works out of the box. Production builds MUST ship a rotated public key that
+ * matches the private key held in your secret manager (see services/licensing).
+ */
 export const LICENSE_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAftV7TvQUf1/Iucmeer9df1DY7rxpGl78JqjNkIea6Q4=
+MCowBQYDK2VwAyEAbsGUkED8mRg41tqedbUatmz1DlRPpRDZGlfTXzP1KOE=
 -----END PUBLIC KEY-----`
 
 export function emptyLicenseStatus(product: LicenseProduct): LicenseStatus {

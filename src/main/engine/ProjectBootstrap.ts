@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { buildPatchMessage, resolveProjectMediaPaths } from '@shared/projectEngineSync'
 import { migrateProjectFile, type ProjectFile } from '@shared/project'
+import { allowGraphMedia, allowMediaFile, allowMediaRoot } from '../mediaAccess'
 import type { EngineLauncher } from './EngineLauncher'
 
 export async function loadProjectFile(path: string): Promise<ProjectFile> {
@@ -9,7 +10,7 @@ export async function loadProjectFile(path: string): Promise<ProjectFile> {
   const raw: unknown = JSON.parse(await readFile(absolute, 'utf-8'))
   const project = migrateProjectFile(raw)
   const projectDir = dirname(absolute)
-  return {
+  const resolved: ProjectFile = {
     ...project,
     graph: resolveProjectMediaPaths(project.graph, projectDir),
     visualiser:
@@ -20,6 +21,11 @@ export async function loadProjectFile(path: string): Promise<ProjectFile> {
           }
         : project.visualiser
   }
+  // Grant the renderer read access to this project's media (and its folder).
+  allowMediaRoot(projectDir)
+  allowGraphMedia(resolved.graph)
+  if (resolved.visualiser?.stlPath !== undefined) allowMediaFile(resolved.visualiser.stlPath)
+  return resolved
 }
 
 export function pushProjectToEngine(launcher: EngineLauncher, project: ProjectFile): void {

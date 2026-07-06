@@ -146,9 +146,12 @@ export function scopeAxisPosition(
   }
   const global = scopePatchIndex(scope, localIndex)
   if (axis === 'z') return positions[global * 3 + 2] ?? 0
+  if (axis === 'index') {
+    return scope.count > 1 ? localIndex / (scope.count - 1) : 0
+  }
+
   const { width, height } = scope.resolution
-  const cellX = localIndex % width
-  const cellY = Math.floor(localIndex / width)
+  const { cellX, cellY } = scopeCellCoord(positions, global, scope)
   switch (axis) {
     case 'x':
       return width > 1 ? (cellX + 0.5) / width : 0
@@ -156,8 +159,6 @@ export function scopeAxisPosition(
       return height > 1 ? (cellY + 0.5) / height : 0
     case 'xy':
       return width + height > 0 ? (cellX + cellY) / (width + height) : 0
-    case 'index':
-      return scope.count > 1 ? localIndex / (scope.count - 1) : 0
     default:
       return axisPosition(positions, global, scope.resolution, axis, scope.count)
   }

@@ -10,9 +10,31 @@ import type {
   StoredLicense
 } from '../../src/shared/licensing/types'
 
-const PRIVATE_KEY_PEM = `-----BEGIN PRIVATE KEY-----
-MC4CAQAwBQYDK2VwBCIEICCQY5+EvbL1UUf82ebc06PE3y9mk0Ez0yp+cdUGKLF3
+// SECURITY: the signing key must NOT be committed for production. Provide it
+// via PIXELFORGE_LICENSE_PRIVATE_KEY (PEM, with literal "\n" allowed) sourced
+// from a secret manager. The fallback below is a throwaway dev-only key whose
+// public half ships in the client purely for local development.
+// Throwaway keypair for local development ONLY. It is published in this open
+// source repo on purpose — its public half ships in the client so `npm run
+// license:server` works out of the box. Production MUST override this via
+// PIXELFORGE_LICENSE_PRIVATE_KEY and ship a different (rotated) client public key.
+const DEV_ONLY_PRIVATE_KEY_PEM = `-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEIDdUEQWiUhnN/K187rXMACp0P/296PJageW+JPzbCFtJ
 -----END PRIVATE KEY-----`
+
+const PRIVATE_KEY_PEM = (() => {
+  const fromEnv = process.env['PIXELFORGE_LICENSE_PRIVATE_KEY']
+  if (fromEnv !== undefined && fromEnv.trim() !== '') {
+    return fromEnv.includes('\\n') ? fromEnv.replace(/\\n/g, '\n') : fromEnv
+  }
+  console.warn(
+    '[licensing] WARNING: using the built-in DEV-ONLY signing key. Set ' +
+      'PIXELFORGE_LICENSE_PRIVATE_KEY (and rotate the client public key) before production.'
+  )
+  return DEV_ONLY_PRIVATE_KEY_PEM
+})()
+
+const WEBHOOK_SECRET = process.env['PIXELFORGE_WEBHOOK_SECRET'] ?? ''
 
 interface EditorLicense {
   licenseKey: string
@@ -221,6 +243,13 @@ const server = createServer(async (req, res) => {
       return
     }
     if (req.method === 'POST' && url === '/v1/webhook/purchase') {
+      // Webhook mints license records, so it must be authenticated. Requires a
+      // configured shared secret presented as `Authorization: Bearer <secret>`.
+      if (WEBHOOK_SECRET === '' || req.headers.authorization !== `Bearer ${WEBHOOK_SECRET}`) {
+        res.writeHead(401)
+        res.end(JSON.stringify({ error: 'Unauthorized' }))
+        return
+      }
       const body = JSON.parse(await readBody(req)) as {
         licenseKey: string
         email: string

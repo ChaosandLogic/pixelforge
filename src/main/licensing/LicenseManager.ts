@@ -76,6 +76,17 @@ export class LicenseManager {
     return isLicenseUsable(status.state)
   }
 
+  /**
+   * Local-only usability check (no network heartbeat). Used to gate the engine
+   * port and DMX output without blocking on a slow/absent activation server.
+   */
+  async isUsableOffline(): Promise<boolean> {
+    const machineId = await getMachineId()
+    const signatureValid = this.cached !== null ? verifyLicenseSignature(this.cached) : false
+    const status = evaluateLicense(this.cached, machineId, this.product, { signatureValid })
+    return isLicenseUsable(status.state)
+  }
+
   async activate(licenseKey: string, email: string): Promise<LicenseStatus> {
     const machineId = await getMachineId()
     const { license, slotsUsed, slotsTotal } = await activateRemote({
@@ -153,6 +164,9 @@ export class LicenseManager {
 }
 
 export function devBypassEnabled(): boolean {
+  // Only honour the dev bypass in unpackaged (development) builds. Setting the
+  // env var in a shipped .app/.exe must never skip license enforcement.
+  if (app.isPackaged) return false
   return process.env['PIXELFORGE_DEV_LICENSE'] === '1'
 }
 

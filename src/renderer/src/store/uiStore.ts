@@ -2,9 +2,17 @@ import { create } from 'zustand'
 
 const STORAGE_KEY = 'pixelforge-profiler'
 
+/** Metadata of the currently loaded project, preserved across saves. */
+export interface ProjectMeta {
+  name: string
+  created: string
+}
+
 interface UiState {
   profilerEnabled: boolean
   setProfilerEnabled: (enabled: boolean) => void
+  projectMeta: ProjectMeta | null
+  setProjectMeta: (meta: ProjectMeta | null) => void
 }
 
 function loadProfilerEnabled(): boolean {
@@ -31,5 +39,8 @@ export const useUiStore = create<UiState>((set) => ({
   setProfilerEnabled: (enabled) => {
     set({ profilerEnabled: enabled })
     persistProfilerEnabled(enabled)
-  }
+  },
+
+  projectMeta: null,
+  setProjectMeta: (meta) => set({ projectMeta: meta })
 }))

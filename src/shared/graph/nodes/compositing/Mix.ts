@@ -1,4 +1,5 @@
 import { blendAdd, blendMix, blendMultiply, blendScreen } from '../../compositing/blend'
+import { copyScopedPixels, pixelsForBlend } from '../../pixelScope'
 import { floatInput, pixelsInput, stringParam, type NodeTypeDef } from '../../types'
 
 /**
@@ -32,25 +33,26 @@ export const Mix: NodeTypeDef = {
       return { pixels: out }
     }
     if (a === null || b === null) {
-      out.set(a ?? (b as Float32Array))
-      return { pixels: out }
+      return { pixels: copyScopedPixels((a ?? b) as Float32Array, ctx) }
     }
 
     const mode = stringParam(params, 'mode', 'mix')
     const amount = Math.max(0, Math.min(1, floatInput(inputs, params, 'amount', 0.5)))
+    const aFull = pixelsForBlend(a, ctx)!
+    const bFull = pixelsForBlend(b, ctx)!
 
     switch (mode) {
       case 'add':
-        blendAdd(a, b, amount, out)
+        blendAdd(aFull, bFull, amount, out)
         break
       case 'multiply':
-        blendMultiply(a, b, amount, out)
+        blendMultiply(aFull, bFull, amount, out)
         break
       case 'screen':
-        blendScreen(a, b, amount, out)
+        blendScreen(aFull, bFull, amount, out)
         break
       default:
-        blendMix(a, b, amount, out)
+        blendMix(aFull, bFull, amount, out)
     }
     return { pixels: out }
   }

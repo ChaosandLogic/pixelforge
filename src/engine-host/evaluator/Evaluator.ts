@@ -1,11 +1,10 @@
 import { performance } from 'node:perf_hooks'
 import { CHANNELS_PER_PIXEL, MAX_PIXELS, type NodePreviews, type NodeTimings } from '@shared/messages'
 import { getNodeType } from '@shared/graph/registry'
-import { previewNodeIds } from '@shared/graph/preview'
+import { previewNodeIds, needsEffectPreviewCapture } from '@shared/graph/preview'
 import { applyParamBindings, graphHasCycle } from '@shared/graph/paramBinding'
 import { evaluateSubgraph, evalSubgraphNode, type SubgraphContext } from '@shared/component/evaluateSubgraph'
 import { OUTPUT_NODE_TYPE } from '@shared/graph/nodes'
-import { FIXTURE_NODE_TYPE } from '@shared/graph/nodes/setup/Fixture'
 import { SEQUENCE_NODE_TYPE } from '@shared/graph/nodes/sequence/Sequence'
 import { SCHEDULE_NODE_TYPE } from '@shared/graph/nodes/schedule/Schedule'
 import type { DelayBuffer, HoldState, RampState } from '@shared/graph/time/state'
@@ -15,21 +14,22 @@ import {
   sampleHold,
   sampleRamp
 } from '@shared/graph/time/state'
-import type { AudioLevels, EvalContext, GraphData, KeyboardState, MediaFrame, MidiState, NodeData, OscState, PortValues } from '@shared/graph/types'
-import { stringParam } from '@shared/graph/types'
+import type { AudioLevels, EvalContext, GraphData, KeyboardState, MediaFrame, MidiState, NodeData, OscState, ParamValues, PortValues } from '@shared/graph/types'
 import type { FixtureRange } from '@shared/patch/layout'
-import { firstFixtureId, fixtureRangeById, indicesForFixture } from '@shared/patch/fixtureRoute'
 import { blendAdd, blendMix, blendMultiply, blendScreen } from '@shared/graph/compositing/blend'
+import { pixelsForBlend } from '@shared/graph/pixelScope'
+import { rasterizeLayout } from '@shared/preview/rasterize'
 import {
-  compactStreamPixels,
-  previewResolutionForStream,
-  rasterizeLayout,
-  rasterizeStream
-} from '@shared/preview/rasterize'
+  effectPreviewPixelCount,
+  effectPreviewPositions,
+  EFFECT_PREVIEW_EVAL_SIZE,
+  rasterizeEffectPreviewGrid
+} from '@shared/preview/effectPreviewGrid'
 import { defaultResolution, type Resolution } from '@shared/spatial/resolution'
-import type { BufferPool } from './BufferPool'
+import { BufferPool } from './BufferPool'
 
 const VIDEO_NODE_TYPE = 'generator/video'
+const IMAGE_NODE_TYPE = 'generator/image'
 
 interface EdgeSource {
   fromNode: string
@@ -51,6 +51,8 @@ export class Evaluator {
   private pixelCount: number
   private positions: Float32Array
   private readonly pool: BufferPool
+  private readonly previewPool: BufferPool
+  private activePool: BufferPool
 
   private nodesById = new Map<string, NodeData>()
   private edgesByTarget = new Map<string, EdgeSource>()
@@ -58,9 +60,15 @@ export class Evaluator {
   private scheduleNodeIds: string[] = []
   private outputNodeIds: string[] = []
   private outputViews = new Map<string, Uint8Array>()
+  private outputControls = new Map<string, Int32Array>()
   private fixtureRanges: FixtureRange[] = []
   private previewIds: string[] = []
+  private effectPreviewNeeded = false
+  private readonly layoutRasterCache = new Map<string, Uint8Array>()
+  private readonly effectRasterCache = new Map<string, Uint8Array>()
   graphError: string | null = null
+  /** Last runtime error thrown by a node's evaluate() (reset each frame). */
+  evalError: string | null = null
   /** Per-node output thumbnails captured during the last frame. */
   previews: NodePreviews = {}
   /** Per-node evaluate() durations (ms) for the last frame. */
@@ -80,6 +88,7 @@ export class Evaluator {
   private readonly rampStates = new Map<string, RampState>()
   private readonly pendingTriggers = new Set<string>()
   private readonly scheduleFired = new Map<string, Map<number, string>>()
+  private readonly timelineLoopIndices = new Map<string, number>()
   private readonly edgeStates = new Map<string, number>()
   private readonly feedbackBuffers = new Map<string, Float32Array>()
   private patchResolution: Resolution
@@ -89,6 +98,8 @@ export class Evaluator {
     this.view = new Uint8Array(sab)
     this.pixelCount = pixelCount
     this.pool = pool
+    this.previewPool = new BufferPool(effectPreviewPixelCount(EFFECT_PREVIEW_EVAL_SIZE))
+    this.activePool = pool
     this.positions = buildLinePositions(pixelCount)
     this.patchResolution = defaultResolution(pixelCount)
     this.ctx = {
@@ -99,7 +110,7 @@ export class Evaluator {
       positions: this.positions,
       fixtureRanges: this.fixtureRanges,
       nodeId: '',
-      acquire: () => this.pool.acquire(),
+      acquire: () => this.activePool.acquire(),
       getMediaFrame: (nodeId) => this.mediaFrames.get(nodeId) ?? null,
       getAudioLevels: (nodeId) => this.audioLevels.get(nodeId) ?? null,
       getMidiState: (nodeId) => this.midiStates.get(nodeId) ?? null,
@@ -144,6 +155,7 @@ export class Evaluator {
       },
       markScheduleFired: (nodeId, slotIndex, fireKey) =>
         this.markScheduleFired(nodeId, slotIndex, fireKey),
+      advanceTimelineLoop: (loopIndex) => this.advanceTimelineLoop(this.ctx.nodeId, loopIndex),
       feedbackPixels: (input, amount, decay, mode, reset) =>
         this.feedbackPixels(this.ctx.nodeId, input, amount, decay, mode, reset)
     }
@@ -171,6 +183,14 @@ export class Evaluator {
     if (map.get(slotIndex) === fireKey) return false
     map.set(slotIndex, fireKey)
     return true
+  }
+
+  private advanceTimelineLoop(nodeId: string, loopIndex: number): void {
+    const prev = this.timelineLoopIndices.get(nodeId)
+    if (prev !== undefined && loopIndex > prev) {
+      this.emitTrigger(nodeId, 'loop')
+    }
+    this.timelineLoopIndices.set(nodeId, loopIndex)
   }
 
   private risingEdge(nodeId: string, port: string, value: number, threshold: number): void {
@@ -250,7 +270,8 @@ export class Evaluator {
     mode: string,
     reset: boolean
   ): Float32Array {
-    const len = input.length
+    const expanded = pixelsForBlend(input, this.ctx)!
+    const len = expanded.length
     let prev = this.feedbackBuffers.get(nodeId)
     if (prev === undefined || prev.length !== len) {
       prev = new Float32Array(len)
@@ -267,16 +288,16 @@ export class Evaluator {
     const out = this.pool.acquire()
     switch (mode) {
       case 'multiply':
-        blendMultiply(input, faded, amount, out)
+        blendMultiply(expanded, faded, amount, out)
         break
       case 'screen':
-        blendScreen(input, faded, amount, out)
+        blendScreen(expanded, faded, amount, out)
         break
       case 'mix':
-        blendMix(input, faded, amount, out)
+        blendMix(expanded, faded, amount, out)
         break
       default:
-        blendAdd(input, faded, amount, out)
+        blendAdd(expanded, faded, amount, out)
     }
 
     prev.set(out)
@@ -339,45 +360,61 @@ export class Evaluator {
   }
 
   /** Wire per-output SAB views from the output manager (preview aliases the first route). */
-  setOutputTargets(nodeIds: string[], views: Map<string, Uint8Array>, previewView: Uint8Array): void {
+  setOutputTargets(
+    nodeIds: string[],
+    views: Map<string, Uint8Array>,
+    previewView: Uint8Array,
+    controls?: Map<string, Int32Array>
+  ): void {
     this.outputNodeIds = nodeIds
     this.outputViews = views
+    this.outputControls = controls ?? new Map()
     this.view = previewView
   }
 
   setGraph(graph: GraphData): void {
-    this.nodesById.clear()
-    this.edgesByTarget.clear()
-    this.edgesBySource.clear()
-    this.scheduleNodeIds = []
-    this.outputNodeIds = []
-    this.graphError = null
-    this.previewIds = previewNodeIds(graph.nodes)
-
+    // Validate every node type BEFORE mutating any state. On failure we keep the
+    // previous (valid) graph so the engine never runs against half-built maps.
     for (const node of graph.nodes) {
       if (getNodeType(node.type) === undefined) {
         this.graphError = `Unknown node type: ${node.type}`
         return
       }
-      this.nodesById.set(node.id, node)
-      if (node.type === OUTPUT_NODE_TYPE) {
-        this.outputNodeIds.push(node.id)
-      }
-      if (node.type === SCHEDULE_NODE_TYPE) {
-        this.scheduleNodeIds.push(node.id)
-      }
+    }
+
+    // Build the new adjacency into local maps, then commit atomically.
+    const nodesById = new Map<string, NodeData>()
+    const edgesByTarget = new Map<string, EdgeSource>()
+    const edgesBySource = new Map<string, EdgeTarget[]>()
+    const scheduleNodeIds: string[] = []
+    const outputNodeIds: string[] = []
+
+    for (const node of graph.nodes) {
+      nodesById.set(node.id, node)
+      if (node.type === OUTPUT_NODE_TYPE) outputNodeIds.push(node.id)
+      if (node.type === SCHEDULE_NODE_TYPE) scheduleNodeIds.push(node.id)
     }
     for (const edge of graph.edges) {
-      this.edgesByTarget.set(`${edge.toNode}:${edge.toPort}`, {
+      edgesByTarget.set(`${edge.toNode}:${edge.toPort}`, {
         fromNode: edge.fromNode,
         fromPort: edge.fromPort
       })
       const sourceKey = `${edge.fromNode}:${edge.fromPort}`
-      const list = this.edgesBySource.get(sourceKey)
+      const list = edgesBySource.get(sourceKey)
       const target: EdgeTarget = { toNode: edge.toNode, toPort: edge.toPort }
-      if (list === undefined) this.edgesBySource.set(sourceKey, [target])
+      if (list === undefined) edgesBySource.set(sourceKey, [target])
       else list.push(target)
     }
+
+    this.nodesById = nodesById
+    this.edgesByTarget = edgesByTarget
+    this.edgesBySource = edgesBySource
+    this.scheduleNodeIds = scheduleNodeIds
+    this.outputNodeIds = outputNodeIds
+    this.graphError = null
+    this.previewIds = previewNodeIds(graph.nodes)
+    this.effectPreviewNeeded = needsEffectPreviewCapture(graph.nodes, this.previewIds)
+    this.prunePreviewCaches(this.previewIds)
 
     if (graphHasCycle(graph)) {
       this.graphError = 'Graph contains a cycle'
@@ -417,6 +454,31 @@ export class Evaluator {
     for (const id of this.feedbackBuffers.keys()) {
       if (!this.nodesById.has(id)) this.feedbackBuffers.delete(id)
     }
+    for (const id of this.midiStates.keys()) {
+      if (!this.nodesById.has(id)) this.midiStates.delete(id)
+    }
+    for (const id of this.keyboardStates.keys()) {
+      if (!this.nodesById.has(id)) this.keyboardStates.delete(id)
+    }
+    for (const id of this.oscStates.keys()) {
+      if (!this.nodesById.has(id)) this.oscStates.delete(id)
+    }
+    for (const id of this.smoothStates.keys()) {
+      if (!this.nodesById.has(id)) this.smoothStates.delete(id)
+    }
+    for (const id of this.randomStates.keys()) {
+      if (!this.nodesById.has(id)) this.randomStates.delete(id)
+    }
+    for (const id of this.timelineLoopIndices.keys()) {
+      if (!this.nodesById.has(id)) this.timelineLoopIndices.delete(id)
+    }
+  }
+
+  /** Hot path for slider tweaks — avoids rebuilding the edge maps. */
+  patchNodeParams(nodeId: string, params: ParamValues): void {
+    const node = this.nodesById.get(nodeId)
+    if (node === undefined) return
+    node.params = { ...node.params, ...params }
   }
 
   /** Evaluate one frame and write the result into the SharedArrayBuffer. */
@@ -424,6 +486,7 @@ export class Evaluator {
     this.pool.releaseAll()
     this.memo.clear()
     this.frameTimings = {}
+    this.evalError = null
     this.ctx.timeMs = timeMs
     this.ctx.deltaMs = deltaMs
 
@@ -444,7 +507,12 @@ export class Evaluator {
           const value = this.evalNode(source.fromNode)[source.fromPort]
           if (value instanceof Float32Array) pixels = value
         }
+        // Seqlock: mark the buffer as being written (odd) so the output worker
+        // never reads a half-updated frame, then mark it complete (even).
+        const seq = this.outputControls.get(outputId)
+        if (seq !== undefined) Atomics.add(seq, 0, 1)
         this.writePixels(view, pixels, byteCount)
+        if (seq !== undefined) Atomics.add(seq, 0, 1)
       }
     } else {
       this.view.fill(0, 0, byteCount)
@@ -454,83 +522,176 @@ export class Evaluator {
   }
 
   /**
-   * Evaluate preview-enabled nodes (memoised — anything already on the
-   * output path costs nothing extra) and capture their primary output.
+   * Evaluate preview-enabled nodes and capture effect + layout thumbnails.
+   * Layout uses the real patch eval; effect uses a separate synthetic grid pass.
    */
   private capturePreviews(): void {
     const previews: NodePreviews = {}
-    if (this.graphError === null) {
-      for (const id of this.previewIds) {
-        const node = this.nodesById.get(id)
-        if (node === undefined) continue
-        const def = getNodeType(node.type)
-        const port = def?.outputs[0]
-        if (def === undefined || port === undefined) continue
+    if (this.graphError !== null) {
+      this.previews = previews
+      return
+    }
 
-        const value = this.evalNode(id)[port.name]
-        if (port.type === 'pixels' && value instanceof Float32Array) {
-          const layout = rasterizeLayout(value, this.positions, this.pixelCount)
-          let streamPreview: { data: Uint8Array; width: number; height: number }
+    type Raster = { data: Uint8Array; width: number; height: number }
+    const layouts = new Map<string, Raster>()
+    const floatByNode = new Map<string, number>()
 
-          if (node.type === VIDEO_NODE_TYPE) {
-            const frame = this.mediaFrames.get(id)
-            if (frame !== null && frame !== undefined && frame.width > 0 && frame.height > 0) {
-              streamPreview = {
-                data: new Uint8Array(frame.data),
-                width: frame.width,
-                height: frame.height
-              }
-            } else {
-              const { pixels: previewPixels, resolution: previewRes } = this.previewPixelsForNode(
-                node,
-                value
-              )
-              streamPreview = rasterizeStream(previewPixels, previewRes)
-            }
-          } else {
-            const { pixels: previewPixels, resolution: previewRes } = this.previewPixelsForNode(
-              node,
-              value
+    // Output/layout preview uses the real patch (fixture scope, positions, pixel count).
+    for (const id of this.previewIds) {
+      const node = this.nodesById.get(id)
+      if (node === undefined) continue
+      const def = getNodeType(node.type)
+      const port = def?.outputs[0]
+      if (def === undefined || port === undefined) continue
+
+      const value = this.evalNode(id)[port.name]
+      if (port.type === 'pixels' && value instanceof Float32Array) {
+        const layout = rasterizeLayout(value, this.positions, this.pixelCount)
+        layouts.set(id, this.retainRaster(this.layoutRasterCache, id, layout))
+      } else if (port.type === 'float' && typeof value === 'number') {
+        floatByNode.set(id, value)
+      }
+    }
+
+    if (this.effectPreviewNeeded) {
+      const previewMemo = new Map<string, PortValues>()
+      const savedPreviewCtx = this.pushEffectPreviewContext()
+      try {
+        for (const id of this.previewIds) {
+          const node = this.nodesById.get(id)
+          if (node === undefined) continue
+          const def = getNodeType(node.type)
+          const port = def?.outputs[0]
+          if (def === undefined || port === undefined) continue
+
+          const layout = layouts.get(id)
+          if (layout !== undefined) {
+            const effect = this.retainRaster(
+              this.effectRasterCache,
+              id,
+              this.effectPreviewForNode(node, port.name, previewMemo)
             )
-            streamPreview = rasterizeStream(previewPixels, previewRes)
+            previews[id] = { kind: 'pixels', ...effect, layout }
+          } else {
+            const value = floatByNode.get(id)
+            if (value !== undefined) previews[id] = { kind: 'float', value }
           }
-
-          previews[id] = {
-            kind: 'pixels',
-            ...streamPreview,
-            layout: { data: layout.data, width: layout.width, height: layout.height }
-          }
-        } else if (port.type === 'float' && typeof value === 'number') {
-          previews[id] = { kind: 'float', value }
+        }
+      } finally {
+        this.popEffectPreviewContext(savedPreviewCtx)
+      }
+    } else {
+      for (const id of this.previewIds) {
+        const layout = layouts.get(id)
+        if (layout !== undefined) {
+          const prev = this.previews[id]
+          const effect: Raster =
+            prev?.kind === 'pixels'
+              ? { data: prev.data, width: prev.width, height: prev.height }
+              : this.retainRaster(this.effectRasterCache, id, {
+                  data: new Uint8Array(EFFECT_PREVIEW_EVAL_SIZE * EFFECT_PREVIEW_EVAL_SIZE * 3),
+                  width: EFFECT_PREVIEW_EVAL_SIZE,
+                  height: EFFECT_PREVIEW_EVAL_SIZE
+                })
+          previews[id] = { kind: 'pixels', ...effect, layout }
+        } else {
+          const value = floatByNode.get(id)
+          if (value !== undefined) previews[id] = { kind: 'float', value }
         }
       }
     }
     this.previews = previews
   }
 
-  /** Build stream + logical resolution for node preview (fills NODE_PREVIEW_SIZE², not patch layout). */
-  private previewPixelsForNode(
+  private retainRaster(
+    cache: Map<string, Uint8Array>,
+    id: string,
+    source: { data: Uint8Array; width: number; height: number }
+  ): { data: Uint8Array; width: number; height: number } {
+    let buf = cache.get(id)
+    if (buf === undefined || buf.length !== source.data.length) {
+      buf = new Uint8Array(source.data)
+      cache.set(id, buf)
+    } else {
+      buf.set(source.data)
+    }
+    return { data: buf, width: source.width, height: source.height }
+  }
+
+  private prunePreviewCaches(previewIds: string[]): void {
+    const keep = new Set(previewIds)
+    for (const id of this.layoutRasterCache.keys()) {
+      if (!keep.has(id)) this.layoutRasterCache.delete(id)
+    }
+    for (const id of this.effectRasterCache.keys()) {
+      if (!keep.has(id)) this.effectRasterCache.delete(id)
+    }
+  }
+
+  /**
+   * Re-evaluate the node on a fixed square grid so thumbnails show the full
+   * effect, independent of patch pixel count and fixture layout.
+   */
+  private effectPreviewForNode(
     node: NodeData,
-    pixels: Float32Array
-  ): { pixels: Float32Array; resolution: Resolution } {
-    if (node.type === FIXTURE_NODE_TYPE) {
-      let fixtureId = stringParam(node.params, 'fixtureId', '')
-      if (fixtureId === '') fixtureId = firstFixtureId(this.fixtureRanges)
-      const range = fixtureRangeById(fixtureId, this.fixtureRanges)
-      if (range !== undefined && range.count > 0) {
-        const indices = indicesForFixture(fixtureId, this.fixtureRanges)
+    portName: string,
+    previewMemo: Map<string, PortValues>
+  ): { data: Uint8Array; width: number; height: number } {
+    if (node.type === VIDEO_NODE_TYPE || node.type === IMAGE_NODE_TYPE) {
+      const frame = this.mediaFrames.get(node.id)
+      if (frame !== null && frame !== undefined && frame.width > 0 && frame.height > 0) {
         return {
-          pixels: compactStreamPixels(pixels, indices),
-          resolution: { width: range.width, height: range.height }
+          data: new Uint8Array(frame.data),
+          width: frame.width,
+          height: frame.height
         }
       }
     }
 
-    const streamCount = Math.floor(pixels.length / 3)
-    return {
-      pixels,
-      resolution: previewResolutionForStream(streamCount, this.ctx.resolution)
+    const value = this.evalNodeMemo(node.id, previewMemo, false)[portName]
+    if (value instanceof Float32Array) {
+      return rasterizeEffectPreviewGrid(value)
     }
+
+    return rasterizeEffectPreviewGrid(new Float32Array(effectPreviewPixelCount() * 3))
+  }
+
+  private pushEffectPreviewContext(): {
+    pixelCount: number
+    positions: Float32Array
+    resolution: Resolution
+    fixtureRanges: FixtureRange[]
+    activePool: BufferPool
+  } {
+    const saved = {
+      pixelCount: this.ctx.pixelCount,
+      positions: this.ctx.positions,
+      resolution: this.ctx.resolution,
+      fixtureRanges: this.ctx.fixtureRanges,
+      activePool: this.activePool
+    }
+    const size = EFFECT_PREVIEW_EVAL_SIZE
+    this.previewPool.releaseAll()
+    this.activePool = this.previewPool
+    this.ctx.pixelCount = effectPreviewPixelCount(size)
+    this.ctx.positions = effectPreviewPositions(size)
+    this.ctx.resolution = { width: size, height: size }
+    this.ctx.fixtureRanges = []
+    return saved
+  }
+
+  private popEffectPreviewContext(saved: {
+    pixelCount: number
+    positions: Float32Array
+    resolution: Resolution
+    fixtureRanges: FixtureRange[]
+    activePool: BufferPool
+  }): void {
+    this.activePool = saved.activePool
+    this.ctx.pixelCount = saved.pixelCount
+    this.ctx.positions = saved.positions
+    this.ctx.resolution = saved.resolution
+    this.ctx.fixtureRanges = saved.fixtureRanges
   }
 
   /** Copy of the active pixel range, for posting to the renderer preview. */
@@ -550,10 +711,17 @@ export class Evaluator {
   }
 
   private evalNode(nodeId: string): PortValues {
-    const cached = this.memo.get(nodeId)
+    return this.evalNodeMemo(nodeId, this.memo, true)
+  }
+
+  private evalNodeMemo(
+    nodeId: string,
+    memo: Map<string, PortValues>,
+    recordTiming: boolean
+  ): PortValues {
+    const cached = memo.get(nodeId)
     if (cached !== undefined) return cached
-    // Recursion guard: a cycle that slipped past validation terminates here.
-    this.memo.set(nodeId, {})
+    memo.set(nodeId, {})
 
     const node = this.nodesById.get(nodeId)
     if (node === undefined) return {}
@@ -564,18 +732,28 @@ export class Evaluator {
     for (const port of def.inputs) {
       if (node.type === SEQUENCE_NODE_TYPE && port.name.startsWith('segment_')) continue
       const source = this.edgesByTarget.get(`${nodeId}:${port.name}`)
-      inputs[port.name] = source !== undefined ? (this.evalNode(source.fromNode)[source.fromPort] ?? null) : null
+      inputs[port.name] =
+        source !== undefined ? (this.evalNodeMemo(source.fromNode, memo, recordTiming)[source.fromPort] ?? null) : null
     }
 
-    // Set after input recursion — upstream evalNode calls mutate ctx.nodeId.
     this.ctx.nodeId = nodeId
     const resolveOutput = (fromNode: string, fromPort: string): unknown =>
-      this.evalNode(fromNode)[fromPort] ?? null
+      this.evalNodeMemo(fromNode, memo, recordTiming)[fromPort] ?? null
     const params = applyParamBindings(node, inputs, node.params, resolveOutput)
-    const t0 = performance.now()
-    const outputs = def.evaluate(inputs, params, this.ctx)
-    this.frameTimings[nodeId] = performance.now() - t0
-    this.memo.set(nodeId, outputs)
+    const t0 = recordTiming ? performance.now() : 0
+    let outputs: PortValues
+    try {
+      outputs = def.evaluate(inputs, params, this.ctx)
+    } catch (err) {
+      // A single misbehaving node must never freeze the frame loop or stop DMX
+      // output. Record the error, leave this node's outputs empty, keep ticking.
+      this.evalError = `${node.type} (${nodeId}): ${err instanceof Error ? err.message : String(err)}`
+      outputs = {}
+    }
+    if (recordTiming) {
+      this.frameTimings[nodeId] = performance.now() - t0
+    }
+    memo.set(nodeId, outputs)
     return outputs
   }
 }

@@ -1,3 +1,4 @@
+import { mapScopedPixels } from '../../pixelScope'
 import { pixelsInput, floatParam, type NodeTypeDef } from '../../types'
 
 /** Simple tone curve: shadows / midtones / highlights remapping. */
@@ -15,8 +16,8 @@ export const Curves: NodeTypeDef = {
   ],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
@@ -25,13 +26,16 @@ export const Curves: NodeTypeDef = {
     const midtones = floatParam(params, 'midtones')
     const highlights = floatParam(params, 'highlights')
 
-    for (let i = 0; i < ctx.pixelCount * 3; i++) {
-      let v = src[i] as number
-      if (v < 0.33) v += shadows * (0.33 - v)
-      else if (v < 0.66) v += midtones * (0.5 - Math.abs(v - 0.5))
-      else v += highlights * (v - 0.66)
-      out[i] = v < 0 ? 0 : v > 1 ? 1 : v
+    return {
+      pixels: mapScopedPixels(src, ctx, (r, g, b) => {
+        const mapChannel = (v: number): number => {
+          if (v < 0.33) v += shadows * (0.33 - v)
+          else if (v < 0.66) v += midtones * (0.5 - Math.abs(v - 0.5))
+          else v += highlights * (v - 0.66)
+          return v < 0 ? 0 : v > 1 ? 1 : v
+        }
+        return [mapChannel(r), mapChannel(g), mapChannel(b)]
+      })
     }
-    return { pixels: out }
   }
 }

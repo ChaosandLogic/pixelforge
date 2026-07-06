@@ -1,3 +1,4 @@
+import { applyEdgeMode, remapScopedStrip } from '../../pixelScope'
 import { floatParam, pixelsInput, stringParam, type NodeTypeDef } from '../../types'
 
 /** Zooms the pixel pattern about a centre point (nearest-neighbour, 1D). */
@@ -15,32 +16,21 @@ export const Scale: NodeTypeDef = {
   ],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
 
-    const n = ctx.pixelCount
     const scale = Math.max(0.001, floatParam(params, 'scale', 1))
     const centre = floatParam(params, 'centre', 0.5)
     const wrap = stringParam(params, 'edges', 'wrap') === 'wrap'
-    const denom = Math.max(1, n - 1)
 
-    for (let i = 0; i < n; i++) {
-      const u = i / denom
-      const v = (u - centre) / scale + centre
-      let j = Math.round(v * denom)
-      if (wrap) {
-        j %= n
-        if (j < 0) j += n
-      } else {
-        j = j < 0 ? 0 : j >= n ? n - 1 : j
-      }
-      out[i * 3] = src[j * 3] ?? 0
-      out[i * 3 + 1] = src[j * 3 + 1] ?? 0
-      out[i * 3 + 2] = src[j * 3 + 2] ?? 0
+    return {
+      pixels: remapScopedStrip(src, ctx, (_i, u) => {
+        const v = (u - centre) / scale + centre
+        return wrap ? applyEdgeMode(v, 'wrap') : applyEdgeMode(v, 'clamp')
+      })
     }
-    return { pixels: out }
   }
 }

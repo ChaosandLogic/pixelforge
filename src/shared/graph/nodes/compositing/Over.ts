@@ -1,4 +1,5 @@
 import { blendOver } from '../../compositing/blend'
+import { copyScopedPixels, pixelsForBlend } from '../../pixelScope'
 import { floatInput, pixelsInput, type NodeTypeDef } from '../../types'
 
 export const Over: NodeTypeDef = {
@@ -24,11 +25,10 @@ export const Over: NodeTypeDef = {
       return { pixels: out }
     }
     if (a === null || b === null) {
-      out.set(a ?? (b as Float32Array))
-      return { pixels: out }
+      return { pixels: copyScopedPixels((a ?? b) as Float32Array, ctx) }
     }
     const opacity = Math.max(0, Math.min(1, floatInput(inputs, params, 'opacity', 1)))
-    blendOver(a, b, opacity, out)
+    blendOver(pixelsForBlend(a, ctx)!, pixelsForBlend(b, ctx)!, opacity, out)
     return { pixels: out }
   }
 }

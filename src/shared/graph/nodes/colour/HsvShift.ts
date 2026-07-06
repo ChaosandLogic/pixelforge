@@ -1,3 +1,9 @@
+import {
+  beginScopedPixelOutput,
+  pixelScopeFromSrc,
+  scopeDstOffset,
+  scopeSrcOffset
+} from '../../pixelScope'
 import { floatParam, pixelsInput, type NodeTypeDef } from '../../types'
 
 /** In-place rgb -> hsv -> shift -> rgb on one pixel; writes into out[o..o+2]. */
@@ -72,8 +78,8 @@ export const HsvShift: NodeTypeDef = {
   ],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
@@ -82,8 +88,21 @@ export const HsvShift: NodeTypeDef = {
     const sat = floatParam(params, 'saturation', 1)
     const val = floatParam(params, 'value', 1)
 
-    for (let i = 0; i < ctx.pixelCount * 3; i += 3) {
-      shiftPixel(src[i] as number, src[i + 1] as number, src[i + 2] as number, hue, sat, val, out, i)
+    // shiftPixel writes directly at the output offset; no per-pixel allocation.
+    const scope = pixelScopeFromSrc(src, ctx)
+    const out = beginScopedPixelOutput(ctx)
+    for (let i = 0; i < scope.count; i++) {
+      const si = scopeSrcOffset(scope, i)
+      shiftPixel(
+        src[si] as number,
+        src[si + 1] as number,
+        src[si + 2] as number,
+        hue,
+        sat,
+        val,
+        out,
+        scopeDstOffset(scope, i)
+      )
     }
     return { pixels: out }
   }

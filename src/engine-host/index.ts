@@ -47,11 +47,13 @@ function syncOutputs(): void {
   output.sync(routes, evaluator.getPixelCount(), config.iface ?? undefined, config.targetFps)
 
   const views = output.getOutputViews()
+  const controls = output.getControlViews()
   const previewView = output.getPreviewView() ?? new Uint8Array(previewSab)
   evaluator.setOutputTargets(
     routes.map((r) => r.nodeId),
     views,
-    previewView
+    previewView,
+    controls
   )
 }
 syncOutputs()
@@ -98,7 +100,7 @@ const statusTimer = setInterval(() => {
       outputProtocol: driver.protocol,
       outputProtocolName: output.protocolName,
       outputError: output.lastError,
-      graphError: evaluator.graphError,
+      graphError: evaluator.graphError ?? evaluator.evalError,
       outputCount: activeCount,
       outputErrors: output.getRouteErrors()
     }
@@ -145,6 +147,12 @@ function handleRendererMessage(msg: RendererToEngine): void {
       oscListener.syncGraph(msg.graph)
       syncOutputs()
       break
+    case 'patch-node-params': {
+      evaluator.patchNodeParams(msg.nodeId, msg.params)
+      const node = lastGraph?.nodes.find((n) => n.id === msg.nodeId)
+      if (node !== undefined) Object.assign(node.params, msg.params)
+      break
+    }
     case 'set-patch':
       lastPatch = {
         positions: msg.positions,
@@ -205,6 +213,7 @@ function handleBake(requestId: number, durationMs: number, fps: number): void {
       frameCount: 0,
       pixelCount: 0,
       fps,
+      seamFrame: null,
       error: 'No graph loaded'
     })
     return

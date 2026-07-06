@@ -5,7 +5,7 @@
  * and receives frames + status.
  */
 import type { OutputProtocolKind } from '@shared/output/config'
-import type { GraphData } from './graph/types'
+import type { GraphData, ParamValues } from './graph/types'
 import type { FixtureRange } from './patch/layout'
 
 export const CHANNELS_PER_PIXEL = 3
@@ -41,6 +41,7 @@ export type RendererToEngine =
       fixtureRanges: FixtureRange[]
     }
   | { type: 'set-graph'; graph: GraphData }
+  | { type: 'patch-node-params'; nodeId: string; params: ParamValues }
   | { type: 'set-config'; config: Partial<EngineConfig> }
   | {
       type: 'set-patch'
@@ -64,11 +65,18 @@ export interface BakeResult {
   frameCount: number
   pixelCount: number
   fps: number
+  /** Frame at the loop boundary (t = frameCount/fps) for seam measurement; not
+   * part of the exported animation. Null when no frames were rendered. */
+  seamFrame: Uint8Array | null
   error: string | null
 }
 
 /** Hard cap on baked animation size (raw RGB bytes) to bound memory use. */
 export const MAX_BAKE_BYTES = 16 * 1024 * 1024
+
+/** Max frame rate the bake pipeline honours; UI clamps to this so what the
+ * user requests is what gets exported (the engine cannot bake faster). */
+export const MAX_BAKE_FPS = 120
 
 export interface EngineStatus {
   /** Evaluator frames per second (exponential moving average) */
@@ -97,6 +105,7 @@ export interface EngineStatus {
 export type NodePreview =
   | {
       kind: 'pixels'
+      /** Effect thumbnail (spatial / neutral grid). */
       data: Uint8Array
       width: number
       height: number

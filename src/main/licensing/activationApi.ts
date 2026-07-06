@@ -1,9 +1,14 @@
 import type { LicenseProduct, StoredLicense } from '@shared/licensing/types'
 
 const DEFAULT_BASE_URL = process.env['PIXELFORGE_LICENSE_API'] ?? 'http://127.0.0.1:8787'
+const LICENSE_FETCH_TIMEOUT_MS = 5000
+
+async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+  return fetch(url, { ...init, signal: AbortSignal.timeout(LICENSE_FETCH_TIMEOUT_MS) })
+}
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${DEFAULT_BASE_URL}${path}`, {
+  const res = await fetchWithTimeout(`${DEFAULT_BASE_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -42,7 +47,10 @@ export async function getLicenseStatusRemote(licenseKey: string): Promise<{
   slotsTotal: number
   editorSeats: number
 }> {
-  const res = await fetch(`${DEFAULT_BASE_URL}/v1/license/${encodeURIComponent(licenseKey)}/status`)
+  const res = await fetchWithTimeout(
+    `${DEFAULT_BASE_URL}/v1/license/${encodeURIComponent(licenseKey)}/status`,
+    {}
+  )
   if (!res.ok) throw new Error(`Status request failed (${res.status})`)
   return res.json() as Promise<{ slotsUsed: number; slotsTotal: number; editorSeats: number }>
 }

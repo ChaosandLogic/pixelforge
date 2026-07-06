@@ -7,6 +7,8 @@ import { useUiStore } from '@/store/uiStore'
 import { useVisualiserStore } from '@/store/visualiserStore'
 import { loadProjectIntoStores } from '@/project/loadProject'
 import { ExportShowDialog } from '@/ui/ExportShowDialog'
+import { ExportEspDialog } from '@/ui/ExportEspDialog'
+import { ExportFseqDialog } from '@/ui/ExportFseqDialog'
 import type { ShowStartupHints } from '@shared/playerStartup'
 
 function loadProject(project: ProjectFile): void {
@@ -31,13 +33,17 @@ export function Toolbar({
   const canRedo = useGraphStore((s) => s.future.length > 0)
   const config = useEngineStore((s) => s.config)
   const profilerEnabled = useUiStore((s) => s.profilerEnabled)
+  const [exportMenuOpen, setExportMenuOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+  const [exportEspOpen, setExportEspOpen] = useState(false)
+  const [exportFseqOpen, setExportFseqOpen] = useState(false)
   const setProfilerEnabled = useUiStore((s) => s.setProfilerEnabled)
 
   const [examples, setExamples] = useState<ExampleManifestEntry[]>([])
   const [examplesOpen, setExamplesOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const examplesRef = useRef<HTMLDivElement>(null)
+  const exportRef = useRef<HTMLDivElement>(null)
   const helpRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -55,6 +61,16 @@ export function Toolbar({
   }, [examplesOpen])
 
   useEffect(() => {
+    if (!exportMenuOpen) return
+    const onDoc = (e: MouseEvent): void => {
+      if (exportRef.current?.contains(e.target as Node)) return
+      setExportMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [exportMenuOpen])
+
+  useEffect(() => {
     if (!helpOpen) return
     const onDoc = (e: MouseEvent): void => {
       if (helpRef.current?.contains(e.target as Node)) return
@@ -64,42 +80,63 @@ export function Toolbar({
     return () => document.removeEventListener('mousedown', onDoc)
   }, [helpOpen])
 
-  const saveProject = async (): Promise<void> => {
+  const buildProjectFile = (): ProjectFile => {
     const graph = useGraphStore.getState().toGraphData()
     const { points, layout } = usePatchStore.getState()
     const patch = layout !== null ? { points, layout } : { points }
-    const project = {
-      ...createProjectFile('untitled', graph, patch, useEngineStore.getState().config),
+    // Preserve the loaded project's name/created timestamp instead of resetting
+    // to "untitled" and a fresh date on every save.
+    const meta = useUiStore.getState().projectMeta
+    return {
+      ...createProjectFile(meta?.name ?? 'untitled', graph, patch, useEngineStore.getState().config, meta?.created),
       visualiser: useVisualiserStore.getState().toSettings()
     }
-    await window.pixelforge.saveProject(project)
+  }
+
+  const saveProject = async (): Promise<void> => {
+    const project = buildProjectFile()
+    try {
+      const savedPath = await window.pixelforge.saveProject(project)
+      if (savedPath !== null) {
+        const base = savedPath.replace(/^.*[\\/]/, '').replace(/\.pxf$/i, '')
+        useUiStore.getState().setProjectMeta({ name: base, created: project.meta.created })
+      }
+    } catch (err) {
+      alert(`Failed to save project: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   const exportShow = async (startup?: ShowStartupHints): Promise<void> => {
-    const graph = useGraphStore.getState().toGraphData()
-    const { points, layout } = usePatchStore.getState()
-    const patch = layout !== null ? { points, layout } : { points }
-    const project = {
-      ...createProjectFile('untitled', graph, patch, useEngineStore.getState().config),
-      visualiser: useVisualiserStore.getState().toSettings()
-    }
-    const result = await window.pixelforge.exportShow(project, startup)
-    if (result !== null) {
-      alert(`Show exported to ${result.outputDir}`)
+    const project = buildProjectFile()
+    try {
+      const result = await window.pixelforge.exportShow(project, startup)
+      if (result !== null) {
+        alert(`Show exported to ${result.outputDir}`)
+      }
+    } catch (err) {
+      alert(`Failed to export show: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
   const openProject = async (): Promise<void> => {
-    const project = await window.pixelforge.openProject()
-    if (project === null) return
-    loadProject(project)
+    try {
+      const project = await window.pixelforge.openProject()
+      if (project === null) return
+      loadProject(project)
+    } catch (err) {
+      alert(`Failed to open project: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   const openExample = async (filename: string): Promise<void> => {
-    const project = await window.pixelforge.openExample(filename)
-    if (project === null) return
-    loadProject(project)
-    setExamplesOpen(false)
+    try {
+      const project = await window.pixelforge.openExample(filename)
+      if (project === null) return
+      loadProject(project)
+      setExamplesOpen(false)
+    } catch (err) {
+      alert(`Failed to open example: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   return (
@@ -117,9 +154,49 @@ export function Toolbar({
           <button className="tool-btn" onClick={() => void saveProject()} title="Save project">
             Save
           </button>
-          <button className="tool-btn" onClick={() => setExportOpen(true)} title="Export portable show folder for Player">
-            Export Show
-          </button>
+          <div className="examples-menu" ref={exportRef}>
+            <button
+              className={exportMenuOpen ? 'tool-btn active' : 'tool-btn'}
+              onClick={() => setExportMenuOpen(!exportMenuOpen)}
+              title="Export show or baked animation"
+            >
+              Export ▾
+            </button>
+            {exportMenuOpen && (
+              <div className="examples-list export-list">
+                <button
+                  className="examples-item"
+                  onClick={() => {
+                    setExportMenuOpen(false)
+                    setExportOpen(true)
+                  }}
+                >
+                  <span className="examples-item-name">PixelForge Player</span>
+                  <span className="examples-item-desc">Portable show folder for live playback</span>
+                </button>
+                <button
+                  className="examples-item"
+                  onClick={() => {
+                    setExportMenuOpen(false)
+                    setExportEspOpen(true)
+                  }}
+                >
+                  <span className="examples-item-name">ESP32 (ESPixel)</span>
+                  <span className="examples-item-desc">Baked ALED .bin for ESPixel firmware</span>
+                </button>
+                <button
+                  className="examples-item"
+                  onClick={() => {
+                    setExportMenuOpen(false)
+                    setExportFseqOpen(true)
+                  }}
+                >
+                  <span className="examples-item-name">Falcon Player (FSEQ)</span>
+                  <span className="examples-item-desc">Baked .fseq sequence for FPP</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {examples.length > 0 && (
@@ -223,6 +300,8 @@ export function Toolbar({
         onClose={() => setExportOpen(false)}
         onConfirm={(startup) => void exportShow(startup)}
       />
+      <ExportEspDialog open={exportEspOpen} onClose={() => setExportEspOpen(false)} />
+      <ExportFseqDialog open={exportFseqOpen} onClose={() => setExportFseqOpen(false)} />
     </header>
   )
 }

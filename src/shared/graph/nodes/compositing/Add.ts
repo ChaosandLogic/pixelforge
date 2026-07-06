@@ -1,4 +1,5 @@
 import { blendAdd } from '../../compositing/blend'
+import { copyScopedPixels, pixelsForBlend } from '../../pixelScope'
 import { floatInput, pixelsInput, type NodeTypeDef } from '../../types'
 
 export const Add: NodeTypeDef = {
@@ -24,11 +25,10 @@ export const Add: NodeTypeDef = {
       return { pixels: out }
     }
     if (a === null || b === null) {
-      out.set(a ?? (b as Float32Array))
-      return { pixels: out }
+      return { pixels: copyScopedPixels((a ?? b) as Float32Array, ctx) }
     }
     const amount = Math.max(0, Math.min(1, floatInput(inputs, params, 'amount', 1)))
-    blendAdd(a, b, amount, out)
+    blendAdd(pixelsForBlend(a, ctx)!, pixelsForBlend(b, ctx)!, amount, out)
     return { pixels: out }
   }
 }

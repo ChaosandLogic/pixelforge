@@ -37,6 +37,7 @@ import { Hold } from './time/Hold'
 import { Ramp } from './time/Ramp'
 import { Lfo } from './time/Lfo'
 import { BpmClock } from './time/BpmClock'
+import { Timeline } from './time/Timeline'
 import { AudioIn } from './audio/AudioIn'
 import { Beat } from './audio/Beat'
 import { Cylindrical } from './spatial/Cylindrical'
@@ -123,6 +124,7 @@ export function registerStandardNodes(): void {
 
   registerNodeType(Lfo)
   registerNodeType(BpmClock)
+  registerNodeType(Timeline)
   registerNodeType(Delay)
   registerNodeType(Hold)
   registerNodeType(Ramp)

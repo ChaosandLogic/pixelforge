@@ -1,3 +1,4 @@
+import { pixelsForBlend } from '../../pixelScope'
 import { pixelsInput, stringParam, type NodeTypeDef } from '../../types'
 
 export const Merge: NodeTypeDef = {
@@ -29,7 +30,9 @@ export const Merge: NodeTypeDef = {
     const len = ctx.pixelCount * 3
     out.fill(0)
 
-    const streams = [a, b, c].filter((s): s is Float32Array => s !== null)
+    const streams = [a, b, c]
+      .filter((s): s is Float32Array => s !== null)
+      .map((s) => pixelsForBlend(s, ctx)!)
     if (streams.length === 0) return { pixels: out }
 
     for (let i = 0; i < len; i++) {

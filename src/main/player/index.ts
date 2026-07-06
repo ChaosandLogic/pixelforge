@@ -25,6 +25,13 @@ const engine = new EngineLauncher()
 const licenseManager = new LicenseManager('player')
 const cli = parsePlayerArgs(process.argv.slice(1))
 
+process.on('unhandledRejection', (reason) => {
+  console.error('[player] Unhandled promise rejection:', reason)
+})
+process.on('uncaughtException', (err) => {
+  console.error('[player] Uncaught exception:', err)
+})
+
 let bootProjectPath: string | null = null
 let bootProject: ProjectFile | null = null
 let bootPlan: StartupPlan | null = null
@@ -62,6 +69,10 @@ function createPlayerWindow(): void {
   }
 }
 
+async function licenseUsable(): Promise<boolean> {
+  return devBypassEnabled() || licenseManager.isUsableOffline()
+}
+
 async function applyPlanToEngine(plan: StartupPlan): Promise<ProjectFile | null> {
   if (plan.projectPath === null) return null
   validateStartupPlan(plan)
@@ -69,7 +80,7 @@ async function applyPlanToEngine(plan: StartupPlan): Promise<ProjectFile | null>
   if (plan.interface !== null) {
     engine.sendToEngine({ type: 'set-config', config: { iface: plan.interface } })
   }
-  if (plan.autoOutput) {
+  if (plan.autoOutput && (await licenseUsable())) {
     engine.sendToEngine({ type: 'output-start' })
   }
   bootProjectPath = plan.projectPath
@@ -145,7 +156,7 @@ app.whenReady().then(async () => {
   )
 
   if (plan.headless) {
-    if (!devBypassEnabled() && !(await licenseManager.isUsable())) {
+    if (!(await licenseUsable())) {
       console.error(
         'Valid Player license required. Activate PixelForge Player first or set PIXELFORGE_DEV_LICENSE=1 for development.'
       )
@@ -170,12 +181,18 @@ app.whenReady().then(async () => {
   initAutoUpdater('player')
 
   ipcMain.on('engine:request-port', (event) => {
-    engine.connectRenderer(event.sender)
+    void (async () => {
+      if (!(await licenseUsable())) return
+      engine.connectRenderer(event.sender)
+    })()
   })
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createPlayerWindow()
   })
+}).catch((err: unknown) => {
+  console.error('[player] Fatal error during startup:', err)
+  app.exit(1)
 })
 
 app.on('window-all-closed', () => {

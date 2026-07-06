@@ -1,3 +1,9 @@
+import {
+  beginScopedPixelOutput,
+  pixelScopeFromSrc,
+  readScopedRgb,
+  writeScopedRgb
+} from '../../pixelScope'
 import { pixelsInput, stringParam, type NodeTypeDef } from '../../types'
 
 /**
@@ -15,24 +21,21 @@ export const Mirror: NodeTypeDef = {
   params: [{ name: 'mode', label: 'Mode', type: 'select', default: 'fold', options: ['fold', 'flip'] }],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
 
-    const n = ctx.pixelCount
+    const scope = pixelScopeFromSrc(src, ctx)
+    const out = beginScopedPixelOutput(ctx)
     const mode = stringParam(params, 'mode', 'fold')
-    for (let i = 0; i < n; i++) {
-      let j: number
-      if (mode === 'flip') {
-        j = n - 1 - i
-      } else {
-        j = i < n / 2 ? i : n - 1 - i
-      }
-      out[i * 3] = src[j * 3] ?? 0
-      out[i * 3 + 1] = src[j * 3 + 1] ?? 0
-      out[i * 3 + 2] = src[j * 3 + 2] ?? 0
+
+    for (let i = 0; i < scope.count; i++) {
+      const j =
+        mode === 'flip' ? scope.count - 1 - i : i < scope.count / 2 ? i : scope.count - 1 - i
+      const [r, g, b] = readScopedRgb(src, scope, j)
+      writeScopedRgb(out, scope, i, r, g, b)
     }
     return { pixels: out }
   }

@@ -29,11 +29,11 @@ export function NodePreviewButtons({
     <>
       {previewKind === 'pixels' && (
         <button
-          className={previewView === 'output' ? 'pf-preview-view nodrag active' : 'pf-preview-view nodrag'}
+          className={previewView === 'effect' ? 'pf-preview-view nodrag active' : 'pf-preview-view nodrag'}
           title={
-            previewView === 'output'
-              ? 'Output view — LED layout (click for patch view)'
-              : 'Patch view — stream grid (click for output view)'
+            previewView === 'effect'
+              ? 'Effect view — full effect preview (click for output view)'
+              : 'Output view — LED layout (click for effect view)'
           }
           onClick={(e) => {
             e.stopPropagation()
@@ -41,19 +41,18 @@ export function NodePreviewButtons({
           }}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-            {previewView === 'output' ? (
+            {previewView === 'effect' ? (
+              <>
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+                <path d="M4 12h16" opacity="0.55" />
+                <path d="M12 4v16" opacity="0.55" />
+              </>
+            ) : (
               <>
                 <rect x="3" y="5" width="18" height="14" rx="2" />
                 <circle cx="8" cy="10" r="1.2" fill="currentColor" stroke="none" />
                 <circle cx="12" cy="14" r="1.2" fill="currentColor" stroke="none" />
                 <circle cx="16" cy="9" r="1.2" fill="currentColor" stroke="none" />
-              </>
-            ) : (
-              <>
-                <rect x="4" y="4" width="7" height="7" rx="1" />
-                <rect x="13" y="4" width="7" height="7" rx="1" />
-                <rect x="4" y="13" width="7" height="7" rx="1" />
-                <rect x="13" y="13" width="7" height="7" rx="1" />
               </>
             )}
           </svg>

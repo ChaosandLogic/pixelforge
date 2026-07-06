@@ -12,6 +12,7 @@ import {
   segmentPortName,
   type SequenceSegment
 } from '../../../sequence/types'
+import { pixelsForBlend } from '../../pixelScope'
 import { floatInput, floatParam, type NodeTypeDef, type PortDef } from '../../types'
 
 export const SEQUENCE_NODE_TYPE = 'sequence/sequence'
@@ -80,7 +81,9 @@ export const Sequence: NodeTypeDef = {
     const pullSegment = (index: number): Float32Array | null => {
       if (index < 0 || index >= segments.length) return null
       const value = ctx.evalInput(segmentPortName(index))
-      return value instanceof Float32Array ? value : null
+      // Segments wired from a Fixture emit compact (fixture-scoped) buffers;
+      // expand them to full-patch space so `out.set`/blends index correctly.
+      return value instanceof Float32Array ? pixelsForBlend(value, ctx) : null
     }
 
     const out = ctx.acquire()

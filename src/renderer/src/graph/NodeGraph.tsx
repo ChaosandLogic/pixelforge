@@ -5,6 +5,7 @@ import { buildParamBindingEdges, isBindingEdgeId } from '@/graph/bindingEdges'
 import { AddNodeMenu } from './AddNodeMenu'
 import { PfNode } from './components/PfNode'
 import { SequenceNode } from './components/SequenceNode'
+import { TimelineNode } from './components/TimelineNode'
 import { AudioInNode } from './components/AudioInNode'
 import { MediaFileNode } from './components/MediaFileNode'
 import { OutputNode } from './components/OutputNode'
@@ -14,10 +15,12 @@ import { ScheduleNode } from './components/ScheduleNode'
 import { KeyboardInNode } from './components/KeyboardInNode'
 import { engineBridge } from '@/engine/bridge'
 import { SEQUENCE_NODE_TYPE } from '@shared/graph/nodes/sequence/Sequence'
+import { TIMELINE_NODE_TYPE } from '@shared/graph/nodes/time/Timeline'
 
 const nodeTypes = {
   pf: PfNode,
   sequence: SequenceNode,
+  timeline: TimelineNode,
   schedule: ScheduleNode,
   audio: AudioInNode,
   keyboard: KeyboardInNode,
@@ -85,6 +88,9 @@ function GraphCanvas(): React.JSX.Element {
         const selected = useGraphStore.getState().nodes.filter((n) => n.selected)
         for (const node of selected) {
           if (node.data.nodeType === SEQUENCE_NODE_TYPE) {
+            engineBridge.send({ type: 'trigger', nodeId: node.id, port: 'reset' })
+          }
+          if (node.data.nodeType === TIMELINE_NODE_TYPE) {
             engineBridge.send({ type: 'trigger', nodeId: node.id, port: 'reset' })
           }
         }

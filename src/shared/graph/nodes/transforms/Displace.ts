@@ -1,4 +1,12 @@
-import { displaceGrid, gridToPixels, pixelsToGrid } from '../../../spatial/displace'
+import { displaceGrid } from '../../../spatial/displace'
+import {
+  beginScopedPixelOutput,
+  copyScopedPixels,
+  gridToPixelsScoped,
+  pixelScopeFromSrc,
+  pixelsToGridScoped,
+  scopedResolution
+} from '../../pixelScope'
 import { floatInput, floatParam, pixelsInput, resolutionInput, stringParam, type NodeTypeDef } from '../../types'
 
 export const DISPLACE_NODE_TYPE = 'transform/displace'
@@ -32,14 +40,15 @@ export const Displace: NodeTypeDef = {
   ],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
 
     const map = pixelsInput(inputs, 'map') ?? src
-    const resolution = resolutionInput(inputs, ctx)
+    const scope = pixelScopeFromSrc(src, ctx)
+    const resolution = scopedResolution(scope, resolutionInput(inputs, ctx))
     const width = Math.max(1, Math.floor(resolution.width))
     const height = Math.max(1, Math.floor(resolution.height))
     const amount = Math.max(0, Math.min(32, floatInput(inputs, params, 'amount', floatParam(params, 'amount', 4))))
@@ -47,14 +56,14 @@ export const Displace: NodeTypeDef = {
     const wrap = stringParam(params, 'edges', 'clamp') === 'wrap'
 
     if (amount === 0) {
-      out.set(src)
-      return { pixels: out }
+      return { pixels: copyScopedPixels(src, ctx) }
     }
 
-    const srcGrid = pixelsToGrid(src, ctx.positions, ctx.pixelCount, resolution)
-    const mapGrid = pixelsToGrid(map, ctx.positions, ctx.pixelCount, resolution)
+    const out = beginScopedPixelOutput(ctx)
+    const srcGrid = pixelsToGridScoped(src, ctx.positions, scope, resolution)
+    const mapGrid = pixelsToGridScoped(map, ctx.positions, scope, resolution)
     const displaced = displaceGrid(srcGrid, mapGrid, width, height, amount, mode, wrap)
-    gridToPixels(displaced, out, ctx.positions, ctx.pixelCount, resolution)
+    gridToPixelsScoped(displaced, out, ctx.positions, scope, resolution)
     return { pixels: out }
   }
 }

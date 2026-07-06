@@ -54,6 +54,19 @@ export function createProjectFile(
   }
 }
 
+/** Compare dotted numeric versions: -1 if a<b, 0 if equal, 1 if a>b. */
+function compareSemver(a: string, b: string): number {
+  const pa = a.split('.').map((n) => Number.parseInt(n, 10))
+  const pb = b.split('.').map((n) => Number.parseInt(n, 10))
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] ?? 0
+    const y = pb[i] ?? 0
+    if (Number.isNaN(x) || Number.isNaN(y)) return 0
+    if (x !== y) return x < y ? -1 : 1
+  }
+  return 0
+}
+
 /** Validate + migrate a parsed project file. Throws on unusable input. */
 export function migrateProjectFile(raw: unknown): ProjectFile {
   if (typeof raw !== 'object' || raw === null) throw new Error('Not a PixelForge project file')
@@ -62,6 +75,21 @@ export function migrateProjectFile(raw: unknown): ProjectFile {
   if (candidate['graph'] === undefined || candidate['settings'] === undefined) {
     throw new Error('Project file is missing graph or settings')
   }
+
+  const fileVersion = candidate['version']
+  // Refuse files created by a newer app rather than silently mis-reading them.
+  if (compareSemver(fileVersion, PROJECT_VERSION) > 0) {
+    throw new Error(
+      `This project was created by a newer version of PixelForge (file ${fileVersion}, app ${PROJECT_VERSION}). Please update PixelForge.`
+    )
+  }
+
+  // Structural validation: the graph must at least have a nodes array.
+  const graphObj = candidate['graph'] as { nodes?: unknown; edges?: unknown }
+  if (typeof graphObj !== 'object' || graphObj === null || !Array.isArray(graphObj.nodes)) {
+    throw new Error('Project file has an invalid or corrupt graph')
+  }
+  if (!Array.isArray(graphObj.edges)) graphObj.edges = []
 
   // 1.0.0 -> 1.1.0: patch added; engine config moved from per-pixel
   // universe/pixelCount to startUniverse + patch-derived count.
@@ -101,6 +129,12 @@ export function migrateProjectFile(raw: unknown): ProjectFile {
       }
     }
     candidate['version'] = '1.4.0'
+  }
+
+  // If the version didn't cascade to the current schema, it's an unrecognised
+  // (e.g. gap) version we don't know how to migrate — fail loudly.
+  if (candidate['version'] !== PROJECT_VERSION) {
+    throw new Error(`Unsupported project version: ${fileVersion}`)
   }
 
   return candidate as unknown as ProjectFile

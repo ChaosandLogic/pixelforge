@@ -3,8 +3,15 @@ import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { migrateProjectFile, type ExampleManifestEntry, type ProjectFile } from '@shared/project'
+import { resolveProjectMediaPaths } from '@shared/projectEngineSync'
+import { loadProjectFile } from '../engine/ProjectBootstrap'
+import { allowGraphMedia, allowMediaRoot } from '../mediaAccess'
 import { exportShowBundle } from '../export/showExport'
+import { exportEspBundle } from '../export/espExport'
+import { exportFseqBundle } from '../export/fseqExport'
 import type { ShowManifest } from '@shared/showExportTypes'
+import type { EspExportPayload, EspExportResult } from '@shared/espExportTypes'
+import type { FseqExportPayload, FseqExportResult } from '@shared/fseqExportTypes'
 import type { ShowStartupHints } from '@shared/playerStartup'
 
 let lastProjectPath: string | null = null
@@ -45,10 +52,16 @@ export function registerProjectIpc(): void {
 
   ipcMain.handle('project:open-example', async (_event, filename: string): Promise<ProjectFile | null> => {
     if (filename.includes('/') || filename.includes('\\') || filename.includes('..')) return null
-    const path = join(examplesDir(), filename)
+    const dir = examplesDir()
+    const path = join(dir, filename)
     if (!existsSync(path)) return null
     const raw: unknown = JSON.parse(await readFile(path, 'utf-8'))
-    return migrateProjectFile(raw)
+    const project = migrateProjectFile(raw)
+    // Examples reference bundled media relative to the examples folder.
+    const resolved: ProjectFile = { ...project, graph: resolveProjectMediaPaths(project.graph, dir) }
+    allowMediaRoot(dir)
+    allowGraphMedia(resolved.graph)
+    return resolved
   })
 
   ipcMain.handle('project:open', async (): Promise<ProjectFile | null> => {
@@ -59,9 +72,10 @@ export function registerProjectIpc(): void {
     })
     const path = result.filePaths[0]
     if (result.canceled || path === undefined) return null
-    const raw: unknown = JSON.parse(await readFile(path, 'utf-8'))
     lastProjectPath = path
-    return migrateProjectFile(raw)
+    // loadProjectFile migrates, resolves relative media paths against the
+    // project directory, and grants the renderer read access to that media.
+    return loadProjectFile(path)
   })
 
   ipcMain.handle(
@@ -89,8 +103,52 @@ export function registerProjectIpc(): void {
       }
       if (sourcePath === null) sourcePath = join(outputDir, 'show.pxf')
 
-      const manifest = await exportShowBundle(project, sourcePath, outputDir, startup)
-      return { outputDir, manifest }
+      try {
+        const manifest = await exportShowBundle(project, sourcePath, outputDir, startup)
+        return { outputDir, manifest }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[export-show] failed:', err)
+        throw new Error(`Show export failed: ${msg}`)
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'project:export-esp',
+    async (_event, payload: EspExportPayload): Promise<EspExportResult | null> => {
+      const dirResult = await dialog.showOpenDialog({
+        title: 'Export Show for ESP32 (ESPixel)',
+        properties: ['openDirectory', 'createDirectory']
+      })
+      const outputDir = dirResult.filePaths[0]
+      if (dirResult.canceled || outputDir === undefined) return null
+      try {
+        return await exportEspBundle(outputDir, payload)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[export-esp] failed:', err)
+        throw new Error(`ESP export failed: ${msg}`)
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'project:export-fseq',
+    async (_event, payload: FseqExportPayload): Promise<FseqExportResult | null> => {
+      const dirResult = await dialog.showOpenDialog({
+        title: 'Export Sequence for Falcon Player (FSEQ)',
+        properties: ['openDirectory', 'createDirectory']
+      })
+      const outputDir = dirResult.filePaths[0]
+      if (dirResult.canceled || outputDir === undefined) return null
+      try {
+        return await exportFseqBundle(outputDir, payload)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[export-fseq] failed:', err)
+        throw new Error(`FSEQ export failed: ${msg}`)
+      }
     }
   )
 }

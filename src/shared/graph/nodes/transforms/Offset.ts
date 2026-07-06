@@ -1,3 +1,9 @@
+import {
+  beginScopedPixelOutput,
+  pixelScopeFromSrc,
+  readScopedRgb,
+  writeScopedRgb
+} from '../../pixelScope'
 import { floatParam, pixelsInput, type NodeTypeDef } from '../../types'
 
 /**
@@ -17,24 +23,23 @@ export const Offset: NodeTypeDef = {
   ],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
 
-    const n = ctx.pixelCount
+    const scope = pixelScopeFromSrc(src, ctx)
+    const out = beginScopedPixelOutput(ctx)
     const offset = floatParam(params, 'offset')
     const speed = floatParam(params, 'speed')
-    const shiftF = (offset + (ctx.timeMs / 1000) * speed) * n
-    const shift = Math.round(shiftF)
+    const shift = Math.round((offset + (ctx.timeMs / 1000) * speed) * scope.count)
 
-    for (let i = 0; i < n; i++) {
-      let j = (i - shift) % n
-      if (j < 0) j += n
-      out[i * 3] = src[j * 3] ?? 0
-      out[i * 3 + 1] = src[j * 3 + 1] ?? 0
-      out[i * 3 + 2] = src[j * 3 + 2] ?? 0
+    for (let i = 0; i < scope.count; i++) {
+      let j = (i - shift) % scope.count
+      if (j < 0) j += scope.count
+      const [r, g, b] = readScopedRgb(src, scope, j)
+      writeScopedRgb(out, scope, i, r, g, b)
     }
     return { pixels: out }
   }

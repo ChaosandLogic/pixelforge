@@ -14,6 +14,7 @@ import { registerStandardNodes, COMPONENT_NODE_TYPE } from '@shared/graph/nodes'
 import { detectComponentOutput, parseComponentGraph } from '@shared/component/types'
 import type { NodeData } from '@shared/graph/types'
 import { defaultParams, type GraphData, type ParamBinding, type ParamValue, type PortDef } from '@shared/graph/types'
+import { portsCompatible } from '@shared/graph/ports'
 import {
   graphHasCycle,
   isValidFloatBinding,
@@ -21,6 +22,7 @@ import {
 } from '@shared/graph/paramBinding'
 import { isNodePreviewEnabled } from '@shared/graph/preview'
 import { SEQUENCE_NODE_TYPE } from '@shared/graph/nodes/sequence/Sequence'
+import { TIMELINE_NODE_TYPE } from '@shared/graph/nodes/time/Timeline'
 import { SCHEDULE_NODE_TYPE } from '@shared/graph/nodes/schedule/Schedule'
 import { parseScheduleSlots } from '@shared/schedule/types'
 import { AUDIO_IN_NODE_TYPE } from '@shared/graph/nodes/audio/AudioIn'
@@ -44,8 +46,12 @@ interface PfNodeData extends Record<string, unknown> {
   paramBindings?: Record<string, ParamBinding>
   /** Show a live output thumbnail on the node */
   preview?: boolean
-  /** Pixel preview raster: patch stream grid or physical LED layout. */
-  previewView?: 'patch' | 'output'
+  /** Pixel preview raster: effect thumbnail or physical LED layout. */
+  previewView?: 'effect' | 'output' | 'patch'
+}
+
+function persistPreviewView(view?: 'effect' | 'output' | 'patch'): { previewView: 'output' } | Record<string, never> {
+  return view === 'output' ? { previewView: 'output' as const } : {}
 }
 
 export type PfNode = Node<PfNodeData>
@@ -53,6 +59,10 @@ export type PfNode = Node<PfNodeData>
 interface Snapshot {
   nodes: PfNode[]
   edges: Edge[]
+  /** Component-edit context captured with the snapshot, so undo/redo restores
+   * the correct canvas (main graph vs. a component subgraph). */
+  componentEditId?: string | null
+  componentParent?: Snapshot | null
 }
 
 const HISTORY_LIMIT = 50
@@ -95,19 +105,25 @@ interface GraphState {
 
 // --- engine sync (debounced) -------------------------------------------------
 
-let syncTimer: ReturnType<typeof setTimeout> | null = null
+let syncRaf: number | null = null
 
 function scheduleSync(get: () => GraphState): void {
-  if (syncTimer !== null) clearTimeout(syncTimer)
-  syncTimer = setTimeout(() => {
+  if (syncRaf !== null) return
+  syncRaf = requestAnimationFrame(() => {
+    syncRaf = null
     engineBridge.send({ type: 'set-graph', graph: get().toGraphData() })
-  }, 60)
+  })
 }
 
 // --- snapshot helpers ----------------------------------------------------------
 
-function cloneSnapshot(nodes: PfNode[], edges: Edge[]): Snapshot {
-  return structuredClone({ nodes, edges })
+function cloneSnapshot(
+  nodes: PfNode[],
+  edges: Edge[],
+  componentEditId: string | null = null,
+  componentParent: Snapshot | null = null
+): Snapshot {
+  return structuredClone({ nodes, edges, componentEditId, componentParent })
 }
 
 /** Coalesce rapid param tweaks (slider drags) into one history entry. */
@@ -132,8 +148,9 @@ function initialGraph(): { nodes: PfNode[]; edges: Edge[] } {
   return { nodes, edges }
 }
 
-function nodeComponentType(type: string): 'pf' | 'sequence' | 'schedule' | 'audio' | 'keyboard' | 'media' | 'output' | 'fixture' | 'component' {
+function nodeComponentType(type: string): 'pf' | 'sequence' | 'timeline' | 'schedule' | 'audio' | 'keyboard' | 'media' | 'output' | 'fixture' | 'component' {
   if (type === SEQUENCE_NODE_TYPE) return 'sequence'
+  if (type === TIMELINE_NODE_TYPE) return 'timeline'
   if (type === SCHEDULE_NODE_TYPE) return 'schedule'
   if (type === AUDIO_IN_NODE_TYPE) return 'audio'
   if (type === KEYBOARD_IN_NODE_TYPE) return 'keyboard'
@@ -152,7 +169,7 @@ function pfToNodeData(n: PfNode): NodeData {
     params: n.data.params,
     ...(n.data.paramBindings !== undefined ? { paramBindings: n.data.paramBindings } : {}),
     ...(n.data.preview === false ? { preview: false } : {}),
-    ...(n.data.previewView === 'patch' ? { previewView: 'patch' as const } : {})
+    ...persistPreviewView(n.data.previewView)
   }
 }
 
@@ -171,7 +188,7 @@ function nodeDataToPf(n: NodeData): PfNode {
       params,
       ...(n.paramBindings !== undefined ? { paramBindings: { ...n.paramBindings } } : {}),
       ...(n.preview !== undefined ? { preview: n.preview } : {}),
-      ...(n.previewView === 'patch' ? { previewView: 'patch' as const } : {})
+      ...persistPreviewView(n.previewView)
     }
   }
 }
@@ -216,7 +233,7 @@ function graphDataFromPf(nodes: PfNode[], edges: Edge[]): GraphData {
         ? { paramBindings: n.data.paramBindings }
         : {}),
       ...(n.data.preview === false ? { preview: false } : {}),
-      ...(n.data.previewView === 'patch' ? { previewView: 'patch' as const } : {})
+      ...persistPreviewView(n.data.previewView)
     })),
     edges: pfEdgesToGraph(edges)
   }
@@ -254,8 +271,8 @@ function makeNode(type: string, position: { x: number; y: number }): PfNode {
 
 export const useGraphStore = create<GraphState>((set, get) => {
   const pushHistory = (): void => {
-    const { nodes, edges, past } = get()
-    const next = [...past, cloneSnapshot(nodes, edges)]
+    const { nodes, edges, past, componentEditId, componentParent } = get()
+    const next = [...past, cloneSnapshot(nodes, edges, componentEditId, componentParent)]
     if (next.length > HISTORY_LIMIT) next.shift()
     set({ past: next, future: [] })
   }
@@ -343,7 +360,7 @@ export const useGraphStore = create<GraphState>((set, get) => {
           n.id === nodeId ? { ...n, data: { ...n.data, params: { ...n.data.params, [name]: value } } } : n
         )
       })
-      scheduleSync(get)
+      engineBridge.send({ type: 'patch-node-params', nodeId, params: { [name]: value } })
     },
 
     setParamBinding: (nodeId, paramName, bindingKeyValue) => {
@@ -442,12 +459,13 @@ export const useGraphStore = create<GraphState>((set, get) => {
                 ...n,
                 data: {
                   ...n.data,
-                  previewView: n.data.previewView === 'patch' ? 'output' : 'patch'
+                  previewView: n.data.previewView === 'output' ? 'effect' : 'output'
                 }
               }
             : n
         )
       })
+      scheduleSync(get)
     },
 
     copySelectedNodes: () => {
@@ -524,27 +542,31 @@ export const useGraphStore = create<GraphState>((set, get) => {
     },
 
     undo: () => {
-      const { past, future, nodes, edges } = get()
+      const { past, future, nodes, edges, componentEditId, componentParent } = get()
       const prev = past[past.length - 1]
       if (prev === undefined) return
       set({
         past: past.slice(0, -1),
-        future: [cloneSnapshot(nodes, edges), ...future],
+        future: [cloneSnapshot(nodes, edges, componentEditId, componentParent), ...future],
         nodes: prev.nodes,
-        edges: prev.edges
+        edges: prev.edges,
+        componentEditId: prev.componentEditId ?? null,
+        componentParent: prev.componentParent ?? null
       })
       scheduleSync(get)
     },
 
     redo: () => {
-      const { past, future, nodes, edges } = get()
+      const { past, future, nodes, edges, componentEditId, componentParent } = get()
       const next = future[0]
       if (next === undefined) return
       set({
-        past: [...past, cloneSnapshot(nodes, edges)],
+        past: [...past, cloneSnapshot(nodes, edges, componentEditId, componentParent)],
         future: future.slice(1),
         nodes: next.nodes,
-        edges: next.edges
+        edges: next.edges,
+        componentEditId: next.componentEditId ?? null,
+        componentParent: next.componentParent ?? null
       })
       scheduleSync(get)
     },
@@ -584,7 +606,7 @@ export const useGraphStore = create<GraphState>((set, get) => {
               params,
               ...(n.paramBindings !== undefined ? { paramBindings: { ...n.paramBindings } } : {}),
               ...(n.preview !== undefined ? { preview: n.preview } : {}),
-              ...(n.previewView === 'patch' ? { previewView: 'patch' as const } : {})
+              ...persistPreviewView(n.previewView)
             }
           }
         }),
@@ -639,7 +661,7 @@ export function isValidConnection(conn: Connection | Edge): boolean {
   const outPort = resolveOutputPort(source, conn.sourceHandle ?? '')
   const inPort = resolveInputPort(target.data.nodeType, conn.targetHandle ?? '')
   if (outPort === undefined || inPort === undefined) return false
-  if (outPort.type !== inPort.type) return false
+  if (!portsCompatible(outPort.type, inPort.type)) return false
 
   const graph = useGraphStore.getState().toGraphData()
   const testGraph: GraphData = {

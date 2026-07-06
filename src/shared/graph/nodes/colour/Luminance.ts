@@ -1,9 +1,5 @@
+import { pixelScopeFromSrc, readScopedRgb } from '../../pixelScope'
 import { pixelsInput, stringParam, type NodeTypeDef } from '../../types'
-
-function pixelLuminance(src: Float32Array, index: number): number {
-  const o = index * 3
-  return 0.2126 * (src[o] as number) + 0.7152 * (src[o + 1] as number) + 0.0722 * (src[o + 2] as number)
-}
 
 export const Luminance: NodeTypeDef = {
   type: 'colour/luminance',
@@ -26,14 +22,15 @@ export const Luminance: NodeTypeDef = {
     const mode = stringParam(params, 'mode', 'average')
     if (src === null || src.length < 3) return { value: 0 }
 
-    const count = Math.min(ctx.pixelCount, Math.floor(src.length / 3))
-    if (count <= 0) return { value: 0 }
+    const scope = pixelScopeFromSrc(src, ctx)
+    if (scope.count <= 0) return { value: 0 }
 
     let sum = 0
     let max = 0
     let min = 1
-    for (let i = 0; i < count; i++) {
-      const lum = pixelLuminance(src, i)
+    for (let i = 0; i < scope.count; i++) {
+      const [r, g, b] = readScopedRgb(src, scope, i)
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
       sum += lum
       if (lum > max) max = lum
       if (lum < min) min = lum
@@ -45,7 +42,7 @@ export const Luminance: NodeTypeDef = {
       case 'min':
         return { value: min }
       default:
-        return { value: sum / count }
+        return { value: sum / scope.count }
     }
   }
 }

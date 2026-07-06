@@ -21,6 +21,13 @@ export function previewResolutionForStream(streamCount: number, fallback: Resolu
   return { width: n, height: 1 }
 }
 
+/** Square grid resolution from stream length only (ignores patch layout). */
+export function squareResolutionForCount(streamCount: number): Resolution {
+  const n = Math.max(1, streamCount)
+  const side = Math.max(1, Math.ceil(Math.sqrt(n)))
+  return { width: side, height: Math.max(1, Math.ceil(n / side)) }
+}
+
 /** Gather patch indices into a compact stream for fixture previews. */
 export function compactStreamPixels(pixels: Float32Array, indices: number[]): Float32Array {
   const out = new Float32Array(indices.length * 3)

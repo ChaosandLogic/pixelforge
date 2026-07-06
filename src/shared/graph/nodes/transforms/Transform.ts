@@ -1,3 +1,4 @@
+import { applyEdgeMode, remapScopedStrip } from '../../pixelScope'
 import { floatInput, floatParam, pixelsInput, stringParam, type NodeTypeDef } from '../../types'
 
 /**
@@ -26,8 +27,8 @@ export const Transform: NodeTypeDef = {
   ],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
@@ -37,31 +38,15 @@ export const Transform: NodeTypeDef = {
     const scale = Math.max(0.001, floatParam(params, 'scale', 1))
     const centre = floatParam(params, 'centre', 0.5)
     const flip = params['flip'] === true
-    const edges = stringParam(params, 'edges', 'wrap')
-
+    const edges = stringParam(params, 'edges', 'wrap') as 'wrap' | 'clamp' | 'mirror'
     const shift = translate + (ctx.timeMs / 1000) * speed
-    const n = ctx.pixelCount
-    const denom = Math.max(1, n - 1)
 
-    for (let i = 0; i < n; i++) {
-      let u = i / denom
-      if (flip) u = 1 - u
-      let v = (u - centre) / scale + centre - shift
-
-      if (edges === 'wrap') {
-        v -= Math.floor(v)
-      } else if (edges === 'mirror') {
-        const t = Math.abs(v) % 2
-        v = t > 1 ? 2 - t : t
-      } else {
-        v = v < 0 ? 0 : v > 1 ? 1 : v
-      }
-
-      const j = Math.round(v * denom)
-      out[i * 3] = src[j * 3] ?? 0
-      out[i * 3 + 1] = src[j * 3 + 1] ?? 0
-      out[i * 3 + 2] = src[j * 3 + 2] ?? 0
+    return {
+      pixels: remapScopedStrip(src, ctx, (_i, u) => {
+        let pos = flip ? 1 - u : u
+        let v = (pos - centre) / scale + centre - shift
+        return applyEdgeMode(v, edges)
+      })
     }
-    return { pixels: out }
   }
 }

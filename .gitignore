@@ -13,6 +13,20 @@ dist/
 .env
 .env.*
 
+# Code-signing certificates / provisioning (never commit these)
+*.p12
+*.pfx
+*.cer
+*.crt
+*.key
+*.pem
+*.mobileprovision
+*.provisionprofile
+
+# Generated attribution dumps
+THIRD-PARTY-LICENSES.csv
+THIRD-PARTY-LICENSES.txt
+
 # Logs
 *.log
 npm-debug.log*

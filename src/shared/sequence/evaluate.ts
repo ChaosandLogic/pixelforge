@@ -33,7 +33,7 @@ function incomingDuration(transition: SequenceTransition | null): number {
 }
 
 /** Total sequence length in beats (transitions overlap). */
-function sequenceLengthBeats(segments: SequenceSegment[]): number {
+export function sequenceLengthBeats(segments: SequenceSegment[]): number {
   if (segments.length === 0) return 0
   let time = 0
   for (const seg of segments) {

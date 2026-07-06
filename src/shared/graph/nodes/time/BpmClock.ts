@@ -5,7 +5,7 @@ export const BpmClock: NodeTypeDef = {
   type: 'time/bpm-clock',
   label: 'BPM Clock',
   category: 'time',
-  description: 'Beat counter for sequences (wire beat output into Sequence)',
+  description: 'Beat counter — prefer Timeline for show loops and export',
   inputs: [],
   outputs: [{ name: 'beat', label: 'Beat', type: 'float' }],
   params: [

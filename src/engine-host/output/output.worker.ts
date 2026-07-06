@@ -12,8 +12,9 @@ import type { FromOutputWorker, OutputWorkerData, ToOutputWorker } from './worke
 if (parentPort === null) throw new Error('output.worker must run as a worker_thread')
 const port = parentPort
 
-const { sab } = workerData as OutputWorkerData
+const { sab, control } = workerData as OutputWorkerData
 const view = new Uint8Array(sab)
+const seq = new Int32Array(control)
 
 let protocol: OutputProtocol = createOutputProtocol({ protocol: 'sacn', startUniverse: 1 })
 let protocolKind: OutputProtocolKind = 'sacn'
@@ -23,6 +24,24 @@ let sending = false
 let packetCount = 0
 let lastError: string | null = null
 let protocolName = 'sACN'
+
+// Private copy of the most recent torn-free frame. We always send from here so
+// a frame the evaluator was mid-writing is never transmitted.
+let frame = new Uint8Array(pixelCount * 3)
+
+/**
+ * Seqlock read: copy the shared pixel buffer into `frame` only if the evaluator
+ * was not writing during the copy. Returns false (keep the previous frame) on
+ * contention — sACN/Art-Net resends make a one-tick repeat harmless.
+ */
+function readStableFrame(byteCount: number): void {
+  if (frame.length !== byteCount) frame = new Uint8Array(byteCount)
+  const before = Atomics.load(seq, 0)
+  if ((before & 1) !== 0) return // writer mid-write
+  frame.set(view.subarray(0, byteCount))
+  const after = Atomics.load(seq, 0)
+  if (after !== before) return // torn during copy — keep the last good frame
+}
 
 let tickTimer: NodeJS.Timeout = setInterval(tick, 1000 / 44)
 
@@ -63,7 +82,8 @@ port.on('message', (msg: ToOutputWorker) => {
 function tick(): void {
   if (!enabled || sending) return
   sending = true
-  const stream = view.subarray(0, pixelCount * 3)
+  readStableFrame(pixelCount * 3)
+  const stream = frame.subarray(0, pixelCount * 3)
   protocol
     .send(stream)
     .then((packets) => {

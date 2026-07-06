@@ -2,6 +2,15 @@
 
 Node-based LED sequencer with sACN output, 3D visualisation, and live effect authoring.
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+
+PixelForge is free and open source under the **GNU AGPL-3.0**. You can build and
+run everything in this repository yourself at no cost. Pre-built, code-signed
+installers, automatic updates, Player activation licenses, and support are
+available at **[pixelforge.app](https://pixelforge.app)**. A separate commercial
+license is available for proprietary use — see
+[COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+
 See [PIXELFORGE_PLAN.md](PIXELFORGE_PLAN.md) for the full development plan.
 
 ## Example patches
@@ -105,3 +114,24 @@ src/
 └── renderer/      # React UI: toolbar, network panel, 2D/3D preview, status bar
     └── visualiser/  # Three.js InstancedMesh + STL reference mesh
 ```
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and note
+that a one-time [Contributor License Agreement](CLA.md) is required (it keeps the
+dual-licensing model viable). Security issues should follow
+[SECURITY.md](SECURITY.md) rather than public issues.
+
+## License
+
+PixelForge is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+If you run a modified version and expose it to users over a network, the AGPL
+requires you to make your source available to them. For proprietary/commercial
+use without these obligations, a commercial license is available — see
+[COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+
+Third-party dependencies are listed in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+"PixelForge" and the PixelForge logo are trademarks — see
+[TRADEMARKS.md](TRADEMARKS.md). The AGPL covers the source code, not the marks.

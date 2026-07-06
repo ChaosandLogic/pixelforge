@@ -17,6 +17,13 @@ import { requestLocalNetworkAccess } from './localNetworkPermission'
 const engine = new EngineLauncher()
 const licenseManager = new LicenseManager('editor')
 
+process.on('unhandledRejection', (reason) => {
+  console.error('[main] Unhandled promise rejection:', reason)
+})
+process.on('uncaughtException', (err) => {
+  console.error('[main] Uncaught exception:', err)
+})
+
 function createWindow(): void {
   const win = new BrowserWindow({
     width: 1280,
@@ -63,7 +70,14 @@ app.whenReady().then(async () => {
   )
 
   ipcMain.on('engine:request-port', (event) => {
-    engine.connectRenderer(event.sender)
+    void (async () => {
+      // Defense-in-depth: the engine port (and therefore all DMX output) is
+      // only handed to the renderer when the license is usable. The renderer
+      // LicenseGate blocks the UI too, but this stops a patched/DevTools
+      // renderer from reaching the engine host directly.
+      if (!devBypassEnabled() && !(await licenseManager.isUsableOffline())) return
+      engine.connectRenderer(event.sender)
+    })()
   })
 
   createWindow()
@@ -72,6 +86,8 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+}).catch((err: unknown) => {
+  console.error('[main] Fatal error during startup:', err)
 })
 
 app.on('window-all-closed', () => {

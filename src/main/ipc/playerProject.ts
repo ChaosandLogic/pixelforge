@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import type { ProjectFile } from '@shared/project'
 import type { EngineLauncher } from '../engine/EngineLauncher'
 import { loadProjectFile } from '../engine/ProjectBootstrap'
+import { resolveShowRelativePath } from '../player/showPath'
 
 export function registerPlayerProjectIpc(
   engine: EngineLauncher,
@@ -38,7 +39,7 @@ export function registerPlayerProjectIpc(
     if (!existsSync(manifestPath)) throw new Error('show.json not found in show folder')
     const raw: unknown = JSON.parse(await readFile(manifestPath, 'utf-8'))
     const manifest = raw as { project?: string }
-    const projectPath = resolve(showDir, manifest.project ?? 'show.pxf')
+    const projectPath = resolveShowRelativePath(showDir, manifest.project ?? 'show.pxf')
     return loadProjectFile(projectPath)
   })
 

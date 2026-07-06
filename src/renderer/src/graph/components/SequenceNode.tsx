@@ -1,8 +1,10 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { getNodeType } from '@shared/graph/registry'
 import { isNodePreviewEnabled } from '@shared/graph/preview'
 import { activeSegmentPorts } from '@shared/graph/nodes/sequence/Sequence'
+import { TIMELINE_NODE_TYPE, timelineLoop } from '@shared/graph/nodes/time/Timeline'
+import { sequenceLengthBeats } from '@shared/sequence/evaluate'
 import {
   MAX_SEQUENCE_SEGMENTS,
   parseSegments,
@@ -17,9 +19,18 @@ import { NodeProfilerBadge } from './NodeProfilerBadge'
 
 function SequenceNodeComponent({ id, data, selected }: NodeProps<PfNodeType>): React.JSX.Element {
   const updateParam = useGraphStore((s) => s.updateParam)
+  const nodes = useGraphStore((s) => s.nodes)
   const def = getNodeType(data.nodeType)
   const segments = parseSegments(data.params['segments'])
   const previewOn = isNodePreviewEnabled(data.preview)
+  const totalBeats = useMemo(() => sequenceLengthBeats(segments), [segments])
+  const timelineLoopBeats = useMemo(() => {
+    const timeline = nodes.find(
+      (n) => n.data.nodeType === TIMELINE_NODE_TYPE && n.data.params['loop'] !== false
+    )
+    if (timeline === undefined) return null
+    return timelineLoop(timeline.data.params).loopBeats
+  }, [nodes])
 
   if (def === undefined) {
     return <div className="pf-node error">Unknown: {data.nodeType}</div>
@@ -135,6 +146,13 @@ function SequenceNodeComponent({ id, data, selected }: NodeProps<PfNodeType>): R
         <button className="seq-add-segment" disabled={segments.length >= MAX_SEQUENCE_SEGMENTS} onClick={addSegment}>
           + Segment
         </button>
+        <p className="schedule-hint">Total: {totalBeats.toFixed(2)} beats</p>
+        {timelineLoopBeats !== null && Math.abs(timelineLoopBeats - totalBeats) > 0.05 && (
+          <p className="schedule-hint timeline-align-hint">
+            Timeline loop is {timelineLoopBeats.toFixed(2)} beats — wire Timeline beat in and match segment
+            lengths for aligned loops.
+          </p>
+        )}
       </div>
 
       <div className="pf-node-ports">

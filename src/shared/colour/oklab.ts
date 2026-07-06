@@ -85,6 +85,8 @@ interface OklabStop {
 export class OklabGradientRamp {
   private readonly stops: OklabStop[] = []
   private readonly tmp = new Float32Array(3)
+  /** Reused lab buffers so re-setting stops each frame allocates nothing. */
+  private readonly labPool: Float32Array[] = []
 
   /** Stop channels are sRGB 0..1. */
   setStops(stops: ReadonlyArray<{ position: number; r: number; g: number; b: number }>): void {
@@ -92,8 +94,13 @@ export class OklabGradientRamp {
     if (stops.length === 0) return
 
     const sorted = [...stops].sort((a, b) => a.position - b.position)
-    for (const stop of sorted) {
-      const lab = new Float32Array(3)
+    for (let i = 0; i < sorted.length; i++) {
+      const stop = sorted[i]!
+      let lab = this.labPool[i]
+      if (lab === undefined) {
+        lab = new Float32Array(3)
+        this.labPool[i] = lab
+      }
       srgbToOklab(stop.r, stop.g, stop.b, lab)
       this.stops.push({ t: stop.position, lab })
     }

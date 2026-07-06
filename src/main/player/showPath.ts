@@ -1,7 +1,21 @@
 import { existsSync } from 'node:fs'
 import { readFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { join, resolve, sep } from 'node:path'
 import type { ShowStartupHints } from '@shared/playerStartup'
+
+/**
+ * Resolve a show-manifest `project` field against the show folder, rejecting
+ * absolute paths and `..` traversal so a malicious show.json cannot point at
+ * files outside its own folder.
+ */
+export function resolveShowRelativePath(showDir: string, relative: string): string {
+  const base = resolve(showDir)
+  const target = resolve(base, relative)
+  if (target !== base && !target.startsWith(base + sep)) {
+    throw new Error(`Show project path escapes the show folder: ${relative}`)
+  }
+  return target
+}
 
 export function detectShowPathKind(showPath: string): 'project' | 'show-folder' {
   const absolute = resolve(showPath)
@@ -24,7 +38,7 @@ export function resolveShowProjectPath(
   }
   const raw: unknown = JSON.parse(readFileSync(manifestPath, 'utf-8'))
   const manifest = raw as { project?: string }
-  const projectPath = resolve(absolute, manifest.project ?? 'show.pxf')
+  const projectPath = resolveShowRelativePath(absolute, manifest.project ?? 'show.pxf')
   if (!existsSync(projectPath)) {
     throw new Error(`Project file not found in show folder: ${projectPath}`)
   }

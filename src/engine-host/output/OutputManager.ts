@@ -6,6 +6,9 @@ import type { FromOutputWorker } from './workerMessages'
 interface OutputRoute {
   sab: SharedArrayBuffer
   view: Uint8Array
+  /** Seqlock counter shared with the evaluator (see OutputWorkerData.control). */
+  control: SharedArrayBuffer
+  seq: Int32Array
   sender: OutputSender
   transmit: boolean
   protocolName: string
@@ -35,6 +38,11 @@ export class OutputManager {
   getPreviewView(): Uint8Array | null {
     const first = this.routes.values().next().value as OutputRoute | undefined
     return first?.view ?? null
+  }
+
+  /** Seqlock counters keyed by output node id — passed to the evaluator each sync. */
+  getControlViews(): Map<string, Int32Array> {
+    return new Map([...this.routes.entries()].map(([id, route]) => [id, route.seq]))
   }
 
   get enabled(): boolean {
@@ -106,10 +114,13 @@ export class OutputManager {
 
   private createRoute(nodeId: string): OutputRoute {
     const sab = new SharedArrayBuffer(this.pixelCount * CHANNELS_PER_PIXEL)
+    const control = new SharedArrayBuffer(4)
     const route: OutputRoute = {
       sab,
       view: new Uint8Array(sab),
-      sender: new OutputSender(sab, (msg) => this.onRouteStats(nodeId, msg)),
+      control,
+      seq: new Int32Array(control),
+      sender: new OutputSender(sab, control, (msg) => this.onRouteStats(nodeId, msg)),
       transmit: true,
       protocolName: 'sACN',
       packetsPerSec: 0,

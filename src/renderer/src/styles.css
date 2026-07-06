@@ -1033,6 +1033,53 @@ body {
   min-width: 320px;
 }
 
+.pf-timeline {
+  min-width: 280px;
+}
+
+.timeline-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 6px 10px 4px;
+}
+
+.timeline-loop-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.timeline-loop-field input[type='checkbox'] {
+  margin: 0;
+}
+
+.timeline-ruler {
+  margin: 0 10px 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+}
+
+.timeline-ruler-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 40%, transparent) 100%);
+  margin-bottom: 4px;
+}
+
+.timeline-ruler-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.timeline-align-hint {
+  color: #fbbf24;
+}
+
 .pf-schedule {
   min-width: 340px;
 }

@@ -1,5 +1,11 @@
 import { pixelSortGrid, type PixelSortAxis, type PixelSortMetric } from '../../../spatial/pixelSort'
-import { gridToPixels, pixelsToGrid } from '../../../spatial/blur'
+import {
+  beginScopedPixelOutput,
+  gridToPixelsScoped,
+  pixelScopeFromSrc,
+  pixelsToGridScoped,
+  scopedResolution
+} from '../../pixelScope'
 import {
   floatInput,
   floatParam,
@@ -40,13 +46,14 @@ export const PixelSort: NodeTypeDef = {
   ],
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
-    const out = ctx.acquire()
     if (src === null) {
+      const out = ctx.acquire()
       out.fill(0)
       return { pixels: out }
     }
 
-    const resolution = resolutionInput(inputs, ctx)
+    const scope = pixelScopeFromSrc(src, ctx)
+    const resolution = scopedResolution(scope, resolutionInput(inputs, ctx))
     const width = Math.max(1, Math.floor(resolution.width))
     const height = Math.max(1, Math.floor(resolution.height))
     const axis = stringParam(params, 'axis', 'horizontal') as PixelSortAxis
@@ -57,9 +64,10 @@ export const PixelSort: NodeTypeDef = {
     )
     const reverse = params['reverse'] === true
 
-    const grid = pixelsToGrid(src, ctx.positions, ctx.pixelCount, resolution)
+    const out = beginScopedPixelOutput(ctx)
+    const grid = pixelsToGridScoped(src, ctx.positions, scope, resolution)
     const sorted = pixelSortGrid(grid, width, height, axis, metric, reverse, threshold)
-    gridToPixels(sorted, out, ctx.positions, ctx.pixelCount, resolution)
+    gridToPixelsScoped(sorted, out, ctx.positions, scope, resolution)
     return { pixels: out }
   }
 }

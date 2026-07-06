@@ -152,6 +152,8 @@ export interface EvalContext {
   evalSubgraph(graph: ComponentGraphData, externalInputs: PortValues): PortValue | null
   /** Returns true the first time a schedule slot fires for a given minute key. */
   markScheduleFired(nodeId: string, slotIndex: number, fireKey: string): boolean
+  /** Fire loop output when Timeline loop index advances. */
+  advanceTimelineLoop(loopIndex: number): void
   /**
    * Blend input with this node's stored previous frame, persist the result,
    * and return it. Used by the Feedback node for temporal compositing.
@@ -194,8 +196,8 @@ export interface NodeData {
   label?: string
   /** Show a live output preview on the node; omit or true = on, false = hidden */
   preview?: boolean
-  /** Pixel preview raster: patch stream grid or physical LED layout. */
-  previewView?: 'patch' | 'output'
+  /** Pixel preview raster: effect thumbnail or physical LED layout. */
+  previewView?: 'effect' | 'output' | 'patch'
 }
 
 export interface EdgeData {

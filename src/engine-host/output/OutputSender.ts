@@ -17,9 +17,13 @@ export class OutputSender {
   protocolName = 'sACN'
   enabled = false
 
-  constructor(sab: SharedArrayBuffer, onStats?: (msg: FromOutputWorker) => void) {
+  constructor(
+    sab: SharedArrayBuffer,
+    control: SharedArrayBuffer,
+    onStats?: (msg: FromOutputWorker) => void
+  ) {
     this.worker = new Worker(join(__dirname, 'outputWorker.js'), {
-      workerData: { sab }
+      workerData: { sab, control }
     })
     this.worker.on('message', (msg: FromOutputWorker) => {
       if (msg.type === 'stats') {
