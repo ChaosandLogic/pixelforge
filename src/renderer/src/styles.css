@@ -68,11 +68,6 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 3px;
-  background: linear-gradient(135deg, var(--accent), #ffb347);
-  box-shadow: 0 0 10px rgba(255, 122, 26, 0.6);
-}
-
-.brand-mark.player {
   background: linear-gradient(135deg, #26d4c8, #3ba7ff);
   box-shadow: 0 0 10px rgba(38, 212, 200, 0.6);
 }

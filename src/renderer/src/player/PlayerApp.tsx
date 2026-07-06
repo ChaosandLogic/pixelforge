@@ -49,7 +49,7 @@ function PlayerShell({
     <div className="app player-app">
       <header className="toolbar">
         <div className="brand">
-          <span className="brand-mark player" />
+          <span className="brand-mark" />
           PixelForge Player
         </div>
         <div className="toolbar-controls">
