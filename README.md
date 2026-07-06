@@ -1,3 +1,5 @@
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H0C122Q7UR)
+
 # PixelForge
 
 Node-based LED sequencer with sACN output, 3D visualisation, and live effect authoring.
