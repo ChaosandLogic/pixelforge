@@ -16,8 +16,8 @@
   },
   {
     "filename": "04-bpm-sequence.pxf",
-    "name": "BPM Sequence",
-    "description": "Four-segment show with crossfades synced to BPM clock. Use ] to advance manually."
+    "name": "Timeline Sequence",
+    "description": "Four-segment show driven by Timeline (16-beat loop). Beat clocks Sequence; phase scrolls the gradient. Use ] to advance manually."
   },
   {
     "filename": "05-ring-pulse.pxf",
@@ -32,17 +32,17 @@
   {
     "filename": "07-club-show.pxf",
     "name": "Club Show (Matrix)",
-    "description": "Full 4-act matrix show: per-act FX chains, BPM sequence, audio-driven intensity + strobe hit, vignette finish."
+    "description": "Full 4-act matrix show: Timeline-driven sequence (40-beat loop), per-act FX chains, audio intensity + strobe, vignette finish."
   },
   {
     "filename": "08-nested-acts.pxf",
     "name": "Nested Acts",
-    "description": "Sequence inside a sequence: fast inner 3-beat acts within slower outer acts, shared BPM clock, audio crossfade control."
+    "description": "Sequence inside a sequence: Timeline (32-beat loop) clocks both layers; loop trigger restarts Ramp; audio crossfade control."
   },
   {
     "filename": "09-venue-install.pxf",
     "name": "Venue Install",
-    "description": "Bar strip + centre ring + back-wall matrix: per-fixture branches composited with spherical base and logic accents."
+    "description": "Bar + ring + matrix: fixture-scoped branches mapped back with Fixture, Merge compositing, Timeline sequence, spherical base."
   },
   {
     "filename": "10-signal-labyrinth.pxf",

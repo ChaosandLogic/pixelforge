@@ -2,8 +2,8 @@
   "version": "1.4.0",
   "meta": {
     "name": "Club Show (Matrix)",
-    "created": "2026-06-13T21:01:06.465Z",
-    "modified": "2026-06-13T21:01:06.465Z"
+    "created": "2026-07-15T21:41:20.046Z",
+    "modified": "2026-07-15T21:41:20.046Z"
   },
   "patch": {
     "points": [
@@ -814,14 +814,18 @@
         }
       },
       {
-        "id": "clock",
-        "type": "time/bpm-clock",
+        "id": "timeline",
+        "type": "time/timeline",
         "position": {
           "x": 80,
           "y": 80
         },
         "params": {
+          "durationMode": "beats",
+          "durationSec": 8,
+          "durationBeats": 40,
           "bpm": 128,
+          "loop": true,
           "offset": 0
         }
       },
@@ -1432,7 +1436,7 @@
       },
       {
         "id": "s4",
-        "fromNode": "clock",
+        "fromNode": "timeline",
         "fromPort": "beat",
         "toNode": "seq",
         "toPort": "beat"

@@ -1,5 +1,6 @@
 import { CHANNELS_PER_PIXEL, MAX_BAKE_BYTES, MAX_BAKE_FPS } from '@shared/messages'
 import { OUTPUT_NODE_TYPE } from '@shared/graph/nodes'
+import { SHADER_NODE_TYPE } from '@shared/graph/nodes/generators/Shader'
 import type { AudioLevels, GraphData, MediaFrame } from '@shared/graph/types'
 import { BufferPool } from './evaluator/BufferPool'
 import { Evaluator } from './evaluator/Evaluator'
@@ -85,7 +86,12 @@ export function bakeFrames(input: BakeInput): BakeOutput {
     evaluator.setOutputTargets([firstOutputId], views, new Uint8Array(sab))
   }
 
+  const shaderNodeIds = new Set(
+    input.graph.nodes.filter((n) => n.type === SHADER_NODE_TYPE).map((n) => n.id)
+  )
   for (const [nodeId, frame] of input.mediaFrames) {
+    // Shader nodes animate via CPU samplers; frozen GPU frames would stall the bake.
+    if (shaderNodeIds.has(nodeId)) continue
     evaluator.setMediaFrame(nodeId, frame.width, frame.height, frame.data)
   }
   for (const [nodeId, levels] of input.audioLevels) {

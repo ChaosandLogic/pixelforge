@@ -5,6 +5,7 @@ import { App } from './App'
 import { ErrorBoundary } from '@/ui/ErrorBoundary'
 import { initVideoManager } from './media/VideoManager'
 import { initImageManager } from './media/ImageManager'
+import { initShaderManager } from './media/ShaderManager'
 import { initAudioManager } from './media/AudioManager'
 import { initMidiManager } from './media/MidiManager'
 import { initKeyboardManager } from './media/KeyboardManager'
@@ -19,6 +20,7 @@ window.addEventListener('unhandledrejection', (event) => {
 
 initVideoManager()
 initImageManager()
+initShaderManager()
 initAudioManager()
 initMidiManager()
 initKeyboardManager()

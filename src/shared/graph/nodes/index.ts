@@ -2,6 +2,7 @@ import { registerNodeType } from '../registry'
 import { Gradient } from './generators/Gradient'
 import { ImageFile } from './generators/ImageFile'
 import { Noise } from './generators/Noise'
+import { Shader } from './generators/Shader'
 import { SolidColour } from './generators/SolidColour'
 import { Strobe } from './generators/Strobe'
 import { VideoFile } from './generators/VideoFile'
@@ -89,6 +90,7 @@ export function registerStandardNodes(): void {
   registerNodeType(Strobe)
   registerNodeType(VideoFile)
   registerNodeType(ImageFile)
+  registerNodeType(Shader)
   registerNodeType(Chase)
   registerNodeType(Comet)
   registerNodeType(Twinkle)

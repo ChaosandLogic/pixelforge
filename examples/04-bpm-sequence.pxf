@@ -1,9 +1,9 @@
 {
   "version": "1.4.0",
   "meta": {
-    "name": "BPM Sequence",
-    "created": "2026-06-13T21:01:06.464Z",
-    "modified": "2026-06-13T21:01:06.464Z"
+    "name": "Timeline Sequence",
+    "created": "2026-07-15T21:41:20.045Z",
+    "modified": "2026-07-15T21:41:20.045Z"
   },
   "patch": {
     "points": [
@@ -429,14 +429,18 @@
         }
       },
       {
-        "id": "clock",
-        "type": "time/bpm-clock",
+        "id": "timeline",
+        "type": "time/timeline",
         "position": {
           "x": 80,
           "y": 80
         },
         "params": {
+          "durationMode": "beats",
+          "durationSec": 8,
+          "durationBeats": 16,
           "bpm": 128,
+          "loop": true,
           "offset": 0
         }
       },
@@ -486,19 +490,35 @@
           "y": 380
         },
         "params": {
-          "from": {
-            "r": 255,
-            "g": 80,
-            "b": 0
-          },
-          "to": {
-            "r": 30,
-            "g": 60,
-            "b": 255
-          },
+          "stops": [
+            {
+              "id": "a",
+              "position": 0,
+              "colour": {
+                "r": 255,
+                "g": 80,
+                "b": 0
+              }
+            },
+            {
+              "id": "b",
+              "position": 1,
+              "colour": {
+                "r": 30,
+                "g": 60,
+                "b": 255
+              }
+            }
+          ],
           "axis": "x",
+          "centreX": 0.5,
+          "centreY": 0.5,
+          "centreZ": 0.5,
           "offset": 0,
-          "scale": 1
+          "scale": 1,
+          "phase": 0,
+          "speed": 0,
+          "mirror": false
         }
       },
       {
@@ -639,10 +659,17 @@
       },
       {
         "id": "e1",
-        "fromNode": "clock",
+        "fromNode": "timeline",
         "fromPort": "beat",
         "toNode": "seq",
         "toPort": "beat"
+      },
+      {
+        "id": "e1p",
+        "fromNode": "timeline",
+        "fromPort": "phase",
+        "toNode": "grad",
+        "toPort": "phase"
       },
       {
         "id": "e2",

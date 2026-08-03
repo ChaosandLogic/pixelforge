@@ -3,6 +3,7 @@ import { ErrorBoundary } from '@/ui/ErrorBoundary'
 import { PlayerApp } from './PlayerApp'
 import { initVideoManager } from '../media/VideoManager'
 import { initImageManager } from '../media/ImageManager'
+import { initShaderManager } from '../media/ShaderManager'
 import { initAudioManager } from '../media/AudioManager'
 import { initMidiManager } from '../media/MidiManager'
 import { initKeyboardManager } from '../media/KeyboardManager'
@@ -40,6 +41,7 @@ queueMicrotask(() => {
   try {
     initVideoManager()
     initImageManager()
+    initShaderManager()
     initAudioManager()
     initMidiManager()
     initKeyboardManager()

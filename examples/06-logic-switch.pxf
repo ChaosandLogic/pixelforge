@@ -2,8 +2,8 @@
   "version": "1.4.0",
   "meta": {
     "name": "Logic Switch Demo",
-    "created": "2026-06-13T21:01:06.465Z",
-    "modified": "2026-06-13T21:01:06.465Z"
+    "created": "2026-07-15T21:41:20.045Z",
+    "modified": "2026-07-15T21:41:20.045Z"
   },
   "patch": {
     "points": [
@@ -463,19 +463,35 @@
           "y": 230
         },
         "params": {
-          "from": {
-            "r": 255,
-            "g": 120,
-            "b": 0
-          },
-          "to": {
-            "r": 255,
-            "g": 40,
-            "b": 80
-          },
+          "stops": [
+            {
+              "id": "a",
+              "position": 0,
+              "colour": {
+                "r": 255,
+                "g": 120,
+                "b": 0
+              }
+            },
+            {
+              "id": "b",
+              "position": 1,
+              "colour": {
+                "r": 255,
+                "g": 40,
+                "b": 80
+              }
+            }
+          ],
           "axis": "x",
+          "centreX": 0.5,
+          "centreY": 0.5,
+          "centreZ": 0.5,
           "offset": 0,
-          "scale": 1
+          "scale": 1,
+          "phase": 0,
+          "speed": 0,
+          "mirror": false
         },
         "preview": true
       },
@@ -487,19 +503,35 @@
           "y": 380
         },
         "params": {
-          "from": {
-            "r": 0,
-            "g": 80,
-            "b": 255
-          },
-          "to": {
-            "r": 80,
-            "g": 255,
-            "b": 200
-          },
+          "stops": [
+            {
+              "id": "a",
+              "position": 0,
+              "colour": {
+                "r": 0,
+                "g": 80,
+                "b": 255
+              }
+            },
+            {
+              "id": "b",
+              "position": 1,
+              "colour": {
+                "r": 80,
+                "g": 255,
+                "b": 200
+              }
+            }
+          ],
           "axis": "x",
+          "centreX": 0.5,
+          "centreY": 0.5,
+          "centreZ": 0.5,
           "offset": 0,
-          "scale": 1
+          "scale": 1,
+          "phase": 0,
+          "speed": 0,
+          "mirror": false
         }
       },
       {

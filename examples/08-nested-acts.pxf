@@ -2,8 +2,8 @@
   "version": "1.4.0",
   "meta": {
     "name": "Nested Acts",
-    "created": "2026-06-13T21:01:06.466Z",
-    "modified": "2026-06-13T21:01:06.466Z"
+    "created": "2026-07-15T21:41:20.046Z",
+    "modified": "2026-07-15T21:41:20.046Z"
   },
   "patch": {
     "points": [
@@ -813,14 +813,18 @@
         }
       },
       {
-        "id": "clock",
-        "type": "time/bpm-clock",
+        "id": "timeline",
+        "type": "time/timeline",
         "position": {
           "x": 80,
           "y": 80
         },
         "params": {
+          "durationMode": "beats",
+          "durationSec": 8,
+          "durationBeats": 32,
           "bpm": 120,
+          "loop": true,
           "offset": 0
         }
       },
@@ -852,7 +856,7 @@
         },
         "params": {
           "seconds": 16,
-          "loop": true
+          "loop": false
         }
       },
       {
@@ -967,19 +971,35 @@
           "y": 680
         },
         "params": {
-          "from": {
-            "r": 0,
-            "g": 40,
-            "b": 120
-          },
-          "to": {
-            "r": 200,
-            "g": 255,
-            "b": 180
-          },
+          "stops": [
+            {
+              "id": "a",
+              "position": 0,
+              "colour": {
+                "r": 0,
+                "g": 40,
+                "b": 120
+              }
+            },
+            {
+              "id": "b",
+              "position": 1,
+              "colour": {
+                "r": 200,
+                "g": 255,
+                "b": 180
+              }
+            }
+          ],
           "axis": "xy",
+          "centreX": 0.5,
+          "centreY": 0.5,
+          "centreZ": 0.5,
           "offset": 0,
-          "scale": 1
+          "scale": 1,
+          "phase": 0,
+          "speed": 0,
+          "mirror": false
         }
       },
       {
@@ -1196,7 +1216,7 @@
       },
       {
         "id": "i4",
-        "fromNode": "clock",
+        "fromNode": "timeline",
         "fromPort": "beat",
         "toNode": "seq-in",
         "toPort": "beat"
@@ -1214,6 +1234,13 @@
         "fromPort": "value",
         "toNode": "tfm",
         "toPort": "translate"
+      },
+      {
+        "id": "o2t",
+        "fromNode": "timeline",
+        "fromPort": "loop",
+        "toNode": "ramp",
+        "toPort": "trigger"
       },
       {
         "id": "o3",
@@ -1266,7 +1293,7 @@
       },
       {
         "id": "m3",
-        "fromNode": "clock",
+        "fromNode": "timeline",
         "fromPort": "beat",
         "toNode": "seq-out",
         "toPort": "beat"

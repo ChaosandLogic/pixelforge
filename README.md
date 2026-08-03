@@ -10,15 +10,13 @@ PixelForge is free and open source under the **GNU AGPL-3.0**. Everything — th
 Editor, the Player, and the engine — is in this repository and free to build,
 run, and modify.
 
-See [PIXELFORGE_PLAN.md](PIXELFORGE_PLAN.md) for the full development plan.
-
 ## Example patches
 
 Ten example projects ship in [`examples/`](examples/). Use **Examples ▾** in the toolbar to load one — six starter demos plus four complex patches (club show, nested sequences, multi-fixture venue install, and signal labyrinth).
 
 ## Architecture
 
-The real-time pipeline runs in a dedicated Electron `utilityProcess` (the engine host), fully isolated from the UI:
+The real-time pipeline runs in a dedicated Electron `utilityProcess` (the engine host), fully isolated from the UI. Generators include a **Shader** node with curated 2D GLSL presets (plasma, tunnel, ripples, …); live Editor/Player render via WebGL, while headless Player and export bake use matching CPU samplers.
 
 ```
 Renderer (React, UI only)
@@ -104,7 +102,7 @@ src/
 ├── preload/       # Context bridge + engine MessagePort forwarding
 ├── engine-host/   # utilityProcess: FrameClock, evaluator, output sender
 ├── shared/        # Types shared between renderer and engine host
-└── renderer/      # React UI: toolbar, network panel, 2D/3D preview, status bar
+└── renderer/src/  # React UI: toolbar, network panel, 2D/3D preview, status bar
     └── visualiser/  # Three.js InstancedMesh + STL reference mesh
 ```
 

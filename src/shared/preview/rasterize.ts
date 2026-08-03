@@ -140,6 +140,3 @@ export function rasterizeLayout(
 
   return { data, width: size, height: size }
 }
-
-/** @deprecated Use rasterizeStream — kept as alias for callers migrating. */
-export const rasterizePixels = rasterizeStream

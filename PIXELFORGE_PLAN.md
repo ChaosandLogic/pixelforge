@@ -1,5 +1,7 @@
 # PixelForge — Cursor Development Plan
 
+> **Historical roadmap.** This document guided early development. Checkboxes and the planned tree may lag the shipped codebase — prefer [README.md](README.md) and `src/` for current architecture.
+
 > Node-based LED sequencer with sACN output, 3D visualisation, and live effect authoring.
 
 ---

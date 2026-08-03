@@ -50,6 +50,17 @@ function params(type: string, overrides: Record<string, ParamValue> = {}): Recor
   return { ...defaultParams(def), ...overrides }
 }
 
+/** Two-stop ramp for generator/gradient (replaces legacy from/to params). */
+function gradientStops(
+  from: { r: number; g: number; b: number },
+  to: { r: number; g: number; b: number }
+): ParamValue {
+  return [
+    { id: 'a', position: 0, colour: from },
+    { id: 'b', position: 1, colour: to }
+  ]
+}
+
 function node(id: string, type: string, x: number, y: number, p: Record<string, ParamValue> = {}, preview = false): NodeData {
   return { id, type, position: { x, y }, params: p, ...(preview ? { preview: true } : {}) }
 }
@@ -216,20 +227,26 @@ const specs: PatchSpec[] = [
     })
   },
   {
-    name: 'BPM Sequence',
+    name: 'Timeline Sequence',
     filename: '04-bpm-sequence.pxf',
-    description: 'Four-segment show with crossfades synced to BPM clock. Use ] to advance manually.',
+    description:
+      'Four-segment show driven by Timeline (16-beat loop). Beat clocks Sequence; phase scrolls the gradient. Use ] to advance manually.',
     layout: lineLayout(64),
     buildGraph: (layout) => ({
       nodes: [
         node('fix', 'setup/fixture', col(0), row(2), params('setup/fixture', { fixtureId: fid(layout, 0) })),
-        node('clock', 'time/bpm-clock', col(0), row(0), params('time/bpm-clock', { bpm: 128 })),
+        node('timeline', 'time/timeline', col(0), row(0), params('time/timeline', {
+          durationMode: 'beats',
+          durationBeats: 16,
+          bpm: 128,
+          loop: true
+        })),
         node('red', 'generator/solid-colour', col(1), row(0), params('generator/solid-colour', { colour: { r: 220, g: 40, b: 20 } })),
         node('wave', 'generator/wave', col(1), row(1), params('generator/wave', {
           colourA: { r: 0, g: 0, b: 0 },
           colourB: { r: 30, g: 80, b: 255 }
         })),
-        node('grad', 'generator/gradient', col(1), row(2), params('generator/gradient')),
+        node('grad', 'generator/gradient', col(1), row(2), params('generator/gradient', { speed: 0 })),
         node('noise', 'generator/noise', col(1), row(3), params('generator/noise', { noiseType: 'perlin4d-time' })),
         node('seq', 'sequence/sequence', col(2), row(1.5), params('sequence/sequence', {
           bpm: 128,
@@ -250,7 +267,8 @@ const specs: PatchSpec[] = [
         edge('e0r', 'fix', 'resolution', 'wave', 'resolution'),
         edge('e0s', 'fix', 'resolution', 'grad', 'resolution'),
         edge('e0t', 'fix', 'resolution', 'noise', 'resolution'),
-        edge('e1', 'clock', 'beat', 'seq', 'beat'),
+        edge('e1', 'timeline', 'beat', 'seq', 'beat'),
+        edge('e1p', 'timeline', 'phase', 'grad', 'phase'),
         edge('e2', 'red', 'pixels', 'seq', 'segment_0'),
         edge('e3', 'wave', 'pixels', 'seq', 'segment_1'),
         edge('e4', 'grad', 'pixels', 'seq', 'segment_2'),
@@ -297,12 +315,10 @@ const specs: PatchSpec[] = [
         node('lfo', 'time/lfo', col(0), row(0), params('time/lfo', { frequency: 0.5, waveform: 'square' })),
         node('cmp', 'logic/compare', col(1), row(0), params('logic/compare', { op: 'gt', b: 0.5 })),
         node('warm', 'generator/gradient', col(1), row(1), params('generator/gradient', {
-          from: { r: 255, g: 120, b: 0 },
-          to: { r: 255, g: 40, b: 80 }
+          stops: gradientStops({ r: 255, g: 120, b: 0 }, { r: 255, g: 40, b: 80 })
         }), true),
         node('cool', 'generator/gradient', col(1), row(2), params('generator/gradient', {
-          from: { r: 0, g: 80, b: 255 },
-          to: { r: 80, g: 255, b: 200 }
+          stops: gradientStops({ r: 0, g: 80, b: 255 }, { r: 80, g: 255, b: 200 })
         })),
         node('sw', 'logic/switch', col(2), row(1.5), params('logic/switch', { threshold: 0.5 })),
         node('out', 'output/pixel', col(3), row(1.5))
@@ -327,13 +343,18 @@ const specs: PatchSpec[] = [
     name: 'Club Show (Matrix)',
     filename: '07-club-show.pxf',
     description:
-      'Full 4-act matrix show: per-act FX chains, BPM sequence, audio-driven intensity + strobe hit, vignette finish.',
+      'Full 4-act matrix show: Timeline-driven sequence (40-beat loop), per-act FX chains, audio intensity + strobe, vignette finish.',
     layout: matrixLayout(16, 8),
     buildGraph: (layout) => ({
       nodes: [
         // Controls
         node('fix', 'setup/fixture', col(0), row(2), params('setup/fixture', { fixtureId: fid(layout, 0) })),
-        node('clock', 'time/bpm-clock', col(0), row(0), params('time/bpm-clock', { bpm: 128 })),
+        node('timeline', 'time/timeline', col(0), row(0), params('time/timeline', {
+          durationMode: 'beats',
+          durationBeats: 40,
+          bpm: 128,
+          loop: true
+        })),
         node('audio', 'audio/audio-in', col(0), row(1), params('audio/audio-in', { source: 'file', file: '' })),
         node('lfo1', 'time/lfo', col(0), row(3), params('time/lfo', { frequency: 0.15, waveform: 'sine' })),
         node('lfo2', 'time/lfo', col(0), row(4), params('time/lfo', { frequency: 0.4, waveform: 'triangle' })),
@@ -406,7 +427,7 @@ const specs: PatchSpec[] = [
         edge('s1', 'msk', 'pixels', 'seq', 'segment_1'),
         edge('s2', 'lvl', 'pixels', 'seq', 'segment_2'),
         edge('s3', 'hit', 'pixels', 'seq', 'segment_3'),
-        edge('s4', 'clock', 'beat', 'seq', 'beat'),
+        edge('s4', 'timeline', 'beat', 'seq', 'beat'),
         edge('s5', 'audio', 'low', 'seq', 'intensity'),
 
         edge('p1', 'seq', 'pixels', 'cc', 'pixels'),
@@ -421,14 +442,19 @@ const specs: PatchSpec[] = [
     name: 'Nested Acts',
     filename: '08-nested-acts.pxf',
     description:
-      'Sequence inside a sequence: fast inner 3-beat acts within slower outer acts, shared BPM clock, audio crossfade control.',
+      'Sequence inside a sequence: Timeline (32-beat loop) clocks both layers; loop trigger restarts Ramp; audio crossfade control.',
     layout: lineLayout(128),
     buildGraph: (layout) => ({
       nodes: [
         node('fix', 'setup/fixture', col(0), row(2), params('setup/fixture', { fixtureId: fid(layout, 0) })),
-        node('clock', 'time/bpm-clock', col(0), row(0), params('time/bpm-clock', { bpm: 120 })),
+        node('timeline', 'time/timeline', col(0), row(0), params('time/timeline', {
+          durationMode: 'beats',
+          durationBeats: 32,
+          bpm: 120,
+          loop: true
+        })),
         node('audio', 'audio/audio-in', col(0), row(1), params('audio/audio-in')),
-        node('ramp', 'time/ramp', col(0), row(3), params('time/ramp', { seconds: 16, loop: true })),
+        node('ramp', 'time/ramp', col(0), row(3), params('time/ramp', { seconds: 16, loop: false })),
 
         // Inner sequence sources
         node('solid', 'generator/solid-colour', col(1), row(0), params('generator/solid-colour', { colour: { r: 180, g: 20, b: 60 } })),
@@ -441,8 +467,7 @@ const specs: PatchSpec[] = [
 
         // Outer act B — heavy processing chain
         node('grad', 'generator/gradient', col(1), row(4), params('generator/gradient', {
-          from: { r: 0, g: 40, b: 120 },
-          to: { r: 200, g: 255, b: 180 },
+          stops: gradientStops({ r: 0, g: 40, b: 120 }, { r: 200, g: 255, b: 180 }),
           axis: 'xy'
         })),
         node('tfm', 'transform/transform', col(2), row(4), params('transform/transform', { speed: 0.25, scale: 1.5 })),
@@ -475,10 +500,11 @@ const specs: PatchSpec[] = [
         edge('i1', 'solid', 'pixels', 'seq-in', 'segment_0'),
         edge('i2', 'wave', 'pixels', 'seq-in', 'segment_1'),
         edge('i3', 'noise', 'pixels', 'seq-in', 'segment_2'),
-        edge('i4', 'clock', 'beat', 'seq-in', 'beat'),
+        edge('i4', 'timeline', 'beat', 'seq-in', 'beat'),
 
         edge('o1', 'grad', 'pixels', 'tfm', 'pixels'),
         edge('o2', 'ramp', 'value', 'tfm', 'translate'),
+        edge('o2t', 'timeline', 'loop', 'ramp', 'trigger'),
         edge('o3', 'tfm', 'pixels', 'hsv', 'pixels'),
         edge('o4', 'hsv', 'pixels', 'rot', 'pixels'),
         edge('o5', 'rot', 'pixels', 'mix', 'a'),
@@ -487,7 +513,7 @@ const specs: PatchSpec[] = [
 
         edge('m1', 'seq-in', 'pixels', 'seq-out', 'segment_0'),
         edge('m2', 'mix', 'pixels', 'seq-out', 'segment_1'),
-        edge('m3', 'clock', 'beat', 'seq-out', 'beat'),
+        edge('m3', 'timeline', 'beat', 'seq-out', 'beat'),
         edge('m4', 'audio', 'high', 'seq-out', 'intensity'),
 
         edge('f1', 'seq-out', 'pixels', 'lvl', 'pixels'),
@@ -500,11 +526,11 @@ const specs: PatchSpec[] = [
     name: 'Venue Install',
     filename: '09-venue-install.pxf',
     description:
-      'Bar strip + centre ring + back-wall matrix: per-fixture branches composited with spherical base and logic accents.',
+      'Bar + ring + matrix: fixture-scoped branches mapped back with Fixture, Merge compositing, Timeline sequence, spherical base.',
     layout: venueLayout(),
     buildGraph: (layout) => ({
       nodes: [
-        // Per-fixture scopes
+        // Per-fixture scope sources
         node('fix-bar', 'setup/fixture', col(0), row(0), params('setup/fixture', { fixtureId: fid(layout, 0) })),
         node('fix-ring', 'setup/fixture', col(0), row(2), params('setup/fixture', { fixtureId: fid(layout, 1) })),
         node('fix-wall', 'setup/fixture', col(0), row(4), params('setup/fixture', { fixtureId: fid(layout, 2) })),
@@ -514,16 +540,23 @@ const specs: PatchSpec[] = [
         node('lfo-b', 'time/lfo', col(0), row(6.5), params('time/lfo', { frequency: 0.25, waveform: 'saw' })),
         node('lfo-c', 'time/lfo', col(0), row(7.5), params('time/lfo', { frequency: 1.2, waveform: 'square' })),
         node('delay', 'time/delay', col(0), row(8.5), params('time/delay', { seconds: 0.15 })),
-        node('clock', 'time/bpm-clock', col(0), row(9.5), params('time/bpm-clock', { bpm: 90 })),
+        node('timeline', 'time/timeline', col(0), row(9.5), params('time/timeline', {
+          durationMode: 'beats',
+          durationBeats: 36,
+          bpm: 90,
+          loop: true
+        })),
 
         // Branch A — bar
         node('gra', 'generator/gradient', col(1), row(0), params('generator/gradient', { axis: 'x', scale: 2 })),
         node('sca', 'transform/scale', col(2), row(0), params('transform/scale', { scale: 2 })),
         node('off', 'transform/offset', col(3), row(0), params('transform/offset', { speed: 0.15 })),
+        node('map-bar', 'setup/fixture', col(4), row(0), params('setup/fixture', { fixtureId: fid(layout, 0) })),
 
         // Branch B — ring
         node('cyl', 'spatial/cylindrical', col(1), row(2), params('spatial/cylindrical', { speed: 0.06 })),
         node('rot', 'transform/rotate', col(2), row(2), params('transform/rotate', { centreU: 0.5, centreV: 0.55 })),
+        node('map-ring', 'setup/fixture', col(4), row(2), params('setup/fixture', { fixtureId: fid(layout, 1) })),
 
         // Branch C — wall
         node('noi', 'generator/noise', col(1), row(4), params('generator/noise', { scale: 4, speed: 0.4, noiseType: 'perlin4d-time' })),
@@ -531,23 +564,21 @@ const specs: PatchSpec[] = [
           dark: { r: 10, g: 0, b: 40 },
           light: { r: 255, g: 100, b: 180 }
         })),
+        node('map-wall', 'setup/fixture', col(4), row(4), params('setup/fixture', { fixtureId: fid(layout, 2) })),
 
-        // Spherical ambient base (full patch)
+        // Spherical ambient base (full patch) + merge fixture branches
         node('sph', 'spatial/spherical', col(1), row(6), params('spatial/spherical', { speed: 0.02 }), true),
-
-        // Compositing tree
-        node('add1', 'composite/add', col(4), row(1), params('composite/add', { amount: 0.7 })),
-        node('add2', 'composite/add', col(5), row(2), params('composite/add', { amount: 0.55 })),
+        node('merge', 'composite/merge', col(5), row(2), params('composite/merge', { mode: 'add' })),
         node('ovr', 'composite/over', col(6), row(3), params('composite/over', { opacity: 0.65 })),
 
         // Logic accent layer
-        node('cmp', 'logic/compare', col(4), row(5), params('logic/compare', { op: 'gt', b: 0.7 })),
-        node('str', 'generator/strobe', col(4), row(6), params('generator/strobe', { rate: 3, duty: 0.1 })),
-        node('sw', 'logic/switch', col(5), row(5.5), params('logic/switch')),
-        node('scr', 'composite/screen', col(6), row(5.5), params('composite/screen', { amount: 0.25 })),
+        node('cmp', 'logic/compare', col(5), row(5), params('logic/compare', { op: 'gt', b: 0.7 })),
+        node('str', 'generator/strobe', col(5), row(6), params('generator/strobe', { rate: 3, duty: 0.1 })),
+        node('sw', 'logic/switch', col(6), row(5.5), params('logic/switch')),
+        node('scr', 'composite/screen', col(7), row(5.5), params('composite/screen', { amount: 0.25 })),
 
         // Master sequence + output
-        node('seq', 'sequence/sequence', col(7), row(3), params('sequence/sequence', {
+        node('seq', 'sequence/sequence', col(8), row(3), params('sequence/sequence', {
           bpm: 90,
           segments: [
             { id: 'm1', duration: 12, transition: { type: 'crossfade', duration: 3, curve: 'ease-in-out' } },
@@ -555,8 +586,8 @@ const specs: PatchSpec[] = [
             { id: 'm3', duration: 12, transition: { type: 'crossfade', duration: 3, curve: 'ease-in-out' } }
           ]
         })),
-        node('cc', 'colour/correct', col(8), row(3), params('colour/correct', { lift: 0.02, gamma: 1.1 })),
-        node('out', 'output/pixel', col(9), row(3))
+        node('cc', 'colour/correct', col(9), row(3), params('colour/correct', { lift: 0.02, gamma: 1.1 })),
+        node('out', 'output/pixel', col(10), row(3))
       ],
       edges: [
         edge('b0a', 'fix-bar', 'pixels', 'gra', 'pixels'),
@@ -569,17 +600,19 @@ const specs: PatchSpec[] = [
         edge('b1', 'gra', 'pixels', 'sca', 'pixels'),
         edge('b2', 'lfo-a', 'value', 'off', 'translate'),
         edge('b3', 'sca', 'pixels', 'off', 'pixels'),
+        edge('b3m', 'off', 'pixels', 'map-bar', 'pixels'),
 
         edge('b4', 'cyl', 'pixels', 'rot', 'pixels'),
         edge('b5', 'lfo-b', 'value', 'rot', 'angle'),
+        edge('b5m', 'rot', 'pixels', 'map-ring', 'pixels'),
 
         edge('b6', 'noi', 'pixels', 'pal', 'pixels'),
+        edge('b6m', 'pal', 'pixels', 'map-wall', 'pixels'),
 
-        edge('x1', 'off', 'pixels', 'add1', 'a'),
-        edge('x2', 'rot', 'pixels', 'add1', 'b'),
-        edge('x3', 'add1', 'pixels', 'add2', 'a'),
-        edge('x4', 'pal', 'pixels', 'add2', 'b'),
-        edge('x5', 'add2', 'pixels', 'ovr', 'b'),
+        edge('x1', 'map-bar', 'pixels', 'merge', 'a'),
+        edge('x2', 'map-ring', 'pixels', 'merge', 'b'),
+        edge('x3', 'map-wall', 'pixels', 'merge', 'c'),
+        edge('x5', 'merge', 'pixels', 'ovr', 'b'),
         edge('x6', 'sph', 'pixels', 'ovr', 'a'),
 
         edge('l1', 'lfo-c', 'value', 'delay', 'value'),
@@ -591,9 +624,9 @@ const specs: PatchSpec[] = [
         edge('l7', 'ovr', 'pixels', 'scr', 'b'),
 
         edge('s1', 'scr', 'pixels', 'seq', 'segment_0'),
-        edge('s2', 'add2', 'pixels', 'seq', 'segment_1'),
+        edge('s2', 'merge', 'pixels', 'seq', 'segment_1'),
         edge('s3', 'sph', 'pixels', 'seq', 'segment_2'),
-        edge('s4', 'clock', 'beat', 'seq', 'beat'),
+        edge('s4', 'timeline', 'beat', 'seq', 'beat'),
 
         edge('f1', 'seq', 'pixels', 'cc', 'pixels'),
         edge('f2', 'cc', 'pixels', 'out', 'pixels')
