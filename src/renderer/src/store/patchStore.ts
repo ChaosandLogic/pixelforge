@@ -11,6 +11,7 @@ import {
   type LayoutData,
   type Vec3
 } from '@shared/patch/layout'
+import { MAX_PIXELS } from '@shared/messages'
 import { pointsToPositions, type PatchPoint } from '@shared/patch/types'
 import { inferResolutionFromLayout, type Resolution } from '@shared/spatial/resolution'
 import { engineBridge, onEngineConnect } from '@/engine/bridge'
@@ -34,6 +35,7 @@ interface PatchState {
   duplicateFixture: (id: string) => void
   importFile: () => Promise<void>
   exportCsv: () => Promise<void>
+  resetToDefault: () => void
 }
 
 function syncToEngine(points: PatchPoint[], resolution: Resolution, layout: LayoutData | null): void {
@@ -141,7 +143,7 @@ export const usePatchStore = create<PatchState>((set, get) => {
       resolution,
       layoutOverflow: overflow,
       source: layoutSource(layout),
-      lastError: overflow ? `Layout exceeds ${8192} points and was truncated` : null
+      lastError: overflow ? `Layout exceeds ${MAX_PIXELS} points and was truncated` : null
     })
     syncToEngine(points, resolution, layout)
   }
@@ -248,6 +250,10 @@ export const usePatchStore = create<PatchState>((set, get) => {
       const { points } = get()
       const lines = ['id,x,y,z', ...points.map((p) => `${p.id},${p.x},${p.y},${p.z}`)]
       await window.pixelforge.saveTextFile(lines.join('\n'), 'patch.csv')
+    },
+
+    resetToDefault: () => {
+      applyLayout(createDefaultLayout())
     }
   }
 })

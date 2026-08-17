@@ -46,7 +46,7 @@ Enable **Loop** on the playlist item if you want continuous playback.
 ## Notes
 
 - Step time is **${manifest.stepTimeMs} ms** per frame (~${(1000 / manifest.stepTimeMs).toFixed(1)} fps).
-- Baked sequences do not support live audio, MIDI, or OSC — use sACN streaming from PixelForge Player for interactive shows.
+- Baked sequences do not support live audio, MIDI, OSC, or Syphon/Spout — use sACN streaming from PixelForge Player for interactive shows.
 `
 }
 

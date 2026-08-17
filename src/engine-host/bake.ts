@@ -4,6 +4,7 @@ import { SHADER_NODE_TYPE } from '@shared/graph/nodes/generators/Shader'
 import type { AudioLevels, GraphData, MediaFrame } from '@shared/graph/types'
 import { BufferPool } from './evaluator/BufferPool'
 import { Evaluator } from './evaluator/Evaluator'
+import type { GpuClient } from './gpu/GpuClient'
 
 import type { FixtureRange } from '@shared/patch/layout'
 
@@ -21,6 +22,7 @@ export interface BakeInput {
   audioLevels: ReadonlyMap<string, AudioLevels>
   durationMs: number
   fps: number
+  gpu?: GpuClient | null
 }
 
 export interface BakeOutput {
@@ -77,6 +79,7 @@ export function bakeFrames(input: BakeInput): BakeOutput {
     input.fixtureRanges
   )
   evaluator.setGraph(input.graph)
+  if (input.gpu !== undefined && input.gpu !== null) evaluator.setGpuClient(input.gpu)
   if (evaluator.graphError !== null) return fail(evaluator.graphError)
 
   const routes = input.graph.nodes.filter((n) => n.type === OUTPUT_NODE_TYPE)

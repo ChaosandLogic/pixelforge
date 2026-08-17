@@ -99,6 +99,13 @@ export interface EngineStatus {
   outputCount: number
   /** Per-route output errors keyed by output node id */
   outputErrors: Record<string, string | null>
+  /** Syphon (macOS) / Spout (Windows) native module loaded */
+  shareAvailable: boolean
+  sharePlatform: 'syphon' | 'spout' | 'none'
+  /** Discovered Syphon/Spout senders on the machine */
+  shareSenders: string[]
+  gpuAvailable: boolean
+  gpuError: string | null
 }
 
 /** Live thumbnail of one node's primary output. */

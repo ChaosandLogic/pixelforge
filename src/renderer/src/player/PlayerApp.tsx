@@ -32,6 +32,12 @@ function PlayerShell({
     if (autoOutput) setOutputActive(true)
   }
 
+  const openShow = async (): Promise<void> => {
+    if (window.pixelforgePlayer === undefined) return
+    const project = await window.pixelforgePlayer.openProject()
+    if (project !== null) loadProject(project)
+  }
+
   useEffect(() => {
     if (window.pixelforgePlayer === undefined) return
     void window.pixelforgePlayer.getBootStatus().then(({ project, autoOutput }) => {
@@ -39,11 +45,14 @@ function PlayerShell({
     })
   }, [])
 
-  const openShow = async (): Promise<void> => {
-    if (window.pixelforgePlayer === undefined) return
-    const project = await window.pixelforgePlayer.openProject()
-    if (project !== null) loadProject(project)
-  }
+  useEffect(() => {
+    const onMessage = (event: MessageEvent): void => {
+      const data = event.data as { type?: string } | undefined
+      if (data?.type === 'pixelforge-open-show') void openShow()
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
 
   return (
     <div className="app player-app">

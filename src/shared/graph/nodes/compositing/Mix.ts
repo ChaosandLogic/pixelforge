@@ -23,6 +23,7 @@ export const Mix: NodeTypeDef = {
     { name: 'mode', label: 'Mode', type: 'select', default: 'mix', options: ['mix', 'add', 'multiply', 'screen'] },
     { name: 'amount', label: 'Amount', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'composite/mix' },
   evaluate(inputs, params, ctx) {
     const a = pixelsInput(inputs, 'a')
     const b = pixelsInput(inputs, 'b')

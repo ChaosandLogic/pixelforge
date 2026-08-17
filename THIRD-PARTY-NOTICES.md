@@ -30,6 +30,7 @@ copyleft obligations on this project.
 | three | MIT | https://threejs.org |
 | sacn | Apache-2.0 | https://github.com/k-yle/sACN |
 | @sentry/electron | MIT | https://github.com/getsentry/sentry-electron |
+| @napolab/texture-bridge-core | MIT | https://github.com/naporin0624/electron-texture-bridge |
 | electron-updater | MIT | https://github.com/electron-userland/electron-builder |
 | electron | MIT | https://www.electronjs.org |
 

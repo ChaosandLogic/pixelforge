@@ -5,7 +5,6 @@ import {
   type ShaderPreset
 } from '@shared/graph/shaders/presets'
 import type { ColourValue, ParamValue } from '@shared/graph/types'
-import { engineBridge } from '@/engine/bridge'
 import { usePatchStore } from '@/store/patchStore'
 import { useGraphStore, type PfNode } from '@/store/graphStore'
 
@@ -222,28 +221,6 @@ function ensureProgram(entry: ShaderEntry): ShaderProgram | null {
   }
 }
 
-function readRgb(ctx: WebGL2RenderingContext, width: number, height: number): Uint8Array {
-  const rgba = new Uint8Array(width * height * 4)
-  ctx.readPixels(0, 0, width, height, ctx.RGBA, ctx.UNSIGNED_BYTE, rgba)
-  const rgb = new Uint8Array(width * height * 3)
-  // WebGL origin is bottom-left; flip Y to match Image/Video top-left UV.
-  for (let y = 0; y < height; y++) {
-    const srcY = height - 1 - y
-    for (let x = 0; x < width; x++) {
-      const si = (srcY * width + x) * 4
-      const di = (y * width + x) * 3
-      rgb[di] = rgba[si] ?? 0
-      rgb[di + 1] = rgba[si + 1] ?? 0
-      rgb[di + 2] = rgba[si + 2] ?? 0
-    }
-  }
-  return rgb
-}
-
-function blackFrame(width: number, height: number): Uint8Array {
-  return new Uint8Array(width * height * 3)
-}
-
 function sampleAll(): void {
   const ctx = ensureContext()
   const { width, height } = sampleDimensions()
@@ -263,25 +240,11 @@ function sampleAll(): void {
     if (node === undefined) continue
 
     if (ctx === null || canvas === null) {
-      engineBridge.send({
-        type: 'media-frame',
-        nodeId,
-        width,
-        height,
-        data: blackFrame(width, height)
-      })
       continue
     }
 
     const program = ensureProgram(entry)
     if (program === null) {
-      engineBridge.send({
-        type: 'media-frame',
-        nodeId,
-        width,
-        height,
-        data: blackFrame(width, height)
-      })
       continue
     }
 
@@ -304,9 +267,6 @@ function sampleAll(): void {
     ctx.uniform3f(program.uColourB, colourB.r / 255, colourB.g / 255, colourB.b / 255)
     ctx.uniform1f(program.uIntensity, intensity)
     ctx.drawArrays(ctx.TRIANGLES, 0, 3)
-
-    const rgb = readRgb(ctx, width, height)
-    engineBridge.send({ type: 'media-frame', nodeId, width, height, data: rgb })
   }
 }
 

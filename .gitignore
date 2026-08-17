@@ -35,6 +35,9 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# GPU sidecar
+gpu-engine/target/
+
 # Editor / tooling
 .vscode/
 .idea/

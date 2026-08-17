@@ -88,11 +88,22 @@ On Linux, automatic login registration is limited — Player shows a manual auto
 
 ## Using it
 
-1. Pick a network interface in the left panel (or leave on system default).
-2. Set the sACN universe and pixel count in the toolbar.
-3. Choose a colour and toggle **Output ON**.
-4. Use the **3D** preview tab: load an STL reference mesh, orbit with drag, and see live pixel colours on your patch positions.
-5. The status bar shows engine fps, packets/sec, and any send errors. A real sACN node patched to that universe will light up.
+1. **File → New / Open / Save** (or **Cmd/Ctrl+S**) — projects are `.pxf` files. **Examples ▾** in the toolbar loads bundled demos.
+2. Build or import a patch in the left panel: layout builder (line / matrix / ring), or CSV/JSON point import. Pixel order in the patch **is** channel order.
+3. Author the node graph. Wire effect nodes into a **Pixel Output** node and choose sACN, Art-Net, or DDP (plus start universe / host). **Syphon / Spout In** pulls a texture from Resolume, VDMX, OBS, or TouchDesigner; **Syphon / Spout Out** publishes the LED image for those apps (macOS/Windows).
+4. Pick a network interface in the left panel (or leave the system default).
+5. Toggle **Output ON**. A controller patched to that universe/stream will light up.
+6. Use the **3D** preview tab to load an STL reference mesh and see live pixel colours on the layout.
+7. The status bar shows engine fps, packets/sec, and send errors. **Export ▾** writes a Player show folder, ESP32 ALED, or Falcon Player FSEQ.
+
+## Limits
+
+These are current product limits, not bugs:
+
+- **RGB only.** The engine emits a packed RGB stream. There is no RGBW / white-channel derivation, and no per-pixel universe/channel overrides — addressing is sequential from the Pixel Output start universe (170 RGB pixels per sACN/Art-Net universe).
+- **8,192 pixels max** (~48 sACN universes). Larger layouts are truncated with a warning in the patch panel.
+- **Live audio, MIDI, and keyboard** are captured in the Editor/Player window and pushed to the engine. They do not run in **headless** Player or in baked ESP/FSEQ exports. Use OSC In, Syphon/Spout In (engine-side, macOS/Windows), or sACN streaming from a windowed Player for interactive rack shows.
+- **Syphon / Spout** is macOS (Syphon Metal) and Windows (Spout) only. Frames are copied through CPU RGBA (same path as video), so 1080p is downsampled before it hits the LED sampler. Linux shows the nodes as unavailable.
 
 ## Project layout
 

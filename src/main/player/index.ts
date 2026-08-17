@@ -97,6 +97,14 @@ async function runHeadless(plan: StartupPlan): Promise<void> {
   engine.start()
   engine.ensureClientPort()
 
+  engine.onRestart(() => {
+    if (bootPlan === null) return
+    console.error('[player] Engine host restarted; reloading show')
+    void applyPlanToEngine(bootPlan).catch((err: unknown) => {
+      console.error('[player] Failed to restore show after engine restart:', err)
+    })
+  })
+
   engine.onMessage((msg) => {
     if (msg.type === 'status') {
       const s = msg.status

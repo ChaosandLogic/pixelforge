@@ -1,20 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { createProjectFile, type ExampleManifestEntry, type ProjectFile } from '@shared/project'
+import { type ExampleManifestEntry } from '@shared/project'
 import { useEngineStore } from '@/store/engineStore'
 import { useGraphStore } from '@/store/graphStore'
-import { usePatchStore } from '@/store/patchStore'
 import { useUiStore } from '@/store/uiStore'
-import { useVisualiserStore } from '@/store/visualiserStore'
-import { loadProjectIntoStores } from '@/project/loadProject'
 import { ExportShowDialog } from '@/ui/ExportShowDialog'
 import { ExportEspDialog } from '@/ui/ExportEspDialog'
 import { ExportFseqDialog } from '@/ui/ExportFseqDialog'
 import type { ShowStartupHints } from '@shared/playerStartup'
-
-function loadProject(project: ProjectFile): void {
-  loadProjectIntoStores(project)
-  useVisualiserStore.getState().loadSettings(project.visualiser)
-}
+import { buildCurrentProject, openExample, openProject, saveProject } from '@/project/projectActions'
 
 export function Toolbar({
   onShowAbout,
@@ -78,34 +71,8 @@ export function Toolbar({
     return () => document.removeEventListener('mousedown', onDoc)
   }, [helpOpen])
 
-  const buildProjectFile = (): ProjectFile => {
-    const graph = useGraphStore.getState().toGraphData()
-    const { points, layout } = usePatchStore.getState()
-    const patch = layout !== null ? { points, layout } : { points }
-    // Preserve the loaded project's name/created timestamp instead of resetting
-    // to "untitled" and a fresh date on every save.
-    const meta = useUiStore.getState().projectMeta
-    return {
-      ...createProjectFile(meta?.name ?? 'untitled', graph, patch, useEngineStore.getState().config, meta?.created),
-      visualiser: useVisualiserStore.getState().toSettings()
-    }
-  }
-
-  const saveProject = async (): Promise<void> => {
-    const project = buildProjectFile()
-    try {
-      const savedPath = await window.pixelforge.saveProject(project)
-      if (savedPath !== null) {
-        const base = savedPath.replace(/^.*[\\/]/, '').replace(/\.pxf$/i, '')
-        useUiStore.getState().setProjectMeta({ name: base, created: project.meta.created })
-      }
-    } catch (err) {
-      alert(`Failed to save project: ${err instanceof Error ? err.message : String(err)}`)
-    }
-  }
-
   const exportShow = async (startup?: ShowStartupHints): Promise<void> => {
-    const project = buildProjectFile()
+    const project = buildCurrentProject()
     try {
       const result = await window.pixelforge.exportShow(project, startup)
       if (result !== null) {
@@ -113,27 +80,6 @@ export function Toolbar({
       }
     } catch (err) {
       alert(`Failed to export show: ${err instanceof Error ? err.message : String(err)}`)
-    }
-  }
-
-  const openProject = async (): Promise<void> => {
-    try {
-      const project = await window.pixelforge.openProject()
-      if (project === null) return
-      loadProject(project)
-    } catch (err) {
-      alert(`Failed to open project: ${err instanceof Error ? err.message : String(err)}`)
-    }
-  }
-
-  const openExample = async (filename: string): Promise<void> => {
-    try {
-      const project = await window.pixelforge.openExample(filename)
-      if (project === null) return
-      loadProject(project)
-      setExamplesOpen(false)
-    } catch (err) {
-      alert(`Failed to open example: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
@@ -146,10 +92,10 @@ export function Toolbar({
 
       <div className="toolbar-controls">
         <div className="btn-group">
-          <button className="tool-btn" onClick={() => void openProject()} title="Open project">
+          <button className="tool-btn" onClick={() => void openProject()} title="Open project (Cmd/Ctrl+O)">
             Open
           </button>
-          <button className="tool-btn" onClick={() => void saveProject()} title="Save project">
+          <button className="tool-btn" onClick={() => void saveProject(false)} title="Save project (Cmd/Ctrl+S)">
             Save
           </button>
           <div className="examples-menu" ref={exportRef}>
@@ -213,7 +159,10 @@ export function Toolbar({
                     key={ex.filename}
                     className="examples-item"
                     title={ex.description}
-                    onClick={() => void openExample(ex.filename)}
+                    onClick={() => {
+                      void openExample(ex.filename)
+                      setExamplesOpen(false)
+                    }}
                   >
                     <span className="examples-item-name">{ex.name}</span>
                     <span className="examples-item-desc">{ex.description}</span>
@@ -269,7 +218,7 @@ export function Toolbar({
                 }}
               >
                 <span className="examples-item-name">Keyboard shortcuts</span>
-                <span className="examples-item-desc">Undo, redo, sequence controls</span>
+                <span className="examples-item-desc">File, edit, and sequence keys</span>
               </button>
             </div>
           )}

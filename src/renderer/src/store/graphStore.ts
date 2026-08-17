@@ -29,6 +29,8 @@ import { AUDIO_IN_NODE_TYPE } from '@shared/graph/nodes/audio/AudioIn'
 import { KEYBOARD_IN_NODE_TYPE } from '@shared/graph/nodes/input/KeyboardIn'
 import { IMAGE_NODE_TYPE } from '@shared/graph/nodes/generators/ImageFile'
 import { VIDEO_NODE_TYPE } from '@shared/graph/nodes/generators/VideoFile'
+import { SYPHON_IN_NODE_TYPE } from '@shared/graph/nodes/generators/SyphonIn'
+import { SYPHON_OUT_NODE_TYPE } from '@shared/graph/nodes/output/SyphonOut'
 import { FIXTURE_NODE_TYPE } from '@shared/graph/nodes/setup/Fixture'
 import { OUTPUT_NODE_TYPE } from '@shared/graph/nodes/output/PixelOutput'
 import { RESOLUTION_NODE_TYPE } from '@shared/spatial/resolution'
@@ -97,6 +99,9 @@ interface GraphState {
   togglePreviewView: (nodeId: string) => void
   copySelectedNodes: () => void
   pasteNodes: () => void
+  selectAllNodes: () => void
+  removeSelectedNodes: () => void
+  resetToDefault: () => void
   undo: () => void
   redo: () => void
   toGraphData: () => GraphData
@@ -148,14 +153,16 @@ function initialGraph(): { nodes: PfNode[]; edges: Edge[] } {
   return { nodes, edges }
 }
 
-function nodeComponentType(type: string): 'pf' | 'sequence' | 'timeline' | 'schedule' | 'audio' | 'keyboard' | 'media' | 'output' | 'fixture' | 'component' {
+function nodeComponentType(type: string): 'pf' | 'sequence' | 'timeline' | 'schedule' | 'audio' | 'keyboard' | 'media' | 'output' | 'fixture' | 'component' | 'syphonIn' | 'syphonOut' {
   if (type === SEQUENCE_NODE_TYPE) return 'sequence'
   if (type === TIMELINE_NODE_TYPE) return 'timeline'
   if (type === SCHEDULE_NODE_TYPE) return 'schedule'
   if (type === AUDIO_IN_NODE_TYPE) return 'audio'
   if (type === KEYBOARD_IN_NODE_TYPE) return 'keyboard'
   if (type === IMAGE_NODE_TYPE || type === VIDEO_NODE_TYPE) return 'media'
+  if (type === SYPHON_IN_NODE_TYPE) return 'syphonIn'
   if (type === OUTPUT_NODE_TYPE) return 'output'
+  if (type === SYPHON_OUT_NODE_TYPE) return 'syphonOut'
   if (type === FIXTURE_NODE_TYPE) return 'fixture'
   if (type === COMPONENT_NODE_TYPE) return 'component'
   return 'pf'
@@ -537,6 +544,29 @@ export const useGraphStore = create<GraphState>((set, get) => {
       set({
         nodes: [...get().nodes.map((n) => ({ ...n, selected: false })), ...pastedNodes],
         edges: [...get().edges, ...pastedEdges]
+      })
+      scheduleSync(get)
+    },
+
+    selectAllNodes: () => {
+      set({ nodes: get().nodes.map((n) => (n.selected ? n : { ...n, selected: true })) })
+    },
+
+    removeSelectedNodes: () => {
+      const selected = get().nodes.filter((n) => n.selected)
+      if (selected.length === 0) return
+      get().onNodesChange(selected.map((n) => ({ type: 'remove', id: n.id })))
+    },
+
+    resetToDefault: () => {
+      const { nodes, edges } = initialGraph()
+      set({
+        nodes,
+        edges,
+        past: [],
+        future: [],
+        componentEditId: null,
+        componentParent: null
       })
       scheduleSync(get)
     },

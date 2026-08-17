@@ -1,5 +1,4 @@
 import { IMAGE_NODE_TYPE } from '@shared/graph/nodes/generators/ImageFile'
-import { engineBridge } from '@/engine/bridge'
 import { useGraphStore, type PfNode } from '@/store/graphStore'
 
 /** Loads still images for Image nodes and pushes RGB frames to the engine. */
@@ -128,13 +127,6 @@ function syncEntries(nodes: PfNode[]): void {
       pendingPaths.delete(nodeId)
       if (entry === null || entry.disposed) return
       entries.set(nodeId, entry)
-      engineBridge.send({
-        type: 'media-frame',
-        nodeId,
-        width: entry.width,
-        height: entry.height,
-        data: entry.rgb
-      })
     })
   }
 }

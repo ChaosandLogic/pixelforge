@@ -12,7 +12,9 @@ declare global {
     pixelforge: {
       getNetworkInterfaces: () => Promise<NetworkInterfaceInfo[]>
       requestEnginePort: () => void
+      newProject: () => Promise<void>
       saveProject: (project: ProjectFile) => Promise<string | null>
+      saveProjectAs: (project: ProjectFile) => Promise<string | null>
       openProject: () => Promise<ProjectFile | null>
       exportShow: (project: ProjectFile, startup?: ShowStartupHints) => Promise<{ outputDir: string; manifest: ShowManifest } | null>
       exportEsp: (payload: EspExportPayload) => Promise<EspExportResult | null>
@@ -30,6 +32,7 @@ declare global {
       getOnboardingSeen: () => Promise<boolean>
       setOnboardingSeen: () => Promise<void>
       getAppVersion: () => Promise<string>
+      nativeEdit: (command: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll') => void
     }
     pixelforgePlayer?: import('./player/env.d').PlayerApi
   }

@@ -4,6 +4,8 @@ import { AUDIO_IN_INLINE_PARAMS } from '@shared/graph/nodes/audio/AudioIn'
 import { IMAGE_INLINE_PARAMS } from '@shared/graph/nodes/generators/ImageFile'
 import { VIDEO_INLINE_PARAMS } from '@shared/graph/nodes/generators/VideoFile'
 import { OUTPUT_INLINE_PARAMS } from '@shared/graph/nodes/output/PixelOutput'
+import { SYPHON_IN_INLINE_PARAMS } from '@shared/graph/nodes/generators/SyphonIn'
+import { SYPHON_OUT_INLINE_PARAMS } from '@shared/graph/nodes/output/SyphonOut'
 import { KEYBOARD_INLINE_PARAMS, KEYBOARD_IN_NODE_TYPE } from '@shared/graph/nodes/input/KeyboardIn'
 import { FIXTURE_INLINE_PARAMS } from '@shared/graph/nodes/setup/Fixture'
 import { KeyboardInspectorPanel } from '@/ui/KeyboardInspectorPanel'
@@ -308,6 +310,8 @@ export function Inspector(): React.JSX.Element {
                     !IMAGE_INLINE_PARAMS.has(p.name) &&
                     !VIDEO_INLINE_PARAMS.has(p.name) &&
                     !OUTPUT_INLINE_PARAMS.has(p.name) &&
+                    !SYPHON_IN_INLINE_PARAMS.has(p.name) &&
+                    !SYPHON_OUT_INLINE_PARAMS.has(p.name) &&
                     !KEYBOARD_INLINE_PARAMS.has(p.name)
                 )
                 .map((p) => (

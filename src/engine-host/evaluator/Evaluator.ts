@@ -7,6 +7,8 @@ import { evaluateSubgraph, evalSubgraphNode, type SubgraphContext } from '@share
 import { OUTPUT_NODE_TYPE } from '@shared/graph/nodes'
 import { SEQUENCE_NODE_TYPE } from '@shared/graph/nodes/sequence/Sequence'
 import { SCHEDULE_NODE_TYPE } from '@shared/graph/nodes/schedule/Schedule'
+import { SYPHON_IN_NODE_TYPE } from '@shared/graph/nodes/generators/SyphonIn'
+import { SYPHON_OUT_NODE_TYPE } from '@shared/graph/nodes/output/SyphonOut'
 import type { DelayBuffer, HoldState, RampState } from '@shared/graph/time/state'
 import {
   pushDelaySample,
@@ -26,7 +28,20 @@ import {
   rasterizeEffectPreviewGrid
 } from '@shared/preview/effectPreviewGrid'
 import { defaultResolution, type Resolution } from '@shared/spatial/resolution'
+import { GPU_WORKING_RES_MAX, isTopNodeType } from '@shared/gpu/topNodes'
+import { gpuPixelRef, isGpuPixelRef } from '@shared/gpu/pixelRef'
+import type { GpuCompileNode, GpuFrameRequest, GpuMediaRef, GpuNodeUniforms, GpuShareIn, GpuShareOut } from '@shared/gpu/protocol'
+import { FEEDBACK_NODE_TYPE } from '@shared/graph/nodes/compositing/Feedback'
+import { syphonSenderName } from '@shared/graph/nodes/generators/SyphonIn'
+import {
+  isSyphonOutTransmitEnabled,
+  syphonOutMapping,
+  syphonOutName,
+  syphonOutSize
+} from '@shared/graph/nodes/output/SyphonOut'
 import { BufferPool } from './BufferPool'
+import type { GpuClient } from '../gpu/GpuClient'
+import { collectGpuUniforms, fileParam } from '../gpu/uniforms'
 
 const VIDEO_NODE_TYPE = 'generator/video'
 const IMAGE_NODE_TYPE = 'generator/image'
@@ -59,6 +74,7 @@ export class Evaluator {
   private edgesBySource = new Map<string, EdgeTarget[]>()
   private scheduleNodeIds: string[] = []
   private outputNodeIds: string[] = []
+  private shareOutNodeIds: string[] = []
   private outputViews = new Map<string, Uint8Array>()
   private outputControls = new Map<string, Int32Array>()
   private fixtureRanges: FixtureRange[] = []
@@ -93,6 +109,18 @@ export class Evaluator {
   private readonly feedbackBuffers = new Map<string, Float32Array>()
   private patchResolution: Resolution
   private readonly ctx: EvalContext
+  private gpu: GpuClient | null = null
+  private gpuGraphDirty = true
+  private gpuLive: string[] = []
+  private gpuUniforms = new Map<string, GpuNodeUniforms>()
+  private gpuUploads = new Map<string, Float32Array>()
+  private gpuSamples = new Map<string, Float32Array>()
+  private gpuPreviews: NodePreviews = {}
+  private gpuFlushed = false
+  private gpuFeedbackResets: string[] = []
+  gpuShareSenders: string[] = []
+  gpuShareError: string | null = null
+  gpuSharePlatform: 'syphon' | 'spout' | 'none' = 'none'
 
   constructor(sab: SharedArrayBuffer, pixelCount: number, pool: BufferPool) {
     this.view = new Uint8Array(sab)
@@ -159,6 +187,18 @@ export class Evaluator {
       feedbackPixels: (input, amount, decay, mode, reset) =>
         this.feedbackPixels(this.ctx.nodeId, input, amount, decay, mode, reset)
     }
+  }
+
+  setGpuClient(client: GpuClient | null): void {
+    this.gpu = client
+    this.gpuGraphDirty = true
+    if (client?.hello?.share !== undefined) {
+      this.gpuSharePlatform = client.hello.share
+    }
+  }
+
+  get gpuEnabled(): boolean {
+    return this.gpu?.available === true
   }
 
   private emitTrigger(nodeId: string, outputPort: string): void {
@@ -353,10 +393,29 @@ export class Evaluator {
     this.ctx.resolution = this.patchResolution
     this.ctx.fixtureRanges = this.fixtureRanges
     this.feedbackBuffers.clear()
+    this.gpuGraphDirty = true
   }
 
   getPixelCount(): number {
     return this.pixelCount
+  }
+
+  getPositions(): Float32Array {
+    return this.positions
+  }
+
+  getResolution(): Resolution {
+    return this.patchResolution
+  }
+
+  /** Pixel buffer wired into a node port from the last evaluate() memo. */
+  getWiredPixels(nodeId: string, port = 'pixels'): Float32Array | null {
+    const source = this.edgesByTarget.get(`${nodeId}:${port}`)
+    if (source === undefined) return null
+    const value = this.memo.get(source.fromNode)?.[source.fromPort]
+    if (value instanceof Float32Array) return value
+    if (isGpuPixelRef(value)) return this.resolveGpuPixels(value.nodeId)
+    return null
   }
 
   /** Wire per-output SAB views from the output manager (preview aliases the first route). */
@@ -388,10 +447,12 @@ export class Evaluator {
     const edgesBySource = new Map<string, EdgeTarget[]>()
     const scheduleNodeIds: string[] = []
     const outputNodeIds: string[] = []
+    const shareOutNodeIds: string[] = []
 
     for (const node of graph.nodes) {
       nodesById.set(node.id, node)
       if (node.type === OUTPUT_NODE_TYPE) outputNodeIds.push(node.id)
+      if (node.type === SYPHON_OUT_NODE_TYPE) shareOutNodeIds.push(node.id)
       if (node.type === SCHEDULE_NODE_TYPE) scheduleNodeIds.push(node.id)
     }
     for (const edge of graph.edges) {
@@ -411,6 +472,7 @@ export class Evaluator {
     this.edgesBySource = edgesBySource
     this.scheduleNodeIds = scheduleNodeIds
     this.outputNodeIds = outputNodeIds
+    this.shareOutNodeIds = shareOutNodeIds
     this.graphError = null
     this.previewIds = previewNodeIds(graph.nodes)
     this.effectPreviewNeeded = needsEffectPreviewCapture(graph.nodes, this.previewIds)
@@ -419,6 +481,7 @@ export class Evaluator {
     if (graphHasCycle(graph)) {
       this.graphError = 'Graph contains a cycle'
       this.outputNodeIds = []
+      this.shareOutNodeIds = []
     }
 
     // Drop media frames for nodes that no longer exist.
@@ -472,6 +535,7 @@ export class Evaluator {
     for (const id of this.timelineLoopIndices.keys()) {
       if (!this.nodesById.has(id)) this.timelineLoopIndices.delete(id)
     }
+    this.gpuGraphDirty = true
   }
 
   /** Hot path for slider tweaks — avoids rebuilding the edge maps. */
@@ -489,6 +553,13 @@ export class Evaluator {
     this.evalError = null
     this.ctx.timeMs = timeMs
     this.ctx.deltaMs = deltaMs
+    this.gpuLive = []
+    this.gpuUniforms.clear()
+    this.gpuUploads.clear()
+    this.gpuSamples.clear()
+    this.gpuFlushed = false
+    this.gpuFeedbackResets = []
+    this.gpuPreviews = {}
 
     if (this.graphError === null) {
       for (const id of this.scheduleNodeIds) {
@@ -506,6 +577,7 @@ export class Evaluator {
         if (source !== undefined) {
           const value = this.evalNode(source.fromNode)[source.fromPort]
           if (value instanceof Float32Array) pixels = value
+          else if (isGpuPixelRef(value)) pixels = this.resolveGpuPixels(value.nodeId)
         }
         // Seqlock: mark the buffer as being written (odd) so the output worker
         // never reads a half-updated frame, then mark it complete (even).
@@ -516,6 +588,17 @@ export class Evaluator {
       }
     } else {
       this.view.fill(0, 0, byteCount)
+    }
+
+    if (this.graphError === null) {
+      for (const shareId of this.shareOutNodeIds) {
+        const source = this.edgesByTarget.get(`${shareId}:pixels`)
+        if (source !== undefined) this.evalNode(source.fromNode)
+      }
+    }
+
+    if (this.gpuEnabled && this.gpuLive.length > 0) {
+      this.flushGpu([])
     }
 
     this.capturePreviews()
@@ -545,7 +628,14 @@ export class Evaluator {
       if (def === undefined || port === undefined) continue
 
       const value = this.evalNode(id)[port.name]
-      if (port.type === 'pixels' && value instanceof Float32Array) {
+      if (port.type === 'pixels' && isGpuPixelRef(value)) {
+        const layout = rasterizeLayout(
+          this.resolveGpuPixels(value.nodeId),
+          this.positions,
+          this.pixelCount
+        )
+        layouts.set(id, this.retainRaster(this.layoutRasterCache, id, layout))
+      } else if (port.type === 'pixels' && value instanceof Float32Array) {
         const layout = rasterizeLayout(value, this.positions, this.pixelCount)
         layouts.set(id, this.retainRaster(this.layoutRasterCache, id, layout))
       } else if (port.type === 'float' && typeof value === 'number') {
@@ -566,10 +656,13 @@ export class Evaluator {
 
           const layout = layouts.get(id)
           if (layout !== undefined) {
+            const gpuEffect = this.gpuPreviews[id]
             const effect = this.retainRaster(
               this.effectRasterCache,
               id,
-              this.effectPreviewForNode(node, port.name, previewMemo)
+              gpuEffect?.kind === 'pixels'
+                ? { data: gpuEffect.data, width: gpuEffect.width, height: gpuEffect.height }
+                : this.effectPreviewForNode(node, port.name, previewMemo)
             )
             previews[id] = { kind: 'pixels', ...effect, layout }
           } else {
@@ -637,7 +730,7 @@ export class Evaluator {
     portName: string,
     previewMemo: Map<string, PortValues>
   ): { data: Uint8Array; width: number; height: number } {
-    if (node.type === VIDEO_NODE_TYPE || node.type === IMAGE_NODE_TYPE) {
+    if (node.type === VIDEO_NODE_TYPE || node.type === IMAGE_NODE_TYPE || node.type === SYPHON_IN_NODE_TYPE) {
       const frame = this.mediaFrames.get(node.id)
       if (frame !== null && frame !== undefined && frame.width > 0 && frame.height > 0) {
         return {
@@ -732,8 +825,13 @@ export class Evaluator {
     for (const port of def.inputs) {
       if (node.type === SEQUENCE_NODE_TYPE && port.name.startsWith('segment_')) continue
       const source = this.edgesByTarget.get(`${nodeId}:${port.name}`)
-      inputs[port.name] =
+      let value: import('@shared/graph/types').PortValue | null =
         source !== undefined ? (this.evalNodeMemo(source.fromNode, memo, recordTiming)[source.fromPort] ?? null) : null
+      const useGpu = this.gpuEnabled && isTopNodeType(node.type) && recordTiming
+      if (isGpuPixelRef(value) && !useGpu) {
+        value = this.resolveGpuPixels(value.nodeId)
+      }
+      inputs[port.name] = value
     }
 
     this.ctx.nodeId = nodeId
@@ -743,7 +841,11 @@ export class Evaluator {
     const t0 = recordTiming ? performance.now() : 0
     let outputs: PortValues
     try {
-      outputs = def.evaluate(inputs, params, this.ctx)
+      if (this.gpuEnabled && isTopNodeType(node.type) && recordTiming) {
+        outputs = this.recordGpuNode(node, inputs, params)
+      } else {
+        outputs = def.evaluate(inputs, params, this.ctx)
+      }
     } catch (err) {
       // A single misbehaving node must never freeze the frame loop or stop DMX
       // output. Record the error, leave this node's outputs empty, keep ticking.
@@ -755,6 +857,153 @@ export class Evaluator {
     }
     memo.set(nodeId, outputs)
     return outputs
+  }
+
+  private workingRes(): { width: number; height: number } {
+    return {
+      width: Math.max(1, Math.min(GPU_WORKING_RES_MAX, this.patchResolution.width)),
+      height: Math.max(1, Math.min(GPU_WORKING_RES_MAX, this.patchResolution.height))
+    }
+  }
+
+  private recordGpuNode(node: NodeData, inputs: PortValues, params: ParamValues): PortValues {
+    if (node.type === FEEDBACK_NODE_TYPE && this.ctx.consumeTrigger(node.id, 'reset')) {
+      this.gpuFeedbackResets.push(node.id)
+    }
+    this.gpuUniforms.set(node.id, collectGpuUniforms(node, inputs, params, this.ctx))
+    if (!this.gpuLive.includes(node.id)) this.gpuLive.push(node.id)
+    for (const [port, value] of Object.entries(inputs)) {
+      if (value instanceof Float32Array) {
+        const source = this.edgesByTarget.get(`${node.id}:${port}`)
+        const uploadId = source?.fromNode ?? `${node.id}:${port}`
+        this.gpuUploads.set(uploadId, value)
+      }
+    }
+    this.gpuFlushed = false
+    return { pixels: gpuPixelRef(node.id) }
+  }
+
+  private resolveGpuPixels(nodeId: string): Float32Array {
+    this.flushGpu([nodeId])
+    const sampled = this.gpuSamples.get(nodeId)
+    const out = this.activePool.acquire()
+    if (sampled === undefined) {
+      out.fill(0)
+      return out
+    }
+    const n = Math.min(out.length, sampled.length)
+    out.set(sampled.subarray(0, n))
+    if (n < out.length) out.fill(0, n)
+    return out
+  }
+
+  private compileGpu(): void {
+    const gpu = this.gpu
+    if (gpu === null || !gpu.available) return
+    const res = this.workingRes()
+    const nodes: GpuCompileNode[] = []
+    for (const node of this.nodesById.values()) {
+      if (!isTopNodeType(node.type)) continue
+      const def = getNodeType(node.type)
+      const inputs: Record<string, string> = {}
+      if (def !== undefined) {
+        for (const port of def.inputs) {
+          if (port.type !== 'pixels') continue
+          const source = this.edgesByTarget.get(`${node.id}:${port.name}`)
+          if (source !== undefined) inputs[port.name] = source.fromNode
+        }
+      }
+      nodes.push({ id: node.id, type: node.type, width: res.width, height: res.height, inputs })
+    }
+    gpu.compile(
+      {
+        nodes,
+        pixelCount: this.pixelCount,
+        resolutionWidth: res.width,
+        resolutionHeight: res.height
+      },
+      this.positions
+    )
+    this.gpuGraphDirty = false
+  }
+
+  private flushGpu(sampleIds: string[]): void {
+    const gpu = this.gpu
+    if (gpu === null || !gpu.available || this.gpuLive.length === 0) return
+    if (this.gpuGraphDirty) {
+      try {
+        this.compileGpu()
+      } catch (err) {
+        this.evalError = err instanceof Error ? err.message : String(err)
+        return
+      }
+    }
+    const media: GpuMediaRef[] = []
+    const shareIn: GpuShareIn[] = []
+    const shareOut: GpuShareOut[] = []
+    for (const id of this.gpuLive) {
+      const node = this.nodesById.get(id)
+      if (node === undefined) continue
+      if (node.type === VIDEO_NODE_TYPE || node.type === IMAGE_NODE_TYPE) {
+        const path = fileParam(node.params)
+        if (path !== '') {
+          media.push({
+            nodeId: id,
+            path,
+            kind: node.type === VIDEO_NODE_TYPE ? 'video' : 'image'
+          })
+        }
+      }
+      if (node.type === SYPHON_IN_NODE_TYPE) {
+        const sender = syphonSenderName(node.params)
+        if (sender !== '') shareIn.push({ nodeId: id, sender })
+      }
+    }
+    for (const id of this.shareOutNodeIds) {
+      const node = this.nodesById.get(id)
+      if (node === undefined || !isSyphonOutTransmitEnabled(node.params)) continue
+      const source = this.edgesByTarget.get(`${id}:pixels`)
+      if (source === undefined) continue
+      const size = syphonOutSize(node.params)
+      shareOut.push({
+        nodeId: id,
+        name: syphonOutName(node.params),
+        width: size.width,
+        height: size.height,
+        mapping: syphonOutMapping(node.params),
+        sourceNodeId: source.fromNode,
+        fromCpu: !isTopNodeType(this.nodesById.get(source.fromNode)?.type ?? '')
+      })
+    }
+    const uniforms: Record<string, GpuNodeUniforms> = {}
+    for (const [id, u] of this.gpuUniforms) uniforms[id] = u
+    const previewIds = this.previewIds.filter((id) => isTopNodeType(this.nodesById.get(id)?.type ?? ''))
+    const req: GpuFrameRequest = {
+      timeMs: this.ctx.timeMs,
+      deltaMs: this.ctx.deltaMs,
+      liveNodeIds: [...this.gpuLive],
+      uniforms,
+      cpuUploadIds: [...this.gpuUploads.keys()],
+      sampleNodeIds: [...new Set(sampleIds)],
+      previewNodeIds: previewIds,
+      feedbackResets: [...this.gpuFeedbackResets],
+      media,
+      shareIn,
+      shareOut
+    }
+    try {
+      const result = gpu.frame(req, this.gpuUploads)
+      for (const [id, rgb] of result.samples) this.gpuSamples.set(id, rgb)
+      for (const [id, preview] of result.previews) {
+        this.gpuPreviews[id] = { kind: 'pixels', data: preview.data, width: preview.width, height: preview.height }
+      }
+      this.gpuShareSenders = result.shareSenders
+      this.gpuShareError = result.shareError
+      this.gpuFlushed = true
+      if (result.error !== null) this.evalError = result.error
+    } catch (err) {
+      this.evalError = err instanceof Error ? err.message : String(err)
+    }
   }
 }
 

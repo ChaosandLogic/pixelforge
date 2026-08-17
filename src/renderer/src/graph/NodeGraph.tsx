@@ -13,6 +13,8 @@ import { FixtureNode } from './components/FixtureNode'
 import { ComponentNode } from './components/ComponentNode'
 import { ScheduleNode } from './components/ScheduleNode'
 import { KeyboardInNode } from './components/KeyboardInNode'
+import { SyphonInNode } from './components/SyphonInNode'
+import { SyphonOutNode } from './components/SyphonOutNode'
 import { engineBridge } from '@/engine/bridge'
 import { SEQUENCE_NODE_TYPE } from '@shared/graph/nodes/sequence/Sequence'
 import { TIMELINE_NODE_TYPE } from '@shared/graph/nodes/time/Timeline'
@@ -26,6 +28,8 @@ const nodeTypes = {
   keyboard: KeyboardInNode,
   media: MediaFileNode,
   output: OutputNode,
+  syphonIn: SyphonInNode,
+  syphonOut: SyphonOutNode,
   fixture: FixtureNode,
   component: ComponentNode
 }
@@ -39,10 +43,6 @@ function GraphCanvas(): React.JSX.Element {
   const onNodesChange = useGraphStore((s) => s.onNodesChange)
   const onEdgesChange = useGraphStore((s) => s.onEdgesChange)
   const connect = useGraphStore((s) => s.connect)
-  const undo = useGraphStore((s) => s.undo)
-  const redo = useGraphStore((s) => s.redo)
-  const copySelectedNodes = useGraphStore((s) => s.copySelectedNodes)
-  const pasteNodes = useGraphStore((s) => s.pasteNodes)
 
   const bindingEdges = useMemo(() => buildParamBindingEdges(nodes), [nodes])
   const displayEdges = useMemo(() => [...edges, ...bindingEdges], [edges, bindingEdges])
@@ -56,25 +56,6 @@ function GraphCanvas(): React.JSX.Element {
     const onKey = (e: KeyboardEvent): void => {
       const target = e.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return
-
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
-        e.preventDefault()
-        if (e.shiftKey) redo()
-        else undo()
-        return
-      }
-
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c') {
-        e.preventDefault()
-        copySelectedNodes()
-        return
-      }
-
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'v') {
-        e.preventDefault()
-        pasteNodes()
-        return
-      }
 
       if (e.key === ']' || e.key === 'ArrowRight') {
         const selected = useGraphStore.getState().nodes.filter((n) => n.selected)
@@ -98,7 +79,7 @@ function GraphCanvas(): React.JSX.Element {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [undo, redo, copySelectedNodes, pasteNodes])
+  }, [])
 
   return (
     <div className="graph-area">

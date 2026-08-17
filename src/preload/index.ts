@@ -9,7 +9,9 @@ import type { ShowStartupHints } from '@shared/playerStartup'
 export interface PixelForgeApi {
   getNetworkInterfaces: () => Promise<NetworkInterfaceInfo[]>
   requestEnginePort: () => void
+  newProject: () => Promise<void>
   saveProject: (project: ProjectFile) => Promise<string | null>
+  saveProjectAs: (project: ProjectFile) => Promise<string | null>
   openProject: () => Promise<ProjectFile | null>
   exportShow: (project: ProjectFile, startup?: ShowStartupHints) => Promise<{ outputDir: string; manifest: ShowManifest } | null>
   exportEsp: (payload: EspExportPayload) => Promise<EspExportResult | null>
@@ -27,12 +29,15 @@ export interface PixelForgeApi {
   getOnboardingSeen: () => Promise<boolean>
   setOnboardingSeen: () => Promise<void>
   getAppVersion: () => Promise<string>
+  nativeEdit: (command: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll') => void
 }
 
 const api: PixelForgeApi = {
   getNetworkInterfaces: () => ipcRenderer.invoke('network:interfaces'),
   requestEnginePort: () => ipcRenderer.send('engine:request-port'),
+  newProject: () => ipcRenderer.invoke('project:new'),
   saveProject: (project) => ipcRenderer.invoke('project:save', project),
+  saveProjectAs: (project) => ipcRenderer.invoke('project:save-as', project),
   openProject: () => ipcRenderer.invoke('project:open'),
   exportShow: (project, startup) => ipcRenderer.invoke('project:export-show', project, startup),
   exportEsp: (payload) => ipcRenderer.invoke('project:export-esp', payload),
@@ -49,7 +54,8 @@ const api: PixelForgeApi = {
   saveTextFile: (content, defaultName) => ipcRenderer.invoke('files:save-text', content, defaultName),
   getOnboardingSeen: () => ipcRenderer.invoke('onboarding:seen'),
   setOnboardingSeen: () => ipcRenderer.invoke('onboarding:set-seen'),
-  getAppVersion: () => ipcRenderer.invoke('app:version')
+  getAppVersion: () => ipcRenderer.invoke('app:version'),
+  nativeEdit: (command) => ipcRenderer.send('app:native-edit', command)
 }
 
 contextBridge.exposeInMainWorld('pixelforge', api)
@@ -69,3 +75,22 @@ ipcRenderer.on('app:show-about', () => {
 ipcRenderer.on('app:show-shortcuts', () => {
   window.postMessage({ type: 'pixelforge-show-shortcuts' }, '*')
 })
+
+const menuMessages: Record<string, string> = {
+  'app:new-project': 'pixelforge-new-project',
+  'app:open-project': 'pixelforge-open-project',
+  'app:save-project': 'pixelforge-save-project',
+  'app:save-project-as': 'pixelforge-save-project-as',
+  'app:edit-undo': 'pixelforge-edit-undo',
+  'app:edit-redo': 'pixelforge-edit-redo',
+  'app:edit-cut': 'pixelforge-edit-cut',
+  'app:edit-copy': 'pixelforge-edit-copy',
+  'app:edit-paste': 'pixelforge-edit-paste',
+  'app:edit-select-all': 'pixelforge-edit-select-all'
+}
+
+for (const [channel, type] of Object.entries(menuMessages)) {
+  ipcRenderer.on(channel, () => {
+    window.postMessage({ type }, '*')
+  })
+}

@@ -42,7 +42,13 @@ const initialStatus: EngineStatus = {
   outputError: null,
   graphError: null,
   outputCount: 0,
-  outputErrors: {}
+  outputErrors: {},
+  shareAvailable: false,
+  sharePlatform: 'none',
+  shareSenders: [],
+  shareError: null,
+  gpuAvailable: false,
+  gpuError: null
 }
 
 export const useEngineStore = create<EngineState>((set, get) => {

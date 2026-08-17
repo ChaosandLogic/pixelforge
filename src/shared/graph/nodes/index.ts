@@ -68,6 +68,8 @@ import { MidiIn } from './input/MidiIn'
 import { KeyboardIn } from './input/KeyboardIn'
 import { OscIn } from './input/OscIn'
 import { PixelOutput } from './output/PixelOutput'
+import { SyphonIn } from './generators/SyphonIn'
+import { SyphonOut } from './output/SyphonOut'
 
 export const COMPONENT_IN_NODE_TYPE = ComponentIn.type
 export const COMPONENT_OUT_NODE_TYPE = ComponentOut.type
@@ -136,6 +138,7 @@ export function registerStandardNodes(): void {
   registerNodeType(MidiIn)
   registerNodeType(KeyboardIn)
   registerNodeType(OscIn)
+  registerNodeType(SyphonIn)
   registerNodeType(Sequence)
   registerNodeType(Schedule)
 
@@ -161,6 +164,7 @@ export function registerStandardNodes(): void {
   registerNodeType(ComponentIn)
   registerNodeType(ComponentOut)
   registerNodeType(PixelOutput)
+  registerNodeType(SyphonOut)
 }
 
 export const OUTPUT_NODE_TYPE = PixelOutput.type

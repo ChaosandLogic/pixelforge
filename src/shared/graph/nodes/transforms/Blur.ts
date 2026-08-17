@@ -37,6 +37,7 @@ export const Blur: NodeTypeDef = {
     },
     { name: 'edges', label: 'Edges', type: 'select', default: 'clamp', options: ['clamp', 'wrap'] }
   ],
+  gpu: { pass: 'transform/blur' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

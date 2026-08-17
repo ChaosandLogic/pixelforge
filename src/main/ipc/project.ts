@@ -16,6 +16,22 @@ import type { ShowStartupHints } from '@shared/playerStartup'
 
 let lastProjectPath: string | null = null
 
+async function writeProject(path: string, project: ProjectFile): Promise<string> {
+  await writeFile(path, JSON.stringify(project, null, 2), 'utf-8')
+  lastProjectPath = path
+  return path
+}
+
+async function saveProjectDialog(project: ProjectFile): Promise<string | null> {
+  const result = await dialog.showSaveDialog({
+    title: 'Save Project',
+    defaultPath: lastProjectPath ?? `${project.meta.name || 'untitled'}.pxf`,
+    filters: [{ name: 'PixelForge Project', extensions: ['pxf'] }]
+  })
+  if (result.canceled || result.filePath === undefined) return null
+  return writeProject(result.filePath, project)
+}
+
 function examplesDir(): string {
   const candidates = [
     join(process.cwd(), 'examples'),
@@ -30,16 +46,17 @@ function examplesDir(): string {
 }
 
 export function registerProjectIpc(): void {
+  ipcMain.handle('project:new', (): void => {
+    lastProjectPath = null
+  })
+
   ipcMain.handle('project:save', async (_event, project: ProjectFile): Promise<string | null> => {
-    const result = await dialog.showSaveDialog({
-      title: 'Save Project',
-      defaultPath: `${project.meta.name || 'untitled'}.pxf`,
-      filters: [{ name: 'PixelForge Project', extensions: ['pxf'] }]
-    })
-    if (result.canceled || result.filePath === undefined) return null
-    await writeFile(result.filePath, JSON.stringify(project, null, 2), 'utf-8')
-    lastProjectPath = result.filePath
-    return result.filePath
+    if (lastProjectPath !== null) return writeProject(lastProjectPath, project)
+    return saveProjectDialog(project)
+  })
+
+  ipcMain.handle('project:save-as', async (_event, project: ProjectFile): Promise<string | null> => {
+    return saveProjectDialog(project)
   })
 
   ipcMain.handle('project:list-examples', async (): Promise<ExampleManifestEntry[]> => {

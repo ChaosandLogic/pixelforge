@@ -9,6 +9,7 @@ import {
   type StartCorner,
   type Vec3
 } from '@shared/patch/layout'
+import { MAX_PIXELS } from '@shared/messages'
 import { universeCountFor } from '@shared/patch/types'
 import { useEngineStore } from '@/store/engineStore'
 import { usePatchStore } from '@/store/patchStore'
@@ -70,7 +71,7 @@ function FixtureParams({
             <input
               type="number"
               min={1}
-              max={8192}
+              max={MAX_PIXELS}
               value={def.count}
               onChange={(e) => onChange({ ...def, count: Math.max(1, Number(e.target.value) || 1) })}
             />
@@ -173,7 +174,7 @@ function FixtureParams({
             <input
               type="number"
               min={1}
-              max={8192}
+              max={MAX_PIXELS}
               value={def.count}
               onChange={(e) => onChange({ ...def, count: Math.max(1, Number(e.target.value) || 1) })}
             />
@@ -344,7 +345,9 @@ export function LayoutBuilder({ onClose }: { onClose: () => void }): React.JSX.E
             {points.length} points → {universes} universe{universes === 1 ? '' : 's'} (U{startUniverse}
             {universes > 1 ? `–U${startUniverse + universes - 1}` : ''})
           </span>
-          {layoutOverflow && <span className="layout-overflow-warn">Truncated at 8192 points</span>}
+          {layoutOverflow && (
+            <span className="layout-overflow-warn">Truncated at {MAX_PIXELS} points</span>
+          )}
           {lastError !== null && layoutOverflow && <span className="patch-error">{lastError}</span>}
         </footer>
       </div>

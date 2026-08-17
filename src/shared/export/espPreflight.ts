@@ -3,6 +3,7 @@ import { AUDIO_IN_NODE_TYPE } from '../graph/nodes/audio/AudioIn'
 import { KEYBOARD_IN_NODE_TYPE } from '../graph/nodes/input/KeyboardIn'
 import { MIDI_IN_NODE_TYPE } from '../graph/nodes/input/MidiIn'
 import { OSC_IN_NODE_TYPE } from '../graph/nodes/input/OscIn'
+import { SYPHON_IN_NODE_TYPE } from '../graph/nodes/generators/SyphonIn'
 import type { GraphData } from '../graph/types'
 import { ESP_MAX_LEDS, estimateAledMaxBytes } from './aled'
 import { bakeExportWarnings } from './loopPeriod'
@@ -11,7 +12,8 @@ const LIVE_INPUT_TYPES = new Set([
   AUDIO_IN_NODE_TYPE,
   MIDI_IN_NODE_TYPE,
   KEYBOARD_IN_NODE_TYPE,
-  OSC_IN_NODE_TYPE
+  OSC_IN_NODE_TYPE,
+  SYPHON_IN_NODE_TYPE
 ])
 
 export interface EspPreflightResult {

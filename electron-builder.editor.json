@@ -9,6 +9,15 @@
     "examples/**/*",
     "package.json"
   ],
+  "asarUnpack": [
+    "node_modules/@napolab/**"
+  ],
+  "extraResources": [
+    {
+      "from": "gpu-engine/target/release/gpu-engine",
+      "to": "gpu-engine"
+    }
+  ],
   "mac": {
     "category": "public.app-category.developer-tools",
     "target": ["dmg", "zip"],

@@ -18,6 +18,9 @@ import { BufferPool } from './evaluator/BufferPool'
 import { Evaluator } from './evaluator/Evaluator'
 import { OutputManager } from './output/OutputManager'
 import { OscListener } from './input/OscListener'
+import { TextureShare } from './share/TextureShare'
+import { GpuClient } from './gpu/GpuClient'
+import { gpuEnginePath } from './gpu/path'
 
 registerStandardNodes()
 
@@ -29,6 +32,43 @@ const pool = new BufferPool(DEFAULT_PIXEL_COUNT)
 const evaluator = new Evaluator(previewSab, DEFAULT_PIXEL_COUNT, pool)
 const output = new OutputManager()
 const oscListener = new OscListener()
+const share = new TextureShare()
+let gpu: GpuClient | null = null
+let gpuCrashTimes: number[] = []
+let gpuRestartTimer: ReturnType<typeof setTimeout> | null = null
+
+function attachGpu(): void {
+  const path = gpuEnginePath()
+  if (path === null) {
+    evaluator.setGpuClient(null)
+    return
+  }
+  const client = new GpuClient(path, () => {
+    evaluator.setGpuClient(null)
+    const now = Date.now()
+    gpuCrashTimes = gpuCrashTimes.filter((t) => now - t < 15_000)
+    gpuCrashTimes.push(now)
+    if (gpuCrashTimes.length > 5) {
+      console.error('[gpu-engine] giving up after repeated crashes; falling back to CPU TOPs')
+      return
+    }
+    if (gpuRestartTimer !== null) clearTimeout(gpuRestartTimer)
+    gpuRestartTimer = setTimeout(() => {
+      gpuRestartTimer = null
+      attachGpu()
+    }, 400)
+  })
+  if (client.start()) {
+    gpu = client
+    evaluator.setGpuClient(client)
+  } else {
+    gpu = null
+    evaluator.setGpuClient(null)
+  }
+}
+attachGpu()
+
+const gpuShareActive = (): boolean => gpu?.available === true && gpu.hello?.share !== 'none'
 
 let rendererPort: MessagePortMain | null = null
 let lastGraph: GraphData | null = null
@@ -69,8 +109,10 @@ const clock = new FrameClock(config.targetFps, (timeMs, deltaMs) => {
         if (v !== undefined) evaluator.setOscState(node.id, v)
       }
     }
+    if (!gpuShareActive()) share.receive(evaluator, lastGraph)
   }
   evaluator.evaluate(timeMs, deltaMs)
+  if (lastGraph !== null && !gpuShareActive()) share.publish(evaluator, lastGraph)
   if (deltaMs > 0) {
     fpsEma = fpsEma === 0 ? 1000 / deltaMs : fpsEma + FPS_SMOOTHING * (1000 / deltaMs - fpsEma)
   }
@@ -88,6 +130,7 @@ const statusTimer = setInterval(() => {
   const pixelCount = evaluator.getPixelCount()
   const driver = parseOutputConfig(lastGraph, config.startUniverse)
   const activeCount = output.activeRouteCount
+  if (!gpuShareActive()) share.pollDiscovery()
   postToRenderer({
     type: 'status',
     status: {
@@ -102,7 +145,13 @@ const statusTimer = setInterval(() => {
       outputError: output.lastError,
       graphError: evaluator.graphError ?? evaluator.evalError,
       outputCount: activeCount,
-      outputErrors: output.getRouteErrors()
+      outputErrors: output.getRouteErrors(),
+      shareAvailable: gpuShareActive() || share.status.available,
+      sharePlatform: gpuShareActive() ? evaluator.gpuSharePlatform : share.status.platform,
+      shareSenders: gpuShareActive() ? evaluator.gpuShareSenders : share.status.senders,
+      shareError: gpuShareActive() ? evaluator.gpuShareError : share.status.error,
+      gpuAvailable: evaluator.gpuEnabled,
+      gpuError: gpu?.lastError ?? null
     }
   })
 }, 500)
@@ -125,6 +174,7 @@ function handleRendererMessage(msg: RendererToEngine): void {
       lastGraph = msg.graph
       evaluator.setGraph(msg.graph)
       oscListener.syncGraph(msg.graph)
+      if (!gpuShareActive()) share.syncGraph(msg.graph, evaluator)
       lastPatch = {
         positions: msg.positions,
         count: msg.count,
@@ -145,12 +195,14 @@ function handleRendererMessage(msg: RendererToEngine): void {
       lastGraph = msg.graph
       evaluator.setGraph(msg.graph)
       oscListener.syncGraph(msg.graph)
+      if (!gpuShareActive()) share.syncGraph(msg.graph, evaluator)
       syncOutputs()
       break
     case 'patch-node-params': {
       evaluator.patchNodeParams(msg.nodeId, msg.params)
       const node = lastGraph?.nodes.find((n) => n.id === msg.nodeId)
       if (node !== undefined) Object.assign(node.params, msg.params)
+      if (!gpuShareActive()) share.syncGraph(lastGraph, evaluator)
       break
     }
     case 'set-patch':
@@ -233,6 +285,8 @@ function handleBake(requestId: number, durationMs: number, fps: number): void {
       }
     })()
 
+  clock.stop()
+  evaluator.setGpuClient(null)
   const result = bakeFrames({
     graph: lastGraph,
     positions: patch.positions,
@@ -243,8 +297,11 @@ function handleBake(requestId: number, durationMs: number, fps: number): void {
     mediaFrames: lastMediaFrames,
     audioLevels: lastAudioLevels,
     durationMs,
-    fps
+    fps,
+    gpu
   })
+  evaluator.setGpuClient(gpu)
+  clock.start()
   postToRenderer({ type: 'bake-result', requestId, ...result })
 }
 
@@ -265,7 +322,11 @@ process.parentPort.on('message', (event) => {
 function shutdown(): void {
   clock.stop()
   clearInterval(statusTimer)
+  if (gpuRestartTimer !== null) clearTimeout(gpuRestartTimer)
+  gpu?.stop()
   output.shutdown()
+  share.dispose()
+  oscListener.dispose()
   rendererPort?.close()
   process.exit(0)
 }

@@ -50,3 +50,7 @@ ipcRenderer.on('app:show-shortcuts', () => {
 ipcRenderer.on('player:show-startup-panel', () => {
   window.postMessage({ type: 'pixelforge-show-startup-panel' }, '*')
 })
+
+ipcRenderer.on('player:open-show', () => {
+  window.postMessage({ type: 'pixelforge-open-show' }, '*')
+})

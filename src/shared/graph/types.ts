@@ -3,6 +3,7 @@
  * and the engine host (evaluation).
  */
 import type { Resolution } from '../spatial/resolution'
+import type { GpuPixelRef } from '../gpu/pixelRef'
 import type { ScheduleSlot } from '../schedule/types'
 import type { SequenceSegment } from '../sequence/types'
 import type { GradientStop } from '../colour/gradientStops'
@@ -34,7 +35,7 @@ export type ParamValues = Record<string, ParamValue>
  * buffers (sRGB triplets 0..1) owned by the evaluator — nodes must never
  * hold onto them across frames.
  */
-export type PortValue = number | Float32Array | ColourValue | Resolution | null
+export type PortValue = number | Float32Array | ColourValue | Resolution | GpuPixelRef | null
 export type PortValues = Record<string, PortValue>
 
 export interface PortDef {
@@ -176,6 +177,8 @@ export interface NodeTypeDef {
   inputs: PortDef[]
   outputs: PortDef[]
   params: ParamDef[]
+  /** When set, the GPU sidecar can execute this node as a 2D TOP pass. */
+  gpu?: { pass: string }
   evaluate(inputs: PortValues, params: ParamValues, ctx: EvalContext): PortValues
 }
 

@@ -40,6 +40,7 @@ function paletteNodes(componentEditId: string | null): NodeTypeDef[] {
     if (INTERNAL_NODE_TYPES.has(def.type) && componentEditId === null) return false
     if (def.type === 'setup/component') return false
     if (def.type === 'output/pixel' && componentEditId !== null) return false
+    if (def.type === 'output/syphon-out' && componentEditId !== null) return false
     return true
   })
 }

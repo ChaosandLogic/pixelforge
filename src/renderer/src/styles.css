@@ -900,6 +900,10 @@ body {
   border-color: var(--accent);
 }
 
+select.media-file-btn {
+  appearance: auto;
+}
+
 .pf-media {
   min-width: 180px;
 }

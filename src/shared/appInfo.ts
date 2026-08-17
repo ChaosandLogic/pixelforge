@@ -11,7 +11,7 @@ export const APP_TAGLINE =
 
 export const APP_ABOUT_LINES = [
   'Author patches and node-graph effects in the Editor.',
-  'Output via sACN (E1.31), Art-Net, or DDP.',
+  'Output via sACN (E1.31), Art-Net, DDP, Syphon, or Spout.',
   'Preview on imported layouts with a 3D visualiser.',
   'Export portable show folders for PixelForge Player on site.'
 ] as const
@@ -19,8 +19,18 @@ export const APP_ABOUT_LINES = [
 export const APP_COPYRIGHT = 'Copyright © 2026 PixelForge'
 
 export const KEYBOARD_SHORTCUTS = [
+  { keys: 'Cmd/Ctrl+N', action: 'New project' },
+  { keys: 'Cmd/Ctrl+O', action: 'Open project / show' },
+  { keys: 'Cmd/Ctrl+S', action: 'Save' },
+  { keys: 'Shift+Cmd/Ctrl+S', action: 'Save As' },
   { keys: 'Cmd/Ctrl+Z', action: 'Undo' },
   { keys: 'Shift+Cmd/Ctrl+Z', action: 'Redo' },
+  { keys: 'Cmd/Ctrl+X', action: 'Cut selected nodes' },
+  { keys: 'Cmd/Ctrl+C', action: 'Copy selected nodes' },
+  { keys: 'Cmd/Ctrl+V', action: 'Paste nodes' },
+  { keys: 'Cmd/Ctrl+A', action: 'Select all nodes' },
+  { keys: 'Backspace / Delete', action: 'Delete selected nodes' },
   { keys: '] or →', action: 'Advance sequence segment' },
-  { keys: 'Home / Shift+←', action: 'Reset sequence' }
+  { keys: 'Home / Shift+←', action: 'Reset sequence' },
+  { keys: 'Cmd/Ctrl+/', action: 'Keyboard shortcuts' }
 ] as const

@@ -61,7 +61,7 @@ curl -X POST http://<device-ip>/api/playback \\
 ## Notes
 
 - LED index order in the file matches your PixelForge patch wiring order.
-- Baked shows do not support live audio, MIDI, or OSC — use sACN streaming from PixelForge Player for interactive shows.
+- Baked shows do not support live audio, MIDI, OSC, or Syphon/Spout — use sACN streaming from PixelForge Player for interactive shows.
 `
 }
 

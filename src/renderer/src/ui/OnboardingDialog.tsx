@@ -17,10 +17,10 @@ export function OnboardingDialog(): React.JSX.Element | null {
   }
 
   const loadTutorial = async (): Promise<void> => {
+    const { loadProject } = await import('@/project/projectActions')
     const project = await window.pixelforge.openExample('01-scrolling-wave.pxf')
     if (project !== null) {
-      const { loadProjectIntoStores } = await import('@/project/loadProject')
-      loadProjectIntoStores(project)
+      loadProject(project)
     }
     dismiss()
   }
@@ -30,13 +30,14 @@ export function OnboardingDialog(): React.JSX.Element | null {
       <div className="onboarding-card">
         <h2>Welcome to PixelForge</h2>
         <p>
-          Start with the scrolling wave tutorial, or open <strong>Examples ▾</strong> from the toolbar for more
-          demo patches.
+          Start with the scrolling wave tutorial, or use <strong>File → Open</strong> and{' '}
+          <strong>Examples ▾</strong> in the toolbar for more demo patches.
         </p>
         <ul>
-          <li>Pick a network interface in the left panel</li>
-          <li>Toggle <strong>Output ON</strong> to send sACN to your fixtures</li>
-          <li>Use the 3D tab to preview on your patch layout</li>
+          <li>Build or import a patch in the left panel (layout builder, CSV, or JSON)</li>
+          <li>Wire generators into a <strong>Pixel Output</strong> node and pick sACN, Art-Net, or DDP</li>
+          <li>Pick a network interface, then toggle <strong>Output ON</strong></li>
+          <li>Use the 3D tab to preview live colours on your layout</li>
         </ul>
         <div className="onboarding-actions">
           <button className="tool-btn primary" onClick={() => void loadTutorial()}>

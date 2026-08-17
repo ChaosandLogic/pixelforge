@@ -1,6 +1,5 @@
 import type { NodePreview } from '@shared/messages'
 import { NODE_PREVIEW_SIZE } from '@shared/preview/displaySize'
-import { engineBridge } from '@/engine/bridge'
 import { usePatchStore } from '@/store/patchStore'
 import { useGraphStore, type PfNode } from '@/store/graphStore'
 
@@ -195,14 +194,6 @@ function sampleAll(): void {
     }
 
     ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, width, height)
-    const rgba = ctx.getImageData(0, 0, width, height).data
-    const rgb = new Uint8Array(width * height * 3)
-    for (let i = 0; i < width * height; i++) {
-      rgb[i * 3] = rgba[i * 4] ?? 0
-      rgb[i * 3 + 1] = rgba[i * 4 + 1] ?? 0
-      rgb[i * 3 + 2] = rgba[i * 4 + 2] ?? 0
-    }
-    engineBridge.send({ type: 'media-frame', nodeId, width, height, data: rgb })
 
     const pw = NODE_PREVIEW_SIZE
     const ph = NODE_PREVIEW_SIZE

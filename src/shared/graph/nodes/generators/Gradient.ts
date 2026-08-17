@@ -52,6 +52,7 @@ export const Gradient: NodeTypeDef = {
     { name: 'speed', label: 'Phase speed', type: 'float', default: 0, min: -5, max: 5, step: 0.05 },
     { name: 'mirror', label: 'Mirror', type: 'boolean', default: false }
   ],
+  gpu: { pass: 'generator/gradient' },
   evaluate(inputs, params, ctx) {
     const stops = parseGradientStops(params['stops'], params)
     ramp.setStops(

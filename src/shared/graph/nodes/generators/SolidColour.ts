@@ -9,6 +9,7 @@ export const SolidColour: NodeTypeDef = {
   inputs: [{ name: 'pixels', label: 'Pixels', type: 'pixels' }],
   outputs: [{ name: 'pixels', label: 'Pixels', type: 'pixels' }],
   params: [{ name: 'colour', label: 'Colour', type: 'colour', default: { r: 255, g: 80, b: 0 } }],
+  gpu: { pass: 'generator/solid-colour' },
   evaluate(inputs, params, ctx) {
     const { r, g, b } = colourParam(params, 'colour')
     const scope = generatorScope(inputs, ctx)

@@ -52,6 +52,76 @@ export function setupAppMenu(product: AppProduct): void {
     }
   ]
 
+  const editorFileItems: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: 'New',
+      accelerator: 'CmdOrCtrl+N',
+      click: () => sendToFocusedWindow('app:new-project')
+    },
+    {
+      label: 'Open…',
+      accelerator: 'CmdOrCtrl+O',
+      click: () => sendToFocusedWindow('app:open-project')
+    },
+    { type: 'separator' },
+    {
+      label: 'Save',
+      accelerator: 'CmdOrCtrl+S',
+      click: () => sendToFocusedWindow('app:save-project')
+    },
+    {
+      label: 'Save As…',
+      accelerator: 'Shift+CmdOrCtrl+S',
+      click: () => sendToFocusedWindow('app:save-project-as')
+    }
+  ]
+
+  const playerFileItems: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: 'Open Show…',
+      accelerator: 'CmdOrCtrl+O',
+      click: () => sendToFocusedWindow('player:open-show')
+    },
+    {
+      label: 'Startup Show…',
+      click: () => sendToFocusedWindow('player:show-startup-panel')
+    }
+  ]
+
+  const editorEditSubmenu: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: 'Undo',
+      accelerator: 'CmdOrCtrl+Z',
+      click: () => sendToFocusedWindow('app:edit-undo')
+    },
+    {
+      label: 'Redo',
+      accelerator: 'Shift+CmdOrCtrl+Z',
+      click: () => sendToFocusedWindow('app:edit-redo')
+    },
+    { type: 'separator' },
+    {
+      label: 'Cut',
+      accelerator: 'CmdOrCtrl+X',
+      click: () => sendToFocusedWindow('app:edit-cut')
+    },
+    {
+      label: 'Copy',
+      accelerator: 'CmdOrCtrl+C',
+      click: () => sendToFocusedWindow('app:edit-copy')
+    },
+    {
+      label: 'Paste',
+      accelerator: 'CmdOrCtrl+V',
+      click: () => sendToFocusedWindow('app:edit-paste')
+    },
+    {
+      label: 'Select All',
+      accelerator: 'CmdOrCtrl+A',
+      click: () => sendToFocusedWindow('app:edit-select-all')
+    }
+  ]
+
   const template: Electron.MenuItemConstructorOptions[] = [
     ...(isMac
       ? [
@@ -74,21 +144,14 @@ export function setupAppMenu(product: AppProduct): void {
     {
       label: 'File',
       submenu: [
-        ...(product === 'player'
-          ? [
-              {
-                label: 'Startup Show…',
-                click: () => sendToFocusedWindow('player:show-startup-panel')
-              },
-              { type: 'separator' as const }
-            ]
-          : []),
+        ...(product === 'player' ? playerFileItems : editorFileItems),
+        { type: 'separator' },
         isMac ? { role: 'close' as const } : { role: 'quit' as const }
       ]
     },
     {
       label: 'Edit',
-      submenu: [
+      submenu: product === 'editor' ? editorEditSubmenu : [
         { role: 'undo' as const },
         { role: 'redo' as const },
         { type: 'separator' as const },
