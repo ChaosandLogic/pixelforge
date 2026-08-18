@@ -3,6 +3,7 @@ name = "gpu-engine"
 version = "0.1.0"
 edition = "2021"
 description = "PixelForge GPU TOP sidecar"
+license = "MIT"
 
 [dependencies]
 bytemuck = { version = "1.23", features = ["derive"] }

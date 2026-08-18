@@ -35,8 +35,9 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# GPU sidecar
+# GPU sidecar (and accidental cargo output at the repo root)
 gpu-engine/target/
+/target/
 
 # Editor / tooling
 .vscode/

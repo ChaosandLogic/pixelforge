@@ -23,6 +23,6 @@
 ## Checklist
 
 - [ ] I have read [CONTRIBUTING.md](../CONTRIBUTING.md)
-- [ ] I agree my contribution is licensed under the project's AGPL-3.0 license
+- [ ] I agree my contribution is licensed under the project's MIT license
 - [ ] No secrets or certificates are included
 - [ ] Changes are focused and follow the existing code style

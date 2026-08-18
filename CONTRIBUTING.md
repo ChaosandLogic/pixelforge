@@ -5,13 +5,13 @@ build, test, and submit changes.
 
 ## Licensing of contributions
 
-PixelForge is licensed under the **GNU AGPL-3.0**. By submitting a pull request
-you agree that your contribution is provided under the same AGPL-3.0 license
+PixelForge is licensed under the **MIT License**. By submitting a pull request
+you agree that your contribution is provided under the same MIT license
 (inbound = outbound). Please only submit code you have the right to contribute.
 
 ## Development setup
 
-Requires Node.js 20+ and npm.
+Requires Node.js 20+, npm, and Rust (`cargo`) for the GPU sidecar.
 
 ```bash
 npm install
@@ -38,8 +38,7 @@ npm run build
 
 ## Architecture
 
-See [`README.md`](README.md#architecture) and
-[`PIXELFORGE_PLAN.md`](PIXELFORGE_PLAN.md) for the process model (renderer /
+See [`README.md`](README.md#architecture) for the process model (renderer /
 main / engine-host `utilityProcess`), the pull-based evaluator, and the
 SharedArrayBuffer output path.
 

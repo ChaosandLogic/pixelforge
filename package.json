@@ -4,13 +4,13 @@
   "description": "Node-based LED sequencer with sACN output, 3D visualisation, and live effect authoring",
   "author": "PixelForge",
   "homepage": "https://pixelforge.app",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pixelforge/pixelforge.git"
+    "url": "git+https://github.com/ChaosandLogic/pixelforge.git"
   },
   "bugs": {
-    "url": "https://github.com/pixelforge/pixelforge/issues"
+    "url": "https://github.com/ChaosandLogic/pixelforge/issues"
   },
   "main": "out/main/index.js",
   "private": true,

@@ -1,9 +1,8 @@
 # Third-Party Notices
 
-PixelForge is distributed under the GNU Affero General Public License v3.0
+PixelForge is distributed under the MIT License
 (see [`LICENSE`](LICENSE)). It bundles third-party open source software, each
-under its own license. All bundled runtime dependencies use permissive licenses
-that are compatible with the AGPL-3.0.
+under its own license.
 
 ## License summary (production dependency tree)
 
@@ -17,8 +16,7 @@ that are compatible with the AGPL-3.0.
 | BSD-2-Clause | 1 |
 | BlueOak-1.0.0 | 1 |
 
-All of the above are permissive, attribution-style licenses and impose no
-copyleft obligations on this project.
+All of the above are permissive, attribution-style licenses.
 
 ## Primary direct dependencies
 

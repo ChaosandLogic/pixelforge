@@ -4,11 +4,18 @@
 
 Node-based LED sequencer with sACN output, 3D visualisation, and live effect authoring.
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-PixelForge is free and open source under the **GNU AGPL-3.0**. Everything — the
-Editor, the Player, and the engine — is in this repository and free to build,
-run, and modify.
+PixelForge is **fully open source**. The Editor, Player, GPU engine, and bundled
+examples are all in this repository, licensed under the [MIT License](LICENSE).
+You can use, study, modify, and share the whole project.
+
+```bash
+git clone https://github.com/ChaosandLogic/pixelforge.git
+cd pixelforge
+npm install
+npm run dev
+```
 
 ## Example patches
 
@@ -35,6 +42,8 @@ Engine host (utilityProcess)
 - A renderer hang or crash never stops DMX output.
 
 ## Development
+
+Requires **Node.js 20+**, **npm**, and **Rust/cargo** (for `gpu-engine`).
 
 ```bash
 npm install
@@ -95,7 +104,7 @@ On Linux, automatic login registration is limited — Player shows a manual auto
 1. **File → New / Open / Save** (or **Cmd/Ctrl+S**) — projects are `.pxf` files. **Examples ▾** in the toolbar loads bundled demos.
 2. Build or import a patch from **Patch** next to **+ Add node**: layout builder (line / matrix / ring), or CSV/JSON point import. Pixel order in the patch **is** channel order.
 3. Author the node graph. Wire effect nodes into a **Pixel Output** node and choose sACN, Art-Net, or DDP (plus start universe / host). **Syphon / Spout In** pulls a texture from Resolume, VDMX, OBS, or TouchDesigner; **Syphon / Spout Out** publishes the LED image for those apps (macOS/Windows).
-4. On Pixel Output, pick **Send from** if you need a specific network adapter (or leave System default).
+4. On Pixel Output, pick **Send from** if you need a specific NIC (or leave System default).
 5. Toggle **Output ON**. A controller patched to that universe/stream will light up.
 6. Use the **3D** preview tab to load an STL reference mesh and see live pixel colours on the layout.
 7. The status bar shows engine fps, packets/sec, and send errors. **Export ▾** writes a Player show folder, ESP32 ALED, or Falcon Player FSEQ.
@@ -115,25 +124,21 @@ These are current product limits, not bugs:
 src/
 ├── main/          # Electron main process: window, engine launcher, IPC
 ├── preload/       # Context bridge + engine MessagePort forwarding
-├── engine-host/   # utilityProcess: FrameClock, evaluator, output sender
-├── shared/        # Types shared between renderer and engine host
-└── renderer/src/  # React UI: toolbar, network panel, 2D/3D preview, status bar
+├── engine-host/   # utilityProcess: FrameClock, evaluator, GPU client, output
+├── shared/        # Types and node defs shared by renderer and engine host
+└── renderer/src/  # React UI: graph, inspector, 2D/3D preview, status bar
     └── visualiser/  # Three.js InstancedMesh + STL reference mesh
+gpu-engine/        # Native wgpu sidecar (Metal / DirectX / Vulkan)
+examples/          # Bundled .pxf demos
 ```
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md).
-Security issues should follow [SECURITY.md](SECURITY.md) rather than public issues.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Report security issues via [SECURITY.md](SECURITY.md), not public issues.
 
 ## License
 
-PixelForge is licensed under the [GNU Affero General Public License v3.0](LICENSE).
-If you run a modified version and expose it to users over a network, the AGPL
-requires you to make your source available to them.
+PixelForge is licensed under the [MIT License](LICENSE).
 
-Third-party dependencies are listed in
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
-
-"PixelForge" and the PixelForge logo are trademarks — see
-[TRADEMARKS.md](TRADEMARKS.md). The AGPL covers the source code, not the marks.
+Third-party dependencies are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
