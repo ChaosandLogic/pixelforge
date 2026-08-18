@@ -34,9 +34,9 @@ export function OnboardingDialog(): React.JSX.Element | null {
           <strong>Examples ▾</strong> in the toolbar for more demo patches.
         </p>
         <ul>
-          <li>Build or import a patch in the left panel (layout builder, CSV, or JSON)</li>
+          <li>Build or import a patch from <strong>Patch</strong> next to Add node (layout builder, CSV, or JSON)</li>
           <li>Wire generators into a <strong>Pixel Output</strong> node and pick sACN, Art-Net, or DDP</li>
-          <li>Pick a network interface, then toggle <strong>Output ON</strong></li>
+          <li>Choose <strong>Send from</strong> on Pixel Output if you need a specific NIC, then toggle <strong>Output ON</strong></li>
           <li>Use the 3D tab to preview live colours on your layout</li>
         </ul>
         <div className="onboarding-actions">

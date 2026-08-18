@@ -25,6 +25,7 @@ export const Transform: NodeTypeDef = {
     { name: 'flip', label: 'Flip', type: 'boolean', default: false },
     { name: 'edges', label: 'Edges', type: 'select', default: 'wrap', options: ['wrap', 'clamp', 'mirror'] }
   ],
+  gpu: { pass: 'transform/transform' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

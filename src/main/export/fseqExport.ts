@@ -8,6 +8,10 @@ import {
 } from '@shared/fseqExportTypes'
 
 function buildReadme(manifest: FseqExportManifest): string {
+  const channelsPerPixel =
+    manifest.pixelCount > 0 ? manifest.channelCount / manifest.pixelCount : 3
+  const colour = channelsPerPixel === 4 ? 'RGBW' : 'RGB'
+  const firstPixelChannels = channelsPerPixel === 4 ? 'four' : 'three'
   return `# ${manifest.name} — Falcon Player (FPP)
 
 This folder contains a baked LED sequence for [Falcon Player](https://github.com/FalconChristmas/fpp).
@@ -32,10 +36,10 @@ Or upload via **Content Manager → File Manager** in the FPP web UI.
 In FPP **Channel Outputs**, map a pixel protocol output (e.g. WS2811) so that:
 
 - **Start channel** matches where this sequence begins in your show (often channel **1**)
-- **Channel count** is at least **${manifest.channelCount}** (${manifest.pixelCount} RGB pixels)
-- **Color order** matches your strip (RGB unless your hardware expects GRB, etc.)
+- **Channel count** is at least **${manifest.channelCount}** (${manifest.pixelCount} ${colour} pixels)
+- **Color order** matches your strip (${colour} unless your hardware expects a different order)
 
-Channel data in the file is **RGB interleaved in PixelForge patch wiring order** (pixel 0 = first three channels).
+Channel data in the file is **${colour} interleaved in PixelForge patch wiring order** (pixel 0 = first ${firstPixelChannels} channels).
 
 ## 3. Play the sequence
 

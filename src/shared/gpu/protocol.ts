@@ -65,12 +65,18 @@ export interface GpuMediaRef {
   kind: 'video' | 'image'
 }
 
+export interface GpuCpuUpload {
+  nodeId: string
+  width: number
+  height: number
+}
+
 export interface GpuFrameRequest {
   timeMs: number
   deltaMs: number
   liveNodeIds: string[]
   uniforms: Record<string, GpuNodeUniforms>
-  cpuUploadIds: string[]
+  cpuUploads: GpuCpuUpload[]
   sampleNodeIds: string[]
   previewNodeIds: string[]
   feedbackResets: string[]
@@ -89,6 +95,7 @@ export type GpuRequest =
   | { id: number; kind: 'hello' }
   | { id: number; kind: 'compile'; body: GpuCompileRequest }
   | { id: number; kind: 'frame'; body: GpuFrameRequest }
+  | { id: number; kind: 'senders' }
   | { id: number; kind: 'bake'; body: GpuBakeRequest }
   | { id: number; kind: 'shutdown' }
 

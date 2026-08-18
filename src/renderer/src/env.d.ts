@@ -32,6 +32,8 @@ declare global {
       getOnboardingSeen: () => Promise<boolean>
       setOnboardingSeen: () => Promise<void>
       getAppVersion: () => Promise<string>
+      listShareSenders: () => Promise<string[]>
+      setShareInputs: (inputs: Array<{ nodeId: string; sender: string }>) => Promise<void>
       nativeEdit: (command: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll') => void
     }
     pixelforgePlayer?: import('./player/env.d').PlayerApi

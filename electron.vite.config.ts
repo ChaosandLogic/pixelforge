@@ -44,7 +44,8 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/renderer/index.html'),
-          player: resolve(__dirname, 'src/renderer/player.html')
+          player: resolve(__dirname, 'src/renderer/player.html'),
+          splash: resolve(__dirname, 'src/renderer/splash.html')
         }
       }
     },

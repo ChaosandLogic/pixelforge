@@ -16,6 +16,7 @@ export const Add: NodeTypeDef = {
   params: [
     { name: 'amount', label: 'Amount', type: 'float', default: 1, min: 0, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'composite/add' },
   evaluate(inputs, params, ctx) {
     const a = pixelsInput(inputs, 'a')
     const b = pixelsInput(inputs, 'b')

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { samplePackedToRgb, streamToBgra } from '../shared/share/frame'
+import { mergeShareSenders, parseShareSender, shareInputsFromGraph, shareSenderLabel } from '../shared/share/senders'
 
 describe('samplePackedToRgb', () => {
   it('converts RGBA to RGB at 1:1', () => {
@@ -24,5 +25,39 @@ describe('streamToBgra', () => {
     assert.equal(buf[1], 0)
     assert.equal(buf[2], 255)
     assert.equal(buf[3], 255)
+  })
+})
+
+describe('shareSenderLabel', () => {
+  it('uses name when app is missing', () => {
+    assert.equal(shareSenderLabel({ name: 'Composition' }), 'Composition')
+  })
+
+  it('combines app and server name', () => {
+    assert.equal(shareSenderLabel({ name: 'Composition', appName: 'Resolume Arena' }), 'Resolume Arena — Composition')
+  })
+
+  it('parses a composite label back into name and app', () => {
+    assert.deepEqual(parseShareSender('Resolume Arena — Composition'), {
+      name: 'Composition',
+      appName: 'Resolume Arena'
+    })
+  })
+
+  it('merges sender lists without duplicates', () => {
+    assert.deepEqual(mergeShareSenders(['A', ''], ['A', 'B']), ['A', 'B'])
+  })
+
+  it('collects syphon-in subscriptions from a graph', () => {
+    assert.deepEqual(
+      shareInputsFromGraph({
+        nodes: [
+          { id: 'a', type: 'generator/syphon-in', position: { x: 0, y: 0 }, params: { sender: 'App — Comp' } },
+          { id: 'b', type: 'generator/wave', position: { x: 0, y: 0 }, params: {} }
+        ],
+        edges: []
+      }),
+      [{ nodeId: 'a', sender: 'App — Comp' }]
+    )
   })
 })

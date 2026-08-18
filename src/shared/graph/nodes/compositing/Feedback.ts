@@ -29,6 +29,7 @@ export const Feedback: NodeTypeDef = {
     { name: 'amount', label: 'Amount', type: 'float', default: 0.85, min: 0, max: 1, step: 0.01 },
     { name: 'decay', label: 'Decay', type: 'float', default: 0.95, min: 0, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'composite/feedback' },
   evaluate(inputs, params, ctx) {
     const input = pixelsInput(inputs, 'pixels')
 

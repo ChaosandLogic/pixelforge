@@ -14,6 +14,7 @@ export const Scale: NodeTypeDef = {
     { name: 'centre', label: 'Centre', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 },
     { name: 'edges', label: 'Edges', type: 'select', default: 'wrap', options: ['wrap', 'clamp'] }
   ],
+  gpu: { pass: 'transform/scale' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

@@ -1,5 +1,11 @@
 import type { GraphData } from '../graph/types'
 import { OUTPUT_NODE_TYPE } from '../graph/nodes'
+import {
+  parseColorMode,
+  parseWhiteMode,
+  type ColorMode,
+  type WhiteMode
+} from './rgbw'
 
 export type OutputProtocolKind = 'sacn' | 'artnet' | 'ddp'
 
@@ -12,6 +18,9 @@ export interface OutputDriverConfig {
   /** DDP unicast/broadcast destination. */
   ddpHost: string
   ddpPort: number
+  /** Wire colour mode. Internal frames stay RGB; RGBW is derived at send/export. */
+  colorMode: ColorMode
+  whiteMode: WhiteMode
 }
 
 export interface OutputRouteConfig extends OutputDriverConfig {
@@ -25,7 +34,9 @@ export const DEFAULT_OUTPUT_DRIVER: OutputDriverConfig = {
   startUniverse: 1,
   sacnHost: '',
   ddpHost: '255.255.255.255',
-  ddpPort: 4048
+  ddpPort: 4048,
+  colorMode: 'rgb',
+  whiteMode: 'subtractive'
 }
 
 export const OUTPUT_PROTOCOL_LABELS: Record<OutputProtocolKind, string> = {
@@ -49,9 +60,9 @@ export function isOutputTransmitEnabled(params: Record<string, unknown>): boolea
   return params['transmit'] !== false
 }
 
-function parseNodeOutputConfig(
+export function parseOutputDriver(
   params: Record<string, unknown>,
-  fallbackStartUniverse: number
+  fallbackStartUniverse = DEFAULT_OUTPUT_DRIVER.startUniverse
 ): OutputDriverConfig {
   const protocolRaw = strParam(params, 'protocol', 'sacn')
   const protocol: OutputProtocolKind =
@@ -62,7 +73,9 @@ function parseNodeOutputConfig(
     startUniverse: Math.max(1, Math.min(63999, intParam(params, 'startUniverse', fallbackStartUniverse))),
     sacnHost: strParam(params, 'sacnHost', DEFAULT_OUTPUT_DRIVER.sacnHost),
     ddpHost: strParam(params, 'ddpHost', DEFAULT_OUTPUT_DRIVER.ddpHost),
-    ddpPort: Math.max(1, Math.min(65535, intParam(params, 'ddpPort', DEFAULT_OUTPUT_DRIVER.ddpPort)))
+    ddpPort: Math.max(1, Math.min(65535, intParam(params, 'ddpPort', DEFAULT_OUTPUT_DRIVER.ddpPort))),
+    colorMode: parseColorMode(params['colorMode']),
+    whiteMode: parseWhiteMode(params['whiteMode'])
   }
 }
 
@@ -79,7 +92,7 @@ export function parseOutputRoutes(
       const params = node.params as Record<string, unknown>
       return {
         nodeId: node.id,
-        ...parseNodeOutputConfig(params, fallbackStartUniverse),
+        ...parseOutputDriver(params, fallbackStartUniverse),
         transmit: isOutputTransmitEnabled(params)
       }
     })
@@ -100,6 +113,8 @@ export function parseOutputConfig(
     startUniverse: first.startUniverse,
     sacnHost: first.sacnHost,
     ddpHost: first.ddpHost,
-    ddpPort: first.ddpPort
+    ddpPort: first.ddpPort,
+    colorMode: first.colorMode,
+    whiteMode: first.whiteMode
   }
 }

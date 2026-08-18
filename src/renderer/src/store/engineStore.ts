@@ -9,7 +9,8 @@ import {
   type NodeTimings
 } from '@shared/messages'
 import { engineBridge, onEngineMessage, onEngineConnect } from '@/engine/bridge'
-import { getNetworkInterfaces } from '@/platform/api'
+import { getNetworkInterfaces, listShareSenders } from '@/platform/api'
+import { mergeShareSenders } from '@shared/share/senders'
 
 interface EngineState {
   status: EngineStatus
@@ -39,6 +40,7 @@ const initialStatus: EngineStatus = {
   pixelCount: 170,
   outputProtocol: 'sacn',
   outputProtocolName: 'sACN',
+  colorMode: 'rgb',
   outputError: null,
   graphError: null,
   outputCount: 0,
@@ -58,6 +60,27 @@ export const useEngineStore = create<EngineState>((set, get) => {
     { resolve: (result: BakeResult) => void; reject: (err: Error) => void; timer?: ReturnType<typeof setTimeout> }
   >()
   const BAKE_TIMEOUT_MS = 120_000
+  let engineShareSenders: string[] = []
+  let mainShareSenders: string[] = []
+
+  const mergedStatus = (status: EngineStatus): EngineStatus => ({
+    ...status,
+    shareAvailable: status.shareAvailable || mainShareSenders.length > 0,
+    shareSenders: mergeShareSenders(engineShareSenders, mainShareSenders)
+  })
+
+  const refreshMainSenders = (): void => {
+    void listShareSenders()
+      .then((senders) => {
+        mainShareSenders = senders
+        set({ status: mergedStatus(get().status) })
+      })
+      .catch(() => {
+        /* main-process listing is optional */
+      })
+  }
+  refreshMainSenders()
+  setInterval(refreshMainSenders, 500)
 
   onEngineMessage((msg) => {
     if (msg.type === 'frame') {
@@ -68,7 +91,8 @@ export const useEngineStore = create<EngineState>((set, get) => {
         nodeTimings: msg.timings
       })
     } else if (msg.type === 'status') {
-      set({ status: msg.status })
+      engineShareSenders = msg.status.shareSenders
+      set({ status: mergedStatus(msg.status) })
     } else if (msg.type === 'bake-result') {
       const pending = pendingBakes.get(msg.requestId)
       if (pending === undefined) return

@@ -31,6 +31,7 @@ export const Kaleidoscope: NodeTypeDef = {
       options: ['mirror', 'wrap']
     }
   ],
+  gpu: { pass: 'transform/kaleidoscope' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

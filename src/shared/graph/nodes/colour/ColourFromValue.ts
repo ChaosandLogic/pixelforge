@@ -23,6 +23,7 @@ export const ColourFromValue: NodeTypeDef = {
     { name: 'to', label: 'To', type: 'colour', default: { r: 255, g: 80, b: 0 } },
     { name: 'value', label: 'Value', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'colour/from-value' },
   evaluate(inputs, params, ctx) {
     const from = colourParam(params, 'from')
     const to = colourParam(params, 'to')

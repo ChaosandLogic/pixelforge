@@ -10,8 +10,11 @@ import {
   type Vec3
 } from '@shared/patch/layout'
 import { MAX_PIXELS } from '@shared/messages'
+import { OUTPUT_NODE_TYPE } from '@shared/graph/nodes/output/PixelOutput'
+import { DEFAULT_OUTPUT_DRIVER, parseOutputDriver } from '@shared/output/config'
+import { COLOR_MODE_LABELS } from '@shared/output/rgbw'
 import { universeCountFor } from '@shared/patch/types'
-import { useEngineStore } from '@/store/engineStore'
+import { useGraphStore } from '@/store/graphStore'
 import { usePatchStore } from '@/store/patchStore'
 import { LayoutPreview } from './LayoutPreview'
 
@@ -222,7 +225,16 @@ export function LayoutBuilder({ onClose }: { onClose: () => void }): React.JSX.E
   const removeFixture = usePatchStore((s) => s.removeFixture)
   const moveFixture = usePatchStore((s) => s.moveFixture)
   const duplicateFixture = usePatchStore((s) => s.duplicateFixture)
-  const startUniverse = useEngineStore((s) => s.config.startUniverse)
+  const outputParams = useGraphStore((s) => {
+    const node = s.nodes.find((n) => n.data.nodeType === OUTPUT_NODE_TYPE)
+    return node?.data.params
+  })
+  const outputDriver =
+    outputParams === undefined
+      ? DEFAULT_OUTPUT_DRIVER
+      : parseOutputDriver(outputParams as Record<string, unknown>)
+  const startUniverse = outputDriver.startUniverse
+  const colorMode = outputDriver.colorMode
 
   const fixtures = layout?.fixtures ?? []
   const [selectedIds, setSelectedIds] = useState<string[]>(() =>
@@ -232,7 +244,7 @@ export function LayoutBuilder({ onClose }: { onClose: () => void }): React.JSX.E
 
   const selected =
     selectedIds.length === 1 ? fixtures.find((f) => f.id === selectedIds[0]) : undefined
-  const universes = universeCountFor(points.length)
+  const universes = universeCountFor(points.length, colorMode)
 
   useEffect(() => {
     const valid = selectedIds.filter((id) => fixtures.some((f) => f.id === id))
@@ -342,7 +354,8 @@ export function LayoutBuilder({ onClose }: { onClose: () => void }): React.JSX.E
 
         <footer className="layout-builder-footer">
           <span>
-            {points.length} points → {universes} universe{universes === 1 ? '' : 's'} (U{startUniverse}
+            {points.length} points · {COLOR_MODE_LABELS[colorMode]} → {universes} universe
+            {universes === 1 ? '' : 's'} (U{startUniverse}
             {universes > 1 ? `–U${startUniverse + universes - 1}` : ''})
           </span>
           {layoutOverflow && (

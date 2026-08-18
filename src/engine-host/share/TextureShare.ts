@@ -1,3 +1,4 @@
+/** CPU Syphon/Spout fallback when the GPU sidecar has no native share. */
 import { createRequire } from 'node:module'
 import type { GraphData } from '@shared/graph/types'
 import { SYPHON_IN_NODE_TYPE, syphonSenderName } from '@shared/graph/nodes/generators/SyphonIn'
@@ -9,6 +10,7 @@ import {
   syphonOutSize
 } from '@shared/graph/nodes/output/SyphonOut'
 import { clampShareSize, layoutToBgra, samplePackedToRgb, sampleSizeFor, streamToBgra } from '@shared/share/frame'
+import { parseShareSender, shareSenderLabel } from '@shared/share/senders'
 import type { Evaluator } from '../evaluator/Evaluator'
 
 export type SharePlatform = 'syphon' | 'spout' | 'none'
@@ -37,9 +39,9 @@ interface TextureSenderHandle {
 }
 
 interface NativeShare {
-  TextureReceiver: new (senderName: string) => TextureReceiverHandle
+  TextureReceiver: new (senderName: string, appName?: string, uuid?: string) => TextureReceiverHandle
   TextureSender: new (name: string, width: number, height: number) => TextureSenderHandle
-  listSenders: () => Array<{ name: string }>
+  listSenders: () => Array<{ name?: string; appName?: string }>
   getPlatform: () => string
 }
 
@@ -98,16 +100,16 @@ export class TextureShare {
   pollDiscovery(): void {
     if (this.native === null) return
     try {
-      this.status.senders = this.native.listSenders().map((s) => s.name)
+      this.status.senders = this.native.listSenders().map(shareSenderLabel).filter((name) => name !== '')
       this.status.error = null
     } catch (err) {
       this.status.error = err instanceof Error ? err.message : String(err)
     }
   }
 
-  syncGraph(graph: GraphData | null, evaluator: Evaluator): void {
+  syncGraph(graph: GraphData | null, evaluator: Evaluator, opts?: { senders?: boolean }): void {
     this.syncReceivers(graph, evaluator)
-    this.syncSenders(graph)
+    if (opts?.senders !== false) this.syncSenders(graph)
   }
 
   receive(evaluator: Evaluator, graph: GraphData | null): void {
@@ -186,7 +188,11 @@ export class TextureShare {
     for (const [id, name] of wanted) {
       if (this.receivers.has(id)) continue
       try {
-        this.receivers.set(id, { name, handle: new this.native.TextureReceiver(name) })
+        const parsed = parseShareSender(name)
+        this.receivers.set(id, {
+          name,
+          handle: new this.native.TextureReceiver(parsed.name || name, parsed.appName)
+        })
       } catch (err) {
         this.status.error = err instanceof Error ? err.message : String(err)
       }

@@ -3,7 +3,16 @@ import type { NodeTypeDef } from '../../types'
 export const OUTPUT_NODE_TYPE = 'output/pixel'
 
 /** Params edited inline on the node card (hidden from Inspector). */
-export const OUTPUT_INLINE_PARAMS = new Set(['protocol', 'startUniverse', 'sacnHost', 'ddpHost', 'ddpPort', 'transmit'])
+export const OUTPUT_INLINE_PARAMS = new Set([
+  'protocol',
+  'startUniverse',
+  'sacnHost',
+  'ddpHost',
+  'ddpPort',
+  'colorMode',
+  'whiteMode',
+  'transmit'
+])
 
 /**
  * Terminal node: the evaluator pulls this node's 'pixels' input and writes
@@ -14,7 +23,7 @@ export const PixelOutput: NodeTypeDef = {
   type: OUTPUT_NODE_TYPE,
   label: 'Pixel Output',
   category: 'output',
-  description: 'Sends pixels via sACN, Art-Net, or DDP',
+  description: 'Sends pixels via sACN, Art-Net, or DDP (RGB or RGBW)',
   inputs: [{ name: 'pixels', label: 'Pixels', type: 'pixels' }],
   outputs: [],
   params: [
@@ -34,6 +43,20 @@ export const PixelOutput: NodeTypeDef = {
     },
     { name: 'ddpHost', label: 'DDP host', type: 'string', default: '255.255.255.255' },
     { name: 'ddpPort', label: 'DDP port', type: 'int', default: 4048, min: 1, max: 65535 },
+    {
+      name: 'colorMode',
+      label: 'Colour mode',
+      type: 'select',
+      default: 'rgb',
+      options: ['rgb', 'rgbw']
+    },
+    {
+      name: 'whiteMode',
+      label: 'White channel',
+      type: 'select',
+      default: 'subtractive',
+      options: ['subtractive', 'luminance']
+    },
     { name: 'transmit', label: 'Transmit', type: 'boolean', default: true }
   ],
   evaluate() {

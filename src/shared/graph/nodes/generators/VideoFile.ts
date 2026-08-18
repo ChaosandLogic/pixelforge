@@ -12,9 +12,8 @@ export const VIDEO_NODE_TYPE = 'generator/video'
 export const VIDEO_INLINE_PARAMS = new Set(['file'])
 
 /**
- * Plays a video file. Decoding happens in the renderer (hidden <video>
- * element); each decoded frame is downsampled to a W×H grid matching the
- * patch resolution and pushed to the engine for 2D UV sampling.
+ * Plays a video file. The GPU sidecar decodes frames (ffmpeg when present);
+ * CPU `evaluate()` samples a media-frame only when the sidecar is down.
  */
 export const VideoFile: NodeTypeDef = {
   type: VIDEO_NODE_TYPE,
@@ -30,6 +29,7 @@ export const VideoFile: NodeTypeDef = {
     { name: 'file', label: 'File', type: 'file', default: '' },
     { name: 'gain', label: 'Gain', type: 'float', default: 1, min: 0, max: 2, step: 0.01 }
   ],
+  gpu: { pass: 'generator/video' },
   evaluate(inputs, params, ctx) {
     const scope = generatorScope(inputs, ctx)
     const out = beginScopedOutput(ctx)

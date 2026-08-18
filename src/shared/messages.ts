@@ -5,13 +5,15 @@
  * and receives frames + status.
  */
 import type { OutputProtocolKind } from '@shared/output/config'
+import type { ColorMode } from '@shared/output/rgbw'
 import type { GraphData, ParamValues } from './graph/types'
 import type { FixtureRange } from './patch/layout'
 
+/** Internal pipeline / preview layout — always RGB. Wire format may be RGBW. */
 export const CHANNELS_PER_PIXEL = 3
 export const DEFAULT_TARGET_FPS = 44
-/** SharedArrayBuffer capacity. 8192 px = ~48 sACN universes; DDP has no such limit. */
-export const MAX_PIXELS = 8192
+/** SharedArrayBuffer capacity. 32768 px ≈ 193 sACN universes (RGB) or 256 (RGBW). */
+export const MAX_PIXELS = 32768
 
 export interface EngineConfig {
   /** First sACN universe; the channel stream chunks into consecutive universes from here */
@@ -72,7 +74,7 @@ export interface BakeResult {
 }
 
 /** Hard cap on baked animation size (raw RGB bytes) to bound memory use. */
-export const MAX_BAKE_BYTES = 16 * 1024 * 1024
+export const MAX_BAKE_BYTES = 64 * 1024 * 1024
 
 /** Max frame rate the bake pipeline honours; UI clamps to this so what the
  * user requests is what gets exported (the engine cannot bake faster). */
@@ -91,6 +93,8 @@ export interface EngineStatus {
   /** Active output protocol from the Pixel Output node */
   outputProtocol: OutputProtocolKind
   outputProtocolName: string
+  /** Wire colour mode from the first Pixel Output node */
+  colorMode: ColorMode
   /** Last output error, if any (cleared on successful send) */
   outputError: string | null
   /** Graph validation error (cycle, unknown node type), null when valid */
@@ -104,6 +108,7 @@ export interface EngineStatus {
   sharePlatform: 'syphon' | 'spout' | 'none'
   /** Discovered Syphon/Spout senders on the machine */
   shareSenders: string[]
+  shareError: string | null
   gpuAvailable: boolean
   gpuError: string | null
 }

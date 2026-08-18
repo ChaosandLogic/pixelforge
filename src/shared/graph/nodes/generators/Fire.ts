@@ -23,6 +23,7 @@ export const Fire: NodeTypeDef = {
     { name: 'turbulence', label: 'Turbulence', type: 'float', default: 0.6, min: 0, max: 1, step: 0.01 },
     { name: 'rise', label: 'Rise bias', type: 'float', default: 0.55, min: 0, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'generator/fire' },
   evaluate(inputs, params, ctx) {
     const scope = generatorScope(inputs, ctx)
     const out = beginScopedOutput(ctx)

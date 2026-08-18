@@ -14,6 +14,7 @@ export const Master: NodeTypeDef = {
   params: [
     { name: 'level', label: 'Level', type: 'float', default: 1, min: 0, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'setup/master' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     const out = ctx.acquire()

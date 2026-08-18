@@ -21,6 +21,7 @@ export const PaletteMap: NodeTypeDef = {
     { name: 'dark', label: 'Dark', type: 'colour', default: { r: 0, g: 0, b: 0 } },
     { name: 'light', label: 'Light', type: 'colour', default: { r: 255, g: 255, b: 255 } }
   ],
+  gpu: { pass: 'colour/palette-map' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

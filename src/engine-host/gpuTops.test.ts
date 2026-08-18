@@ -91,7 +91,67 @@ describe('GPU TOP evaluator', () => {
     }
   })
 
-  it('GPU mix of two solids is non-black', () => {
+  it('GPU mix of two solids matches CPU Oklab mix', () => {
+    const bin = gpuBinary()
+    if (bin === null) return
+    const n = 8
+    const graph: GraphData = {
+      nodes: [
+        {
+          id: 'a',
+          type: 'generator/solid-colour',
+          position: { x: 0, y: 0 },
+          params: { colour: { r: 255, g: 0, b: 0 } }
+        },
+        {
+          id: 'b',
+          type: 'generator/solid-colour',
+          position: { x: 0, y: 0 },
+          params: { colour: { r: 0, g: 0, b: 255 } }
+        },
+        {
+          id: 'mix',
+          type: 'composite/mix',
+          position: { x: 0, y: 0 },
+          params: { mode: 'mix', amount: 0.5 }
+        },
+        { id: 'out', type: OUTPUT_NODE_TYPE, position: { x: 0, y: 0 }, params: {} }
+      ],
+      edges: [
+        { id: 'e1', fromNode: 'a', fromPort: 'pixels', toNode: 'mix', toPort: 'a' },
+        { id: 'e2', fromNode: 'b', fromPort: 'pixels', toNode: 'mix', toPort: 'b' },
+        { id: 'e3', fromNode: 'mix', fromPort: 'pixels', toNode: 'out', toPort: 'pixels' }
+      ]
+    }
+    const cpuSab = new SharedArrayBuffer(n * 3)
+    const gpuSab = new SharedArrayBuffer(n * 3)
+    const cpu = new Evaluator(cpuSab, n, new BufferPool(n))
+    cpu.setPatch(linePositions(n), n, n, 1, [])
+    cpu.setGraph(graph)
+    const cpuView = new Uint8Array(cpuSab)
+    cpu.setOutputTargets(['out'], new Map([['out', cpuView]]), cpuView)
+    cpu.evaluate(0, 16)
+
+    const gpuEval = new Evaluator(gpuSab, n, new BufferPool(n))
+    const client = new GpuClient(bin)
+    assert.equal(client.start(), true)
+    try {
+      gpuEval.setGpuClient(client)
+      gpuEval.setPatch(linePositions(n), n, n, 1, [])
+      gpuEval.setGraph(graph)
+      const gpuView = new Uint8Array(gpuSab)
+      gpuEval.setOutputTargets(['out'], new Map([['out', gpuView]]), gpuView)
+      gpuEval.evaluate(0, 16)
+      assert.equal(gpuEval.evalError, null)
+      for (let i = 0; i < n * 3; i++) {
+        assert.ok(Math.abs((gpuView[i] ?? 0) - (cpuView[i] ?? 0)) <= 2)
+      }
+    } finally {
+      client.stop()
+    }
+  })
+
+  it('GPU blur of a solid stays that colour', () => {
     const bin = gpuBinary()
     if (bin === null) return
     const n = 8
@@ -101,40 +161,34 @@ describe('GPU TOP evaluator', () => {
     assert.equal(client.start(), true)
     try {
       evaluator.setGpuClient(client)
-      evaluator.setPatch(linePositions(n), n, 8, 1, [])
+      evaluator.setPatch(linePositions(n), n, n, 1, [])
       evaluator.setGraph({
         nodes: [
           {
-            id: 'a',
+            id: 'solid',
             type: 'generator/solid-colour',
             position: { x: 0, y: 0 },
-            params: { colour: { r: 255, g: 0, b: 0 } }
+            params: { colour: { r: 0, g: 200, b: 40 } }
           },
           {
-            id: 'b',
-            type: 'generator/solid-colour',
+            id: 'blur',
+            type: 'transform/blur',
             position: { x: 0, y: 0 },
-            params: { colour: { r: 0, g: 0, b: 255 } }
-          },
-          {
-            id: 'mix',
-            type: 'composite/mix',
-            position: { x: 0, y: 0 },
-            params: { mode: 'mix', amount: 0.5 }
+            params: { radius: 2, direction: 'both', edges: 'clamp' }
           },
           { id: 'out', type: OUTPUT_NODE_TYPE, position: { x: 0, y: 0 }, params: {} }
         ],
         edges: [
-          { id: 'e1', fromNode: 'a', fromPort: 'pixels', toNode: 'mix', toPort: 'a' },
-          { id: 'e2', fromNode: 'b', fromPort: 'pixels', toNode: 'mix', toPort: 'b' },
-          { id: 'e3', fromNode: 'mix', fromPort: 'pixels', toNode: 'out', toPort: 'pixels' }
+          { id: 'e1', fromNode: 'solid', fromPort: 'pixels', toNode: 'blur', toPort: 'pixels' },
+          { id: 'e2', fromNode: 'blur', fromPort: 'pixels', toNode: 'out', toPort: 'pixels' }
         ]
       })
       const view = new Uint8Array(sab)
       evaluator.setOutputTargets(['out'], new Map([['out', view]]), view)
       evaluator.evaluate(0, 16)
       assert.equal(evaluator.evalError, null)
-      assert.ok((view[0] ?? 0) > 0 || (view[2] ?? 0) > 0)
+      assert.ok(Math.abs((view[1] ?? 0) - 200) <= 2)
+      assert.ok(Math.abs((view[2] ?? 0) - 40) <= 2)
     } finally {
       client.stop()
     }

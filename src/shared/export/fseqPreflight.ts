@@ -5,6 +5,8 @@ import { MIDI_IN_NODE_TYPE } from '../graph/nodes/input/MidiIn'
 import { OSC_IN_NODE_TYPE } from '../graph/nodes/input/OscIn'
 import { SYPHON_IN_NODE_TYPE } from '../graph/nodes/generators/SyphonIn'
 import type { GraphData } from '../graph/types'
+import { parseOutputConfig } from '../output/config'
+import { COLOR_MODE_LABELS, channelsPerPixel } from '../output/rgbw'
 import { estimateFseqBytes, stepTimeFromFps } from './fseq'
 import { bakeExportWarnings } from './loopPeriod'
 
@@ -47,8 +49,10 @@ export function fseqExportPreflight(
   const hasOutput = graph.nodes.some((n) => n.type === OUTPUT_NODE_TYPE)
   if (!hasOutput) errors.push('Graph needs a Pixel Output node to bake.')
 
+  const driver = parseOutputConfig(graph)
+  const colorMode = driver.colorMode
   const frameCount = Math.max(1, Math.round(durationSec * fps))
-  const estBytes = estimateFseqBytes(pixelCount, frameCount)
+  const estBytes = estimateFseqBytes(pixelCount, frameCount, true, colorMode)
   const estMb = estBytes / 1024 / 1024
   if (estMb > 512) {
     warnings.push(`Estimated sequence size ~${estMb.toFixed(0)} MB — large for FPP storage.`)
@@ -69,7 +73,7 @@ export function fseqExportPreflight(
     'Baked sequences are offline animations. Video/image nodes use the current frame for the entire bake.'
   )
   warnings.push(
-    'Map FPP channel outputs to start at channel 1 (or your universe offset) — file channels are RGB in patch order.'
+    `Map FPP channel outputs to start at channel 1 (or your universe offset) — file channels are ${COLOR_MODE_LABELS[colorMode]} (${channelsPerPixel(colorMode)} per pixel) in patch order.`
   )
 
   if (seamlessLoop && loopPeriodSec === null) {

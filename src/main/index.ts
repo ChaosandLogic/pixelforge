@@ -9,10 +9,14 @@ import { registerProjectIpc } from './ipc/project'
 import { initAutoUpdater } from './updater'
 import { initCrashReporting } from './crashReporting'
 import { registerOnboardingIpc } from './ipc/onboarding'
+import { registerShareIpc } from './ipc/share'
 import { setupAppMenu } from './menu'
 import { requestLocalNetworkAccess } from './localNetworkPermission'
+import { createSplashWindow, handoffSplash, hasAppWindow } from './splash'
+import { ShareReceiverHub } from './share/receiver'
 
 const engine = new EngineLauncher()
+const shareHub = new ShareReceiverHub((msg) => engine.sendToEngine(msg))
 
 // Packaged builds get their icon from electron-builder; this only dresses up the
 // dev window/dock so `npm run dev` doesn't show the default Electron icon.
@@ -25,7 +29,7 @@ process.on('uncaughtException', (err) => {
   console.error('[main] Uncaught exception:', err)
 })
 
-function createWindow(): void {
+function createWindow(splash: BrowserWindow | null = null): void {
   const win = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -41,7 +45,7 @@ function createWindow(): void {
     }
   })
 
-  win.on('ready-to-show', () => win.show())
+  handoffSplash(win, splash)
 
   win.webContents.setWindowOpenHandler((details) => {
     void shell.openExternal(details.url)
@@ -58,13 +62,16 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   initCrashReporting('editor')
   if (!app.isPackaged && process.platform === 'darwin') app.dock?.setIcon(devIconPath)
+  const splash = createSplashWindow('editor')
   requestLocalNetworkAccess()
   engine.start()
+  engine.ensureClientPort()
   registerNetworkIpc()
   registerProjectIpc()
   registerMediaIpc()
   registerFileIpc()
   registerOnboardingIpc()
+  registerShareIpc(shareHub)
   registerAppIpc()
   setupAppMenu('editor')
 
@@ -72,11 +79,11 @@ app.whenReady().then(async () => {
     engine.connectRenderer(event.sender)
   })
 
-  createWindow()
+  createWindow(splash)
   initAutoUpdater('editor')
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (!hasAppWindow()) createWindow()
   })
 }).catch((err: unknown) => {
   console.error('[main] Fatal error during startup:', err)
@@ -87,5 +94,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('will-quit', () => {
+  shareHub.dispose()
   engine.stop()
 })

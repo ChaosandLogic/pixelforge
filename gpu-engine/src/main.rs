@@ -110,6 +110,18 @@ fn handle(
             )
             .map_err(|e| e.to_string())?;
         }
+        "senders" => {
+            write_message(
+                writer,
+                &json!({
+                    "id": req.id,
+                    "kind": "senders-ok",
+                    "body": { "senders": engine.share.list_senders() }
+                }),
+                &[],
+            )
+            .map_err(|e| e.to_string())?;
+        }
         "compile" => {
             let body: CompileRequest = serde_json::from_value(req.body.clone()).map_err(|e| e.to_string())?;
             let positions = blob_f32(blobs, "positions");
@@ -120,11 +132,10 @@ fn handle(
         "frame" => {
             let body: FrameRequest = serde_json::from_value(req.body.clone()).map_err(|e| e.to_string())?;
             let mut uploads = HashMap::new();
-            for (name, data) in blobs {
-                if let Some(id) = name.strip_prefix("upload:") {
+            for upload in &body.cpu_uploads {
+                if let Some((_, data)) = blobs.iter().find(|(n, _)| n == &format!("upload:{}", upload.node_id)) {
                     let rgb = f32_from_bytes(data);
-                    let n = (rgb.len() / 3).max(1);
-                    uploads.insert(id.to_string(), (n as u32, 1, rgb));
+                    uploads.insert(upload.node_id.clone(), (upload.width.max(1), upload.height.max(1), rgb));
                 }
             }
             let out = engine.frame(body, &uploads)?;

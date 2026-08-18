@@ -1,9 +1,10 @@
 /**
  * Protocol abstraction for pixel output. The engine hands every protocol
- * the same thing: one flat RGB channel stream in patch order. Each
- * implementation chunks it as its wire format requires.
+ * one flat channel stream in patch order (RGB or RGBW). Each implementation
+ * chunks it as its wire format requires.
  */
 import type { OutputProtocolKind } from '@shared/output/config'
+import type { ColorMode, WhiteMode } from '@shared/output/rgbw'
 
 export interface OutputProtocolConfig {
   /** Active wire protocol */
@@ -18,6 +19,9 @@ export interface OutputProtocolConfig {
   ddpPort?: number
   /** sACN unicast destination; omit/empty = E1.31 multicast (239.255.x.x) */
   sacnHost?: string
+  /** Wire colour mode of `send()` payloads (RGB or already-expanded RGBW). */
+  colorMode?: ColorMode
+  whiteMode?: WhiteMode
 }
 
 export interface OutputProtocol {

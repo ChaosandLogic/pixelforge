@@ -12,7 +12,8 @@ export const SYPHON_IN_INLINE_PARAMS = new Set(['sender'])
 
 /**
  * Samples a Syphon (macOS) or Spout (Windows) sender across the patch.
- * Frames are received in the engine host and stored as media-frames.
+ * Live In uses the GPU sidecar on macOS when Syphon.framework loads;
+ * otherwise the engine host CPU TextureShare path remains.
  */
 export const SyphonIn: NodeTypeDef = {
   type: SYPHON_IN_NODE_TYPE,
@@ -35,6 +36,7 @@ export const SyphonIn: NodeTypeDef = {
       options: ['cover', 'contain', 'stretch']
     }
   ],
+  gpu: { pass: 'generator/syphon-in' },
   evaluate(inputs, params, ctx) {
     const scope = generatorScope(inputs, ctx)
     const out = beginScopedOutput(ctx)

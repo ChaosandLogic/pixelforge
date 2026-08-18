@@ -2,12 +2,9 @@ import { useEffect, useState } from 'react'
 import { AboutDialog } from '@/ui/AboutDialog'
 import { handleEditCommand, type EditCommand } from '@/ui/editing'
 import { NodeGraph } from '@/graph/NodeGraph'
-import { PatchPanel } from '@/patch/PatchPanel'
 import { PreviewPanel } from '@/preview/PreviewPanel'
 import { Inspector } from '@/ui/Inspector'
-import { NetworkPanel } from '@/ui/NetworkPanel'
 import { OnboardingDialog } from '@/ui/OnboardingDialog'
-import { OutputDiagnosticsPanel } from '@/ui/OutputDiagnosticsPanel'
 import { StatusBar } from '@/ui/StatusBar'
 import { Toolbar } from '@/ui/Toolbar'
 import { newProject, openProject, saveProject } from '@/project/projectActions'
@@ -52,11 +49,6 @@ export function App(): React.JSX.Element {
           onShowShortcuts={() => setAboutMode('shortcuts')}
         />
         <div className="app-body">
-          <div className="left-column">
-            <NetworkPanel />
-            <PatchPanel />
-            <OutputDiagnosticsPanel />
-          </div>
           <main className="app-main">
             <NodeGraph />
           </main>

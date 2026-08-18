@@ -28,9 +28,12 @@ import {
   rasterizeEffectPreviewGrid
 } from '@shared/preview/effectPreviewGrid'
 import { defaultResolution, type Resolution } from '@shared/spatial/resolution'
+import { IMAGE_NODE_TYPE } from '@shared/graph/nodes/generators/ImageFile'
+import { VIDEO_NODE_TYPE } from '@shared/graph/nodes/generators/VideoFile'
 import { GPU_WORKING_RES_MAX, isTopNodeType } from '@shared/gpu/topNodes'
 import { gpuPixelRef, isGpuPixelRef } from '@shared/gpu/pixelRef'
-import type { GpuCompileNode, GpuFrameRequest, GpuMediaRef, GpuNodeUniforms, GpuShareIn, GpuShareOut } from '@shared/gpu/protocol'
+import { rasterizeLedsToGrid, rasterizeLedsToTexture } from '@shared/gpu/raster'
+import type { GpuCompileNode, GpuCpuUpload, GpuFrameRequest, GpuMediaRef, GpuNodeUniforms, GpuShareIn, GpuShareOut } from '@shared/gpu/protocol'
 import { FEEDBACK_NODE_TYPE } from '@shared/graph/nodes/compositing/Feedback'
 import { syphonSenderName } from '@shared/graph/nodes/generators/SyphonIn'
 import {
@@ -42,9 +45,6 @@ import {
 import { BufferPool } from './BufferPool'
 import type { GpuClient } from '../gpu/GpuClient'
 import { collectGpuUniforms, fileParam } from '../gpu/uniforms'
-
-const VIDEO_NODE_TYPE = 'generator/video'
-const IMAGE_NODE_TYPE = 'generator/image'
 
 interface EdgeSource {
   fromNode: string
@@ -115,8 +115,6 @@ export class Evaluator {
   private gpuUniforms = new Map<string, GpuNodeUniforms>()
   private gpuUploads = new Map<string, Float32Array>()
   private gpuSamples = new Map<string, Float32Array>()
-  private gpuPreviews: NodePreviews = {}
-  private gpuFlushed = false
   private gpuFeedbackResets: string[] = []
   gpuShareSenders: string[] = []
   gpuShareError: string | null = null
@@ -557,9 +555,7 @@ export class Evaluator {
     this.gpuUniforms.clear()
     this.gpuUploads.clear()
     this.gpuSamples.clear()
-    this.gpuFlushed = false
     this.gpuFeedbackResets = []
-    this.gpuPreviews = {}
 
     if (this.graphError === null) {
       for (const id of this.scheduleNodeIds) {
@@ -593,11 +589,13 @@ export class Evaluator {
     if (this.graphError === null) {
       for (const shareId of this.shareOutNodeIds) {
         const source = this.edgesByTarget.get(`${shareId}:pixels`)
-        if (source !== undefined) this.evalNode(source.fromNode)
+        if (source === undefined) continue
+        const value = this.evalNode(source.fromNode)[source.fromPort]
+        if (value instanceof Float32Array) this.gpuUploads.set(source.fromNode, value)
       }
     }
 
-    if (this.gpuEnabled && this.gpuLive.length > 0) {
+    if (this.gpuEnabled) {
       this.flushGpu([])
     }
 
@@ -606,7 +604,8 @@ export class Evaluator {
 
   /**
    * Evaluate preview-enabled nodes and capture effect + layout thumbnails.
-   * Layout uses the real patch eval; effect uses a separate synthetic grid pass.
+   * Layout uses the real patch eval; effect re-renders on a square UV grid
+   * (same size for GPU TOPs and CPU nodes — not the LED working texture).
    */
   private capturePreviews(): void {
     const previews: NodePreviews = {}
@@ -656,13 +655,15 @@ export class Evaluator {
 
           const layout = layouts.get(id)
           if (layout !== undefined) {
-            const gpuEffect = this.gpuPreviews[id]
+            const media = node.type === SYPHON_IN_NODE_TYPE ? this.mediaFrames.get(id) : undefined
+            const fromMedia =
+              media !== undefined && media.width > 0 && media.height > 0
+                ? { data: new Uint8Array(media.data), width: media.width, height: media.height }
+                : undefined
             const effect = this.retainRaster(
               this.effectRasterCache,
               id,
-              gpuEffect?.kind === 'pixels'
-                ? { data: gpuEffect.data, width: gpuEffect.width, height: gpuEffect.height }
-                : this.effectPreviewForNode(node, port.name, previewMemo)
+              fromMedia ?? this.effectPreviewForNode(node, port.name, previewMemo)
             )
             previews[id] = { kind: 'pixels', ...effect, layout }
           } else {
@@ -879,7 +880,6 @@ export class Evaluator {
         this.gpuUploads.set(uploadId, value)
       }
     }
-    this.gpuFlushed = false
     return { pixels: gpuPixelRef(node.id) }
   }
 
@@ -929,18 +929,11 @@ export class Evaluator {
 
   private flushGpu(sampleIds: string[]): void {
     const gpu = this.gpu
-    if (gpu === null || !gpu.available || this.gpuLive.length === 0) return
-    if (this.gpuGraphDirty) {
-      try {
-        this.compileGpu()
-      } catch (err) {
-        this.evalError = err instanceof Error ? err.message : String(err)
-        return
-      }
-    }
+    if (gpu === null || !gpu.available) return
     const media: GpuMediaRef[] = []
     const shareIn: GpuShareIn[] = []
     const shareOut: GpuShareOut[] = []
+    const shareMedia = new Map<string, { width: number; height: number; rgb: Float32Array }>()
     for (const id of this.gpuLive) {
       const node = this.nodesById.get(id)
       if (node === undefined) continue
@@ -957,6 +950,14 @@ export class Evaluator {
       if (node.type === SYPHON_IN_NODE_TYPE) {
         const sender = syphonSenderName(node.params)
         if (sender !== '') shareIn.push({ nodeId: id, sender })
+        const frame = this.mediaFrames.get(id)
+        if (frame !== undefined && frame.width > 0 && frame.height > 0) {
+          shareMedia.set(`${id}__media`, {
+            width: frame.width,
+            height: frame.height,
+            rgb: rgb8ToFloat(frame.data, frame.width, frame.height)
+          })
+        }
       }
     }
     for (const id of this.shareOutNodeIds) {
@@ -975,31 +976,68 @@ export class Evaluator {
         fromCpu: !isTopNodeType(this.nodesById.get(source.fromNode)?.type ?? '')
       })
     }
+    if (this.gpuLive.length === 0 && shareOut.length === 0 && sampleIds.length === 0) {
+      return
+    }
+    if (this.gpuGraphDirty) {
+      try {
+        this.compileGpu()
+      } catch (err) {
+        this.evalError = err instanceof Error ? err.message : String(err)
+        return
+      }
+    }
+    const res = this.workingRes()
+    const packed = new Map<string, { width: number; height: number; rgb: Float32Array }>()
+    for (const [id, rgb] of this.gpuUploads) {
+      packed.set(id, {
+        width: res.width,
+        height: res.height,
+        rgb: rasterizeLedsToTexture(rgb, this.positions, this.pixelCount, res.width, res.height)
+      })
+    }
+    for (const out of shareOut) {
+      if (!out.fromCpu) continue
+      const rgb = this.gpuUploads.get(out.sourceNodeId)
+      if (rgb === undefined) continue
+      const tex =
+        out.mapping === 'layout'
+          ? rasterizeLedsToTexture(rgb, this.positions, this.pixelCount, out.width, out.height)
+          : rasterizeLedsToGrid(
+              rgb,
+              out.width,
+              out.height,
+              this.patchResolution.width,
+              this.patchResolution.height
+            )
+      packed.set(`share:${out.nodeId}`, { width: out.width, height: out.height, rgb: tex })
+    }
+    for (const [id, frame] of shareMedia) packed.set(id, frame)
+    const cpuUploads: GpuCpuUpload[] = [...packed].map(([nodeId, u]) => ({
+      nodeId,
+      width: u.width,
+      height: u.height
+    }))
     const uniforms: Record<string, GpuNodeUniforms> = {}
     for (const [id, u] of this.gpuUniforms) uniforms[id] = u
-    const previewIds = this.previewIds.filter((id) => isTopNodeType(this.nodesById.get(id)?.type ?? ''))
     const req: GpuFrameRequest = {
       timeMs: this.ctx.timeMs,
       deltaMs: this.ctx.deltaMs,
       liveNodeIds: [...this.gpuLive],
       uniforms,
-      cpuUploadIds: [...this.gpuUploads.keys()],
+      cpuUploads,
       sampleNodeIds: [...new Set(sampleIds)],
-      previewNodeIds: previewIds,
+      previewNodeIds: [],
       feedbackResets: [...this.gpuFeedbackResets],
       media,
       shareIn,
       shareOut
     }
     try {
-      const result = gpu.frame(req, this.gpuUploads)
+      const result = gpu.frame(req, packed)
       for (const [id, rgb] of result.samples) this.gpuSamples.set(id, rgb)
-      for (const [id, preview] of result.previews) {
-        this.gpuPreviews[id] = { kind: 'pixels', data: preview.data, width: preview.width, height: preview.height }
-      }
       this.gpuShareSenders = result.shareSenders
       this.gpuShareError = result.shareError
-      this.gpuFlushed = true
       if (result.error !== null) this.evalError = result.error
     } catch (err) {
       this.evalError = err instanceof Error ? err.message : String(err)
@@ -1008,6 +1046,17 @@ export class Evaluator {
 }
 
 /** Default patch before the renderer sends one: a line along x. */
+function rgb8ToFloat(data: Uint8Array, width: number, height: number): Float32Array {
+  const count = Math.max(0, width * height)
+  const out = new Float32Array(count * 3)
+  for (let i = 0; i < count; i++) {
+    out[i * 3] = (data[i * 3] ?? 0) / 255
+    out[i * 3 + 1] = (data[i * 3 + 1] ?? 0) / 255
+    out[i * 3 + 2] = (data[i * 3 + 2] ?? 0) / 255
+  }
+  return out
+}
+
 function buildLinePositions(pixelCount: number): Float32Array {
   const positions = new Float32Array(pixelCount * 3)
   const denom = Math.max(1, pixelCount - 1)

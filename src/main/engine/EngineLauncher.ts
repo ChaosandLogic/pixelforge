@@ -40,11 +40,12 @@ export class EngineLauncher {
       }
     })
     this.proc.on('exit', (code) => {
-      console.error(`[engine] exited with code ${code}`)
+      const unexpected = !this.stopping
       this.proc = null
       this.clientPort?.close()
       this.clientPort = null
-      if (this.stopping) return
+      if (!unexpected) return
+      console.error(`[engine] exited with code ${code}`)
       for (const win of BrowserWindow.getAllWindows()) {
         win.webContents.send('engine:reconnect')
       }

@@ -27,6 +27,7 @@ export const Rotate: NodeTypeDef = {
     { name: 'centreU', label: 'Centre U', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 },
     { name: 'centreV', label: 'Centre V', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'transform/rotate' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

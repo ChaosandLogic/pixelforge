@@ -37,6 +37,7 @@ export const Text: NodeTypeDef = {
     { name: 'spacing', label: 'Spacing', type: 'int', default: 4, min: 0, max: 64 },
     { name: 'background', label: 'Background', type: 'float', default: 0, min: 0, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'generator/text' },
   evaluate(inputs, params, ctx) {
     const scope = generatorScope(inputs, ctx)
     const out = beginScopedOutput(ctx)

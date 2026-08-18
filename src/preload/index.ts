@@ -29,6 +29,8 @@ export interface PixelForgeApi {
   getOnboardingSeen: () => Promise<boolean>
   setOnboardingSeen: () => Promise<void>
   getAppVersion: () => Promise<string>
+  listShareSenders: () => Promise<string[]>
+  setShareInputs: (inputs: Array<{ nodeId: string; sender: string }>) => Promise<void>
   nativeEdit: (command: 'undo' | 'redo' | 'cut' | 'copy' | 'paste' | 'selectAll') => void
 }
 
@@ -55,6 +57,8 @@ const api: PixelForgeApi = {
   getOnboardingSeen: () => ipcRenderer.invoke('onboarding:seen'),
   setOnboardingSeen: () => ipcRenderer.invoke('onboarding:set-seen'),
   getAppVersion: () => ipcRenderer.invoke('app:version'),
+  listShareSenders: () => ipcRenderer.invoke('share:listSenders'),
+  setShareInputs: (inputs) => ipcRenderer.invoke('share:setInputs', inputs),
   nativeEdit: (command) => ipcRenderer.send('app:native-edit', command)
 }
 

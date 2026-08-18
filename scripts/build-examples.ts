@@ -714,6 +714,258 @@ const specs: PatchSpec[] = [
         edge('p12', 'msk', 'pixels', 'out', 'pixels')
       ]
     })
+  },
+
+  // ---- Visual looks (self-running 2D; no audio / sequence) --------------------
+
+  {
+    name: 'Plasma Field',
+    filename: '11-plasma-field.pxf',
+    description: 'Shader plasma on a 32×16 matrix with a slow hue drift — a looping 2D field.',
+    layout: matrixLayout(32, 16),
+    buildGraph: (layout) => ({
+      nodes: [
+        node('fix', 'setup/fixture', col(0), row(1), params('setup/fixture', { fixtureId: fid(layout, 0) })),
+        node(
+          'plasma',
+          'generator/shader',
+          col(1),
+          row(1),
+          params('generator/shader', {
+            preset: 'plasma',
+            speed: 0.55,
+            scale: 1.35,
+            colourA: { r: 8, g: 12, b: 90 },
+            colourB: { r: 0, g: 220, b: 190 },
+            intensity: 1.1
+          }),
+          true
+        ),
+        node('hsv', 'colour/hsv-shift', col(2), row(1), params('colour/hsv-shift', { hueSpeed: 0.035, saturation: 1.05 })),
+        node('out', 'output/pixel', col(3), row(1))
+      ],
+      edges: [
+        edge('e0', 'fix', 'pixels', 'plasma', 'pixels'),
+        edge('e0r', 'fix', 'resolution', 'plasma', 'resolution'),
+        edge('e1', 'plasma', 'pixels', 'hsv', 'pixels'),
+        edge('e2', 'hsv', 'pixels', 'out', 'pixels')
+      ]
+    })
+  },
+
+  {
+    name: 'Tunnel Ride',
+    filename: '12-tunnel-ride.pxf',
+    description: 'Shader tunnel spinning through UV rotate — depth without a sequence.',
+    layout: matrixLayout(32, 16),
+    buildGraph: (layout) => ({
+      nodes: [
+        node('fix', 'setup/fixture', col(0), row(1), params('setup/fixture', { fixtureId: fid(layout, 0) })),
+        node(
+          'tunnel',
+          'generator/shader',
+          col(1),
+          row(1),
+          params('generator/shader', {
+            preset: 'tunnel',
+            speed: 0.7,
+            scale: 1.15,
+            colourA: { r: 40, g: 0, b: 70 },
+            colourB: { r: 255, g: 140, b: 40 },
+            intensity: 1.15
+          }),
+          true
+        ),
+        node('rot', 'transform/rotate', col(2), row(1), params('transform/rotate', { speed: 0.045 })),
+        node('lvl', 'colour/levels', col(3), row(1), params('colour/levels', { contrast: 1.2, gamma: 0.92 })),
+        node('out', 'output/pixel', col(4), row(1))
+      ],
+      edges: [
+        edge('e0', 'fix', 'pixels', 'tunnel', 'pixels'),
+        edge('e0r', 'fix', 'resolution', 'tunnel', 'resolution'),
+        edge('e1', 'tunnel', 'pixels', 'rot', 'pixels'),
+        edge('e1r', 'fix', 'resolution', 'rot', 'resolution'),
+        edge('e2', 'rot', 'pixels', 'lvl', 'pixels'),
+        edge('e3', 'lvl', 'pixels', 'out', 'pixels')
+      ]
+    })
+  },
+
+  {
+    name: 'Aurora Veil',
+    filename: '13-aurora-veil.pxf',
+    description: 'Soft aurora shader through a box blur — atmospheric sheet lighting.',
+    layout: matrixLayout(32, 16),
+    buildGraph: (layout) => ({
+      nodes: [
+        node('fix', 'setup/fixture', col(0), row(1), params('setup/fixture', { fixtureId: fid(layout, 0) })),
+        node(
+          'aurora',
+          'generator/shader',
+          col(1),
+          row(1),
+          params('generator/shader', {
+            preset: 'aurora',
+            speed: 0.32,
+            scale: 1.7,
+            colourA: { r: 0, g: 40, b: 70 },
+            colourB: { r: 80, g: 255, b: 160 },
+            intensity: 1.05
+          }),
+          true
+        ),
+        node('blur', 'transform/blur', col(2), row(1), params('transform/blur', { radius: 3, direction: 'both' })),
+        node('cc', 'colour/correct', col(3), row(1), params('colour/correct', { temperature: -0.12, gain: 1.08 })),
+        node('out', 'output/pixel', col(4), row(1))
+      ],
+      edges: [
+        edge('e0', 'fix', 'pixels', 'aurora', 'pixels'),
+        edge('e0r', 'fix', 'resolution', 'aurora', 'resolution'),
+        edge('e1', 'aurora', 'pixels', 'blur', 'pixels'),
+        edge('e1r', 'fix', 'resolution', 'blur', 'resolution'),
+        edge('e2', 'blur', 'pixels', 'cc', 'pixels'),
+        edge('e3', 'cc', 'pixels', 'out', 'pixels')
+      ]
+    })
+  },
+
+  {
+    name: 'Kaleido Garden',
+    filename: '14-kaleido-garden.pxf',
+    description: 'Perlin noise folded into 8 kaleidoscope segments with a slow hue spin.',
+    layout: matrixLayout(24, 24),
+    buildGraph: (layout) => ({
+      nodes: [
+        node('fix', 'setup/fixture', col(0), row(1), params('setup/fixture', { fixtureId: fid(layout, 0) })),
+        node(
+          'noise',
+          'generator/noise',
+          col(1),
+          row(1),
+          params('generator/noise', {
+            noiseType: 'perlin4d-time',
+            scale: 4.5,
+            speed: 0.35,
+            colourA: { r: 12, g: 0, b: 48 },
+            colourB: { r: 255, g: 170, b: 40 },
+            contrast: 1.25
+          }),
+          true
+        ),
+        node(
+          'kal',
+          'transform/kaleidoscope',
+          col(2),
+          row(1),
+          params('transform/kaleidoscope', { segments: 8, mode: 'mirror' })
+        ),
+        node('hsv', 'colour/hsv-shift', col(3), row(1), params('colour/hsv-shift', { hueSpeed: 0.05, saturation: 1.1 })),
+        node('out', 'output/pixel', col(4), row(1))
+      ],
+      edges: [
+        edge('e0', 'fix', 'pixels', 'noise', 'pixels'),
+        edge('e0r', 'fix', 'resolution', 'noise', 'resolution'),
+        edge('e1', 'noise', 'pixels', 'kal', 'pixels'),
+        edge('e1r', 'fix', 'resolution', 'kal', 'resolution'),
+        edge('e2', 'kal', 'pixels', 'hsv', 'pixels'),
+        edge('e3', 'hsv', 'pixels', 'out', 'pixels')
+      ]
+    })
+  },
+
+  {
+    name: 'Ember Trails',
+    filename: '15-ember-trails.pxf',
+    description: 'Procedural fire with Feedback persistence — rising embers and smear.',
+    layout: matrixLayout(24, 16),
+    buildGraph: (layout) => ({
+      nodes: [
+        node('fix', 'setup/fixture', col(0), row(1), params('setup/fixture', { fixtureId: fid(layout, 0) })),
+        node(
+          'fire',
+          'generator/fire',
+          col(1),
+          row(1),
+          params('generator/fire', { scale: 5, speed: 1.05, turbulence: 0.7, rise: 0.62 }),
+          true
+        ),
+        node(
+          'fb',
+          'composite/feedback',
+          col(2),
+          row(1),
+          params('composite/feedback', { mode: 'screen', amount: 0.72, decay: 0.92 })
+        ),
+        node('lvl', 'colour/levels', col(3), row(1), params('colour/levels', { brightness: 1.12, contrast: 1.15 })),
+        node('out', 'output/pixel', col(4), row(1))
+      ],
+      edges: [
+        edge('e0', 'fix', 'pixels', 'fire', 'pixels'),
+        edge('e0r', 'fix', 'resolution', 'fire', 'resolution'),
+        edge('e1', 'fire', 'pixels', 'fb', 'pixels'),
+        edge('e2', 'fb', 'pixels', 'lvl', 'pixels'),
+        edge('e3', 'lvl', 'pixels', 'out', 'pixels')
+      ]
+    })
+  },
+
+  {
+    name: 'Ripple Warp',
+    filename: '16-ripple-warp.pxf',
+    description: 'Ripple shader warped by slow noise — TouchDesigner-style UV displace.',
+    layout: matrixLayout(32, 16),
+    buildGraph: (layout) => ({
+      nodes: [
+        node('fix', 'setup/fixture', col(0), row(1.5), params('setup/fixture', { fixtureId: fid(layout, 0) })),
+        node(
+          'ripples',
+          'generator/shader',
+          col(1),
+          row(1),
+          params('generator/shader', {
+            preset: 'ripples',
+            speed: 0.55,
+            scale: 1.4,
+            colourA: { r: 0, g: 30, b: 90 },
+            colourB: { r: 120, g: 230, b: 255 },
+            intensity: 1.1
+          }),
+          true
+        ),
+        node(
+          'map',
+          'generator/noise',
+          col(1),
+          row(2),
+          params('generator/noise', {
+            noiseType: 'perlin3d',
+            scale: 3.5,
+            speed: 0.22,
+            colourA: { r: 0, g: 0, b: 0 },
+            colourB: { r: 255, g: 255, b: 255 },
+            contrast: 0.85
+          })
+        ),
+        node(
+          'warp',
+          'transform/displace',
+          col(2),
+          row(1.5),
+          params('transform/displace', { amount: 6, mode: 'luminance-x', edges: 'wrap' })
+        ),
+        node('out', 'output/pixel', col(3), row(1.5))
+      ],
+      edges: [
+        edge('e0', 'fix', 'pixels', 'ripples', 'pixels'),
+        edge('e0r', 'fix', 'resolution', 'ripples', 'resolution'),
+        edge('e1', 'fix', 'pixels', 'map', 'pixels'),
+        edge('e1r', 'fix', 'resolution', 'map', 'resolution'),
+        edge('e2', 'ripples', 'pixels', 'warp', 'pixels'),
+        edge('e3', 'map', 'pixels', 'warp', 'map'),
+        edge('e3r', 'fix', 'resolution', 'warp', 'resolution'),
+        edge('e4', 'warp', 'pixels', 'out', 'pixels')
+      ]
+    })
   }
 ]
 

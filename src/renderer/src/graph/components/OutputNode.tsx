@@ -51,7 +51,7 @@ function OutputNodeComponent({ id, data, selected }: NodeProps<PfNodeType>): Rea
       </div>
 
       <div className="output-controls nodrag">
-        <OutputSettingsForm nodeId={id} showTransmit={false} />
+        <OutputSettingsForm nodeId={id} showTransmit={false} showBindInterface />
       </div>
 
       <div className="pf-node-ports">

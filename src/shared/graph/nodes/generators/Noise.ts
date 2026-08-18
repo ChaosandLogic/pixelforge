@@ -35,19 +35,20 @@ function sampleNoise(
   const global = scopePatchIndex(scope, localIndex)
   const z = positions[global * 3 + 2] ?? 0
   const s = scale * 0.15
+  const t = timeSec * speed
 
   switch (type) {
     case 'value3d':
-      return valueNoise3D(cellX * s, cellY * s, z * s)
+      return valueNoise3D(cellX * s, cellY * s, z * s + t)
     case 'perlin3d':
-      return perlin3D(u * scale, v * scale, z * scale)
+      return perlin3D(u * scale, v * scale, z * scale + t)
     case 'perlin4d-time':
-      return perlin4D(u * scale, v * scale, z * scale, timeSec * speed)
+      return perlin4D(u * scale, v * scale, z * scale, wScale + t)
     case 'perlin4d-space':
-      return perlin4D(u * scale, v * scale, z * scale, wScale + z * scale * 0.5)
+      return perlin4D(u * scale + t, v * scale, z * scale, wScale)
     case 'value2d':
     default:
-      return valueNoise2D(cellX * s, cellY * s + timeSec * speed)
+      return valueNoise2D(cellX * s, cellY * s + t)
   }
 }
 
@@ -55,7 +56,7 @@ export const Noise: NodeTypeDef = {
   type: 'generator/noise',
   label: 'Noise',
   category: 'generator',
-  description: 'Procedural noise between two colours (Oklab)',
+  description: 'Procedural noise between two colours (Oklab). 3D types evolve with Speed; 4D Time uses W as time, 4D Space travels through W Offset.',
   inputs: [
     { name: 'pixels', label: 'Pixels', type: 'pixels' },
     { name: 'resolution', label: 'Resolution', type: 'resolution' }
@@ -76,6 +77,7 @@ export const Noise: NodeTypeDef = {
     { name: 'wScale', label: 'W Offset', type: 'float', default: 0, min: -20, max: 20, step: 0.1 },
     { name: 'contrast', label: 'Contrast', type: 'float', default: 1, min: 0.2, max: 4, step: 0.05 }
   ],
+  gpu: { pass: 'generator/noise' },
   evaluate(inputs, params, ctx) {
     const a = colourParam(params, 'colourA')
     const b = colourParam(params, 'colourB')

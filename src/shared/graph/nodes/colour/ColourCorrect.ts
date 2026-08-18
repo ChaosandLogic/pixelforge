@@ -15,6 +15,7 @@ export const ColourCorrect: NodeTypeDef = {
     { name: 'gain', label: 'Gain', type: 'float', default: 1, min: 0, max: 3, step: 0.01 },
     { name: 'temperature', label: 'Temperature', type: 'float', default: 0, min: -1, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'colour/correct' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

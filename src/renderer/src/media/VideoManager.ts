@@ -4,8 +4,8 @@ import { usePatchStore } from '@/store/patchStore'
 import { useGraphStore, type PfNode } from '@/store/graphStore'
 
 /**
- * Owns hidden <video> elements for every VideoFile node in the graph.
- * Engine sampling uses patch resolution; node preview is always NODE_PREVIEW_SIZE².
+ * Owns hidden <video> elements for VideoFile node thumbnails in the editor.
+ * Engine sampling is done by the GPU sidecar.
  */
 
 const VIDEO_NODE_TYPE = 'generator/video'
@@ -184,7 +184,7 @@ function resizeEngineCanvases(): void {
 
 function sampleAll(): void {
   const { width, height } = sampleDimensions()
-  for (const [nodeId, entry] of entries) {
+  for (const entry of entries.values()) {
     const { video, ctx, canvas, previewCtx, previewCanvas } = entry
     if (video.readyState < 2 || video.videoWidth === 0) continue
 

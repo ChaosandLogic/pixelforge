@@ -1,4 +1,10 @@
 import { CHANNELS_PER_PIXEL } from '../messages'
+import {
+  channelsPerPixel,
+  expandRgbFramesToRgbw,
+  type ColorMode,
+  type WhiteMode
+} from '../output/rgbw'
 
 /** FSEQ v2 fixed header size (bytes). */
 export const FSEQ_HEADER_BYTES = 32
@@ -15,6 +21,9 @@ export interface FseqEncodeInput {
   frameCount: number
   pixelCount: number
   fps: number
+  /** Wire colour mode. Bake data stays RGB; RGBW is expanded here. */
+  colorMode?: ColorMode
+  whiteMode?: WhiteMode
 }
 
 export interface FseqEncodeResult {
@@ -44,8 +53,13 @@ export function fpsFromStepTime(stepTimeMs: number): number {
   return 1000 / stepTimeMs
 }
 
-export function estimateFseqBytes(pixelCount: number, frameCount: number, includeProducerHeader = true): number {
-  const channelCount = pixelCount * CHANNELS_PER_PIXEL
+export function estimateFseqBytes(
+  pixelCount: number,
+  frameCount: number,
+  includeProducerHeader = true,
+  colorMode: ColorMode = 'rgb'
+): number {
+  const channelCount = pixelCount * channelsPerPixel(colorMode)
   const producerBytes = includeProducerHeader ? sequenceProducerHeader().length : 0
   return FSEQ_HEADER_BYTES + producerBytes + frameCount * channelCount
 }
@@ -68,7 +82,8 @@ export function validateFseqExport(
   pixelCount: number,
   frameCount: number,
   fps: number,
-  fseqByteLength: number
+  fseqByteLength: number,
+  colorMode: ColorMode = 'rgb'
 ): FseqExportValidation {
   const errors: string[] = []
   const warnings: string[] = []
@@ -90,7 +105,7 @@ export function validateFseqExport(
 
   if (fseqByteLength <= FSEQ_HEADER_BYTES) errors.push('Encoded sequence file is empty.')
 
-  const channelCount = pixelCount * CHANNELS_PER_PIXEL
+  const channelCount = pixelCount * channelsPerPixel(colorMode)
   if (channelCount > 0 && frameCount > 0) {
     const mb = fseqByteLength / 1024 / 1024
     if (mb > 512) {
@@ -105,13 +120,16 @@ export function validateFseqExport(
 
 /**
  * Encode dense baked RGB frames into Falcon Player / xLights FSEQ v2 (uncompressed).
- * Channel order is RGB interleaved in patch wiring order (pixel 0 → channels 0–2).
+ * Channel order is RGB or RGBW interleaved in patch wiring order.
  */
 export function encodeFseq(input: FseqEncodeInput): FseqEncodeResult {
   const { frames, frameCount, pixelCount, fps } = input
+  const colorMode = input.colorMode ?? 'rgb'
+  const whiteMode = input.whiteMode ?? 'subtractive'
+  const cpp = channelsPerPixel(colorMode)
   const fail = (error: string): FseqEncodeResult => ({
     data: new Uint8Array(0),
-    channelCount: pixelCount * CHANNELS_PER_PIXEL,
+    channelCount: pixelCount * cpp,
     frameCount,
     stepTimeMs: 0,
     error
@@ -128,11 +146,18 @@ export function encodeFseq(input: FseqEncodeInput): FseqEncodeResult {
     return fail('Invalid bake: pixel count and frame count must be positive.')
   }
 
-  const channelCount = pixelCount * CHANNELS_PER_PIXEL
-  const frameBytes = frameCount * channelCount
-  if (frames.length < frameBytes) {
-    return fail(`Bake buffer too short: expected ${frameBytes} bytes, got ${frames.length}.`)
+  const rgbFrameBytes = pixelCount * CHANNELS_PER_PIXEL
+  const rgbBytes = frameCount * rgbFrameBytes
+  if (frames.length < rgbBytes) {
+    return fail(`Bake buffer too short: expected ${rgbBytes} bytes, got ${frames.length}.`)
   }
+
+  const channelData =
+    colorMode === 'rgbw'
+      ? expandRgbFramesToRgbw(frames, frameCount, pixelCount, whiteMode)
+      : frames.subarray(0, rgbBytes)
+  const channelCount = pixelCount * cpp
+  const frameBytes = frameCount * channelCount
 
   const producerHeader = sequenceProducerHeader()
   const dataOffset = FSEQ_HEADER_BYTES + producerHeader.length
@@ -159,7 +184,7 @@ export function encodeFseq(input: FseqEncodeInput): FseqEncodeResult {
   view.setBigUint64(24, BigInt(Date.now()), true)
 
   data.set(producerHeader, FSEQ_HEADER_BYTES)
-  data.set(frames.subarray(0, frameBytes), dataOffset)
+  data.set(channelData.subarray(0, frameBytes), dataOffset)
 
   return { data, channelCount, frameCount, stepTimeMs, error: null }
 }

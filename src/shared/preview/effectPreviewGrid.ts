@@ -1,10 +1,10 @@
 import { NODE_PREVIEW_SIZE } from './displaySize'
 
-/** Display size for node thumbnails (upscaled in the UI if eval is smaller). */
+/** Display size for node thumbnails. */
 export const EFFECT_PREVIEW_SIZE = NODE_PREVIEW_SIZE
 
-/** Eval grid — smaller than display for faster interactive preview updates. */
-export const EFFECT_PREVIEW_EVAL_SIZE = 64
+/** Eval grid matches display so effect thumbs are 1:1, not an upscaled LED raster. */
+export const EFFECT_PREVIEW_EVAL_SIZE = NODE_PREVIEW_SIZE
 
 const positionCache = new Map<number, Float32Array>()
 

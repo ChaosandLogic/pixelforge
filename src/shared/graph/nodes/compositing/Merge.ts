@@ -21,6 +21,7 @@ export const Merge: NodeTypeDef = {
       options: ['add', 'max', 'average']
     }
   ],
+  gpu: { pass: 'composite/merge' },
   evaluate(inputs, params, ctx) {
     const a = pixelsInput(inputs, 'a')
     const b = pixelsInput(inputs, 'b')

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { MAX_BAKE_FPS } from '@shared/messages'
+import { parseOutputConfig } from '@shared/output/config'
+import { COLOR_MODE_LABELS, channelsPerPixel } from '@shared/output/rgbw'
 import { formatLoopPeriodSec, type ExportBakeFlow } from './useExportBakeFlow'
 
 interface ExportBakeFieldsProps {
@@ -30,8 +32,11 @@ export function ExportBakeFields({
     activePeriodSec,
     detectedPeriod,
     preflight,
-    pixelCount
+    pixelCount,
+    graph
   } = flow
+  const colorMode = parseOutputConfig(graph).colorMode
+  const cpp = channelsPerPixel(colorMode)
 
   return (
     <>
@@ -123,7 +128,11 @@ export function ExportBakeFields({
       {extraHints}
 
       <p className="panel-hint">
-        Patch: {pixelCount} pixels ({pixelCount * 3} channels, RGB in wiring order)
+        Patch: {pixelCount} pixels (baked as RGB
+        {colorMode === 'rgbw'
+          ? `; FSEQ expands to ${pixelCount * cpp} ${COLOR_MODE_LABELS[colorMode]} channels. ESP export stays RGB.`
+          : `, ${pixelCount * cpp} channels in wiring order`}
+        )
       </p>
 
       {preflight.errors.length > 0 && (

@@ -1,6 +1,6 @@
 import type { Socket } from 'node:dgram'
 import { Packet } from 'sacn'
-import { CHANNELS_PER_UNIVERSE } from '@shared/patch/types'
+import { dmxChannelsPerUniverse } from '@shared/output/rgbw'
 import { createOutboundSocket } from './broadcast'
 import { createSacnSocket, SACN_PORT } from './multicast'
 import { hasLocalIpv4, isIpv4Host, resolveOutputIface, sacnMulticastAddress } from './networkIface'
@@ -10,8 +10,8 @@ const SOURCE_NAME = 'PixelForge'
 const MAX_UNIVERSE = 63999
 
 /**
- * sACN (E1.31). Chunks the flat channel stream every 510 channels into
- * consecutive universes from startUniverse.
+ * sACN (E1.31). Chunks the flat channel stream every 510 (RGB) or 512
+ * (RGBW) channels into consecutive universes from startUniverse.
  *
  * Multicast mode (default): each universe goes to 239.255.{hi}.{lo} per the
  * spec — universe 1 is always 239.255.0.1:5568, not a configurable address.
@@ -27,6 +27,7 @@ export class SacnProtocol implements OutputProtocol {
   private useMulticast = true
   private configKey = ''
   private startUniverse = 1
+  private channelsPerUniverse = 510
   private readonly sequences = new Map<number, number>()
 
   configure(config: OutputProtocolConfig): void {
@@ -46,6 +47,7 @@ export class SacnProtocol implements OutputProtocol {
       this.configKey = key
     }
     this.startUniverse = config.startUniverse
+    this.channelsPerUniverse = dmxChannelsPerUniverse(config.colorMode ?? 'rgb')
   }
 
   async send(stream: Uint8Array): Promise<number> {
@@ -64,10 +66,11 @@ export class SacnProtocol implements OutputProtocol {
     let packets = 0
     const sends: Promise<void>[] = []
 
-    for (let offset = 0, u = 0; offset < stream.length; offset += CHANNELS_PER_UNIVERSE, u++) {
+    const chunkSize = this.channelsPerUniverse
+    for (let offset = 0, u = 0; offset < stream.length; offset += chunkSize, u++) {
       const universe = this.startUniverse + u
       if (universe > MAX_UNIVERSE) break
-      const chunk = stream.subarray(offset, Math.min(offset + CHANNELS_PER_UNIVERSE, stream.length))
+      const chunk = stream.subarray(offset, Math.min(offset + chunkSize, stream.length))
       const payload: Record<number, number> = {}
       for (let i = 0; i < chunk.length; i++) {
         payload[i + 1] = chunk[i] as number

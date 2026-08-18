@@ -14,14 +14,17 @@
   ],
   "extraResources": [
     {
-      "from": "gpu-engine/target/release/gpu-engine",
-      "to": "gpu-engine"
+      "from": "gpu-engine/target/release/",
+      "to": ".",
+      "filter": ["gpu-engine", "gpu-engine.exe"]
     }
   ],
   "mac": {
     "category": "public.app-category.developer-tools",
     "target": ["dmg", "zip"],
     "icon": "build/icon.png",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
     "extendInfo": {
       "NSMicrophoneUsageDescription": "PixelForge analyzes audio input for reactive LED visuals.",
       "NSLocalNetworkUsageDescription": "PixelForge sends LED pixel data to fixtures on your local network via sACN, Art-Net, or DDP."

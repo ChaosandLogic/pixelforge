@@ -14,6 +14,7 @@ export const Switch: NodeTypeDef = {
   params: [
     { name: 'threshold', label: 'Threshold', type: 'float', default: 0.5, min: 0, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'logic/switch' },
   evaluate(inputs, params, ctx) {
     const a = pixelsInput(inputs, 'a')
     const b = pixelsInput(inputs, 'b')

@@ -1,5 +1,5 @@
 import type { Socket } from 'node:dgram'
-import { CHANNELS_PER_UNIVERSE } from '@shared/patch/types'
+import { dmxChannelsPerUniverse } from '@shared/output/rgbw'
 import { createOutboundSocket, broadcastDestination } from './broadcast'
 import { resolveOutputIface } from './networkIface'
 import type { OutputProtocol, OutputProtocolConfig } from './OutputProtocol'
@@ -8,9 +8,9 @@ const ARTNET_PORT = 6454
 const MAX_UNIVERSE = 32768
 
 /**
- * Art-Net ArtDmx (OpOutput / 0x5000). Chunks the flat RGB stream every
- * 510 channels into consecutive universes from startUniverse (mapped to
- * 0-based Art-Net port addresses).
+ * Art-Net ArtDmx (OpOutput / 0x5000). Chunks the flat stream every 510
+ * (RGB) or 512 (RGBW) channels into consecutive universes from
+ * startUniverse (mapped to 0-based Art-Net port addresses).
  */
 export class ArtNetProtocol implements OutputProtocol {
   readonly name = 'Art-Net'
@@ -19,12 +19,14 @@ export class ArtNetProtocol implements OutputProtocol {
   private iface: string | undefined
   private destHost = '255.255.255.255'
   private startUniverse = 1
+  private channelsPerUniverse = 510
   private sequence = 0
 
   configure(config: OutputProtocolConfig): void {
     const ifaceChanged = config.iface !== this.iface
     this.iface = config.iface
     this.startUniverse = config.startUniverse
+    this.channelsPerUniverse = dmxChannelsPerUniverse(config.colorMode ?? 'rgb')
     this.destHost = broadcastDestination(resolveOutputIface(config.iface), '255.255.255.255')
 
     if (ifaceChanged || this.socket === null) {
@@ -48,10 +50,11 @@ export class ArtNetProtocol implements OutputProtocol {
     let packets = 0
     const sends: Promise<void>[] = []
 
-    for (let offset = 0, u = 0; offset < stream.length; offset += CHANNELS_PER_UNIVERSE, u++) {
+    const chunkSize = this.channelsPerUniverse
+    for (let offset = 0, u = 0; offset < stream.length; offset += chunkSize, u++) {
       const universeIndex = this.startUniverse - 1 + u
       if (universeIndex >= MAX_UNIVERSE) break
-      const chunk = stream.subarray(offset, Math.min(offset + CHANNELS_PER_UNIVERSE, stream.length))
+      const chunk = stream.subarray(offset, Math.min(offset + chunkSize, stream.length))
       const packet = buildArtDmx(universeIndex, chunk, this.sequence)
       this.sequence = (this.sequence + 1) & 0xff
       sends.push(

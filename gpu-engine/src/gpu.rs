@@ -159,6 +159,9 @@ impl GpuEngine {
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             view_formats: &[],
         });
+        let black_bpr = align256(16);
+        let mut black_bytes = vec![0u8; black_bpr as usize];
+        black_bytes[..16].copy_from_slice(bytemuck::bytes_of(&[0f32, 0.0, 0.0, 1.0]));
         queue.write_texture(
             wgpu::TexelCopyTextureInfo {
                 texture: &black,
@@ -166,10 +169,10 @@ impl GpuEngine {
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            bytemuck::bytes_of(&[0f32, 0.0, 0.0, 1.0]),
+            &black_bytes,
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
-                bytes_per_row: Some(16),
+                bytes_per_row: Some(black_bpr),
                 rows_per_image: Some(1),
             },
             wgpu::Extent3d {
@@ -263,14 +266,20 @@ impl GpuEngine {
         for media in &req.media {
             self.media.ensure(&media.node_id, &media.path, &media.kind, req.time_ms);
         }
+        let mut native_share = Vec::new();
         for share_in in &req.share_in {
+            let key = format!("{}__media", share_in.node_id);
             if let Some((w, h, rgba)) = self.share.receive(&share_in.sender) {
-                self.upload_rgba(&format!("{}__media", share_in.node_id), w, h, &rgba);
+                self.upload_rgba(&key, w, h, &rgba);
+                native_share.push(key);
             }
         }
-        for id in &req.cpu_upload_ids {
-            if let Some((w, h, rgb)) = uploads.get(id) {
-                self.upload_rgb(id, *w, *h, rgb);
+        for upload in &req.cpu_uploads {
+            if native_share.iter().any(|k| k == &upload.node_id) {
+                continue;
+            }
+            if let Some((w, h, rgb)) = uploads.get(&upload.node_id) {
+                self.upload_rgb(&upload.node_id, *w, *h, rgb);
             }
         }
 
@@ -302,10 +311,13 @@ impl GpuEngine {
         }
 
         for out in &req.share_out {
-            if let Some(rgb) = samples.get(&out.source_node_id) {
-                self.share.publish(&out.name, out.width, out.height, &rgb_to_rgba(rgb));
-            } else if let Some((_, _, rgb)) = uploads.get(&out.source_node_id) {
-                self.share.publish(&out.name, out.width, out.height, &rgb_to_rgba(rgb));
+            if out.from_cpu {
+                let key = format!("share:{}", out.node_id);
+                if let Some((w, h, rgb)) = uploads.get(&key) {
+                    self.share.publish(&out.name, *w, *h, &rgb_to_rgba(rgb));
+                }
+            } else if let Some(rgba) = self.readback_rgba8(&out.source_node_id, out.width, out.height) {
+                self.share.publish(&out.name, out.width, out.height, &rgba);
             }
         }
 
@@ -354,7 +366,7 @@ impl GpuEngine {
         };
 
         if ty == "transform/blur" {
-            let radius = uniforms.floats.first().copied().unwrap_or(2.0).round() as i32;
+            let radius = uniforms.floats.get(2).copied().unwrap_or(2.0).round() as i32;
             let dir = uniforms.strings.first().map(|s| s.as_str()).unwrap_or("both");
             if radius <= 0 {
                 self.dispatch_pass(encoder, id, req, uniforms, 37, None)?;
@@ -543,8 +555,11 @@ impl GpuEngine {
     }
 
     fn ensure_scratch(&mut self, id: &str, w: u32, h: u32) {
-        if self.nodes.contains_key(id) {
-            return;
+        if let Some(n) = self.nodes.get(id) {
+            if n.width == w && n.height == h {
+                return;
+            }
+            self.nodes.remove(id);
         }
         let texture = make_target(&self.device, w, h, id);
         let view = texture.create_view(&Default::default());
@@ -598,7 +613,8 @@ impl GpuEngine {
             None => return,
         };
         if let Some((tex, _)) = &node.feedback {
-            let zeros = vec![0u8; (node.width * node.height * 16) as usize];
+            let bpr = align256(node.width * 16);
+            let zeros = vec![0u8; (bpr * node.height) as usize];
             self.queue.write_texture(
                 wgpu::TexelCopyTextureInfo {
                     texture: tex,
@@ -609,7 +625,7 @@ impl GpuEngine {
                 &zeros,
                 wgpu::TexelCopyBufferLayout {
                     offset: 0,
-                    bytes_per_row: Some(node.width * 16),
+                    bytes_per_row: Some(bpr),
                     rows_per_image: Some(node.height),
                 },
                 wgpu::Extent3d {
@@ -757,6 +773,74 @@ impl GpuEngine {
         Ok(self.read_preview_rgb(&preview))
     }
 
+    fn readback_rgba8(&self, id: &str, dst_w: u32, dst_h: u32) -> Option<Vec<u8>> {
+        let node = self.nodes.get(id)?;
+        let src_w = node.width.max(1);
+        let src_h = node.height.max(1);
+        let dw = dst_w.clamp(1, 1024);
+        let dh = dst_h.clamp(1, 1024);
+        let bpr = align256(src_w * 16);
+        let staging = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("share-staging"),
+            size: (bpr * src_h) as u64,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        let mut encoder = self.device.create_command_encoder(&Default::default());
+        encoder.copy_texture_to_buffer(
+            wgpu::TexelCopyTextureInfo {
+                texture: &node.texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            wgpu::TexelCopyBufferInfo {
+                buffer: &staging,
+                layout: wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(bpr),
+                    rows_per_image: Some(src_h),
+                },
+            },
+            wgpu::Extent3d {
+                width: src_w,
+                height: src_h,
+                depth_or_array_layers: 1,
+            },
+        );
+        self.queue.submit(Some(encoder.finish()));
+        let slice = staging.slice(..);
+        let (tx, rx) = std::sync::mpsc::channel();
+        slice.map_async(wgpu::MapMode::Read, move |r| {
+            let _ = tx.send(r);
+        });
+        self.device.poll(wgpu::Maintain::Wait);
+        rx.recv().ok()?.ok()?;
+        let data = slice.get_mapped_range();
+        let mut out = vec![0u8; (dw * dh * 4) as usize];
+        for y in 0..dh {
+            let sy = ((y as f32 + 0.5) * src_h as f32 / dh as f32).floor() as u32;
+            let sy = sy.min(src_h - 1);
+            let row = &data[(sy * bpr) as usize..];
+            for x in 0..dw {
+                let sx = ((x as f32 + 0.5) * src_w as f32 / dw as f32).floor() as u32;
+                let sx = sx.min(src_w - 1);
+                let si = (sx * 16) as usize;
+                let r = f32_from_le(&row[si..si + 4]).clamp(0.0, 1.0);
+                let g = f32_from_le(&row[si + 4..si + 8]).clamp(0.0, 1.0);
+                let b = f32_from_le(&row[si + 8..si + 12]).clamp(0.0, 1.0);
+                let di = ((y * dw + x) * 4) as usize;
+                out[di] = (r * 255.0).round() as u8;
+                out[di + 1] = (g * 255.0).round() as u8;
+                out[di + 2] = (b * 255.0).round() as u8;
+                out[di + 3] = 255;
+            }
+        }
+        drop(data);
+        staging.unmap();
+        Some(out)
+    }
+
     fn read_leds_for(&self) -> Result<Option<Vec<f32>>, String> {
         let staging = match &self.led_staging {
             Some(b) => b,
@@ -835,14 +919,18 @@ impl GpuEngine {
 
     fn upload_rgb(&mut self, id: &str, w: u32, h: u32, rgb: &[f32]) {
         self.ensure_scratch(id, w, h);
-        let mut rgba32 = vec![0u8; (w * h * 16) as usize];
-        for i in 0..(w * h) as usize {
-            let r = rgb.get(i * 3).copied().unwrap_or(0.0);
-            let g = rgb.get(i * 3 + 1).copied().unwrap_or(0.0);
-            let b = rgb.get(i * 3 + 2).copied().unwrap_or(0.0);
-            let f = [r, g, b, 1.0f32];
-            let bytes = bytemuck::bytes_of(&f);
-            rgba32[i * 16..i * 16 + 16].copy_from_slice(bytes);
+        let bpr = align256(w * 16);
+        let mut rgba32 = vec![0u8; (bpr * h) as usize];
+        for y in 0..h as usize {
+            for x in 0..w as usize {
+                let i = y * w as usize + x;
+                let r = rgb.get(i * 3).copied().unwrap_or(0.0);
+                let g = rgb.get(i * 3 + 1).copied().unwrap_or(0.0);
+                let b = rgb.get(i * 3 + 2).copied().unwrap_or(0.0);
+                let pixel = [r, g, b, 1.0f32];
+                let o = y * bpr as usize + x * 16;
+                rgba32[o..o + 16].copy_from_slice(bytemuck::bytes_of(&pixel));
+            }
         }
         if let Some(node) = self.nodes.get(id) {
             self.queue.write_texture(
@@ -855,7 +943,7 @@ impl GpuEngine {
                 &rgba32,
                 wgpu::TexelCopyBufferLayout {
                     offset: 0,
-                    bytes_per_row: Some(w * 16),
+                    bytes_per_row: Some(bpr),
                     rows_per_image: Some(h),
                 },
                 wgpu::Extent3d {
@@ -948,7 +1036,7 @@ fn bgl_tex(binding: u32) -> wgpu::BindGroupLayoutEntry {
         binding,
         visibility: wgpu::ShaderStages::COMPUTE,
         ty: wgpu::BindingType::Texture {
-            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+            sample_type: wgpu::TextureSampleType::Float { filterable: false },
             view_dimension: wgpu::TextureViewDimension::D2,
             multisampled: false,
         },
@@ -993,6 +1081,15 @@ fn bgl_storage(binding: u32, read_only: bool) -> wgpu::BindGroupLayoutEntry {
 
 fn align256(v: u32) -> u32 {
     (v + 255) & !255
+}
+
+fn f32_from_le(bytes: &[u8]) -> f32 {
+    f32::from_le_bytes([
+        bytes.first().copied().unwrap_or(0),
+        bytes.get(1).copied().unwrap_or(0),
+        bytes.get(2).copied().unwrap_or(0),
+        bytes.get(3).copied().unwrap_or(0),
+    ])
 }
 
 fn rgb_to_rgba(rgb: &[f32]) -> Vec<u8> {

@@ -38,6 +38,7 @@ export const Displace: NodeTypeDef = {
     },
     { name: 'edges', label: 'Edges', type: 'select', default: 'clamp', options: ['clamp', 'wrap'] }
   ],
+  gpu: { pass: 'transform/displace' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

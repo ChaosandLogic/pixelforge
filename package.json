@@ -18,10 +18,10 @@
     "dev": "electron-vite dev",
     "dev:player": "npm run build && electron out/main/player.js",
     "build": "npm run build:gpu && electron-vite build",
-    "build:gpu": "cargo build --release --manifest-path gpu-engine/Cargo.toml",
+    "build:gpu": "cargo build --release --manifest-path gpu-engine/Cargo.toml --target-dir gpu-engine/target",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
-    "test": "npx tsx --tsconfig tsconfig.node.json --test src/main/player/startup.test.ts src/main/engine/engineRestart.test.ts src/engine-host/aled.test.ts src/engine-host/bake.test.ts src/engine-host/evaluator.test.ts src/engine-host/fseq.test.ts src/engine-host/generatorScope.test.ts src/engine-host/gpuTops.test.ts src/engine-host/loopPeriod.test.ts src/engine-host/pixelScope.test.ts src/engine-host/ports.test.ts src/engine-host/shaders.test.ts src/engine-host/share.test.ts src/engine-host/timeline.test.ts",
+    "test": "npx tsx --tsconfig tsconfig.node.json --test src/main/player/startup.test.ts src/main/engine/engineRestart.test.ts src/engine-host/aled.test.ts src/engine-host/bake.test.ts src/engine-host/evaluator.test.ts src/engine-host/fseq.test.ts src/engine-host/generatorScope.test.ts src/engine-host/gpuTops.test.ts src/engine-host/loopPeriod.test.ts src/engine-host/pixelScope.test.ts src/engine-host/ports.test.ts src/engine-host/rgbw.test.ts src/engine-host/shaders.test.ts src/engine-host/share.test.ts src/engine-host/timeline.test.ts",
     "build:examples": "npx tsx scripts/build-examples.ts",
     "dist:editor": "npm run build && electron-builder --config electron-builder.editor.json",
     "dist:player": "npm run build && electron-builder --config electron-builder.player.json"

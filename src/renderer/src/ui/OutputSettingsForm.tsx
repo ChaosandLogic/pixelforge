@@ -1,5 +1,16 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { isOutputTransmitEnabled, OUTPUT_PROTOCOL_LABELS, type OutputProtocolKind } from '@shared/output/config'
+import {
+  COLOR_MODE_LABELS,
+  COLOR_MODES,
+  WHITE_MODE_LABELS,
+  WHITE_MODES,
+  parseColorMode,
+  parseWhiteMode,
+  pixelsPerUniverse,
+  type ColorMode,
+  type WhiteMode
+} from '@shared/output/rgbw'
 import { useEngineStore } from '@/store/engineStore'
 import { useGraphStore } from '@/store/graphStore'
 
@@ -10,15 +21,25 @@ interface OutputSettingsFormProps {
   nodeId: string
   /** Show the per-route transmit toggle (default on). */
   showTransmit?: boolean
+  /** Bind NIC picker. Editor Pixel Output node only — Player keeps NetworkPanel. */
+  showBindInterface?: boolean
 }
 
 export function OutputSettingsForm({
   nodeId,
-  showTransmit = true
+  showTransmit = true,
+  showBindInterface = false
 }: OutputSettingsFormProps): React.JSX.Element {
   const node = useGraphStore((s) => s.nodes.find((n) => n.id === nodeId))
   const updateParam = useGraphStore((s) => s.updateParam)
   const interfaces = useEngineStore((s) => s.interfaces)
+  const loadInterfaces = useEngineStore((s) => s.loadInterfaces)
+  const config = useEngineStore((s) => s.config)
+  const updateConfig = useEngineStore((s) => s.updateConfig)
+
+  useEffect(() => {
+    void loadInterfaces()
+  }, [loadInterfaces])
 
   const params = node?.data.params ?? {}
   const sacnHost = typeof params['sacnHost'] === 'string' ? params['sacnHost'] : ''
@@ -48,6 +69,8 @@ export function OutputSettingsForm({
   const sacnMulticast = `239.255.${startUniverse >> 8}.${startUniverse & 255}`
   const ddpHost = typeof params['ddpHost'] === 'string' ? params['ddpHost'] : '255.255.255.255'
   const ddpPort = typeof params['ddpPort'] === 'number' ? params['ddpPort'] : 4048
+  const colorMode = parseColorMode(params['colorMode'])
+  const whiteMode = parseWhiteMode(params['whiteMode'])
   const transmitOn = isOutputTransmitEnabled(params)
 
   return (
@@ -75,6 +98,43 @@ export function OutputSettingsForm({
           ))}
         </select>
       </label>
+
+      {showBindInterface && (
+        <>
+          <label className="output-field">
+            <span className="output-field-label-row">
+              Send from
+              <button
+                type="button"
+                className="refresh-btn"
+                title="Rescan interfaces"
+                onClick={() => void loadInterfaces()}
+              >
+                ↻
+              </button>
+            </span>
+            <select
+              value={config.iface ?? ''}
+              onChange={(e) => updateConfig({ iface: e.target.value === '' ? null : e.target.value })}
+            >
+              <option value="">System default</option>
+              {adapters.map((iface) => (
+                <option key={`${iface.name}-${iface.address}`} value={iface.address}>
+                  {iface.name} ({iface.address})
+                </option>
+              ))}
+              {config.iface !== null &&
+                config.iface !== '' &&
+                !adapters.some((iface) => iface.address === config.iface) && (
+                  <option value={config.iface}>{config.iface} (unavailable)</option>
+                )}
+            </select>
+          </label>
+          <p className="output-field-hint">
+            Local adapter to send from. Destination is Fixture IP / Host below, not this NIC.
+          </p>
+        </>
+      )}
 
       {protocol === 'sacn' && (
         <>
@@ -132,6 +192,41 @@ export function OutputSettingsForm({
           />
         </label>
       )}
+
+      <label className="output-field">
+        <span>Colour mode</span>
+        <select
+          value={colorMode}
+          onChange={(e) => updateParam(nodeId, 'colorMode', e.target.value as ColorMode)}
+        >
+          {COLOR_MODES.map((mode) => (
+            <option key={mode} value={mode}>
+              {COLOR_MODE_LABELS[mode]}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {colorMode === 'rgbw' && (
+        <label className="output-field">
+          <span>White channel</span>
+          <select
+            value={whiteMode}
+            onChange={(e) => updateParam(nodeId, 'whiteMode', e.target.value as WhiteMode)}
+          >
+            {WHITE_MODES.map((mode) => (
+              <option key={mode} value={mode}>
+                {WHITE_MODE_LABELS[mode]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <p className="output-field-hint">
+        {colorMode === 'rgbw'
+          ? `RGBW derives W at output (${pixelsPerUniverse('rgbw')} pixels / universe). Subtractive moves shared white into W; luminance adds W from brightness.`
+          : `${pixelsPerUniverse('rgb')} RGB pixels per sACN/Art-Net universe.`}
+      </p>
 
       {protocol === 'ddp' && (
         <>

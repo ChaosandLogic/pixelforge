@@ -12,11 +12,11 @@ run, and modify.
 
 ## Example patches
 
-Ten example projects ship in [`examples/`](examples/). Use **Examples ▾** in the toolbar to load one — six starter demos plus four complex patches (club show, nested sequences, multi-fixture venue install, and signal labyrinth).
+Sixteen example projects ship in [`examples/`](examples/). Use **Examples ▾** in the toolbar to load one — six starter demos, four complex patches (club show, nested sequences, multi-fixture venue install, and signal labyrinth), and six visual looks (plasma, tunnel, aurora, kaleidoscope, fire trails, ripple warp).
 
 ## Architecture
 
-The real-time pipeline runs in a dedicated Electron `utilityProcess` (the engine host), fully isolated from the UI. Generators include a **Shader** node with curated 2D GLSL presets (plasma, tunnel, ripples, …); live Editor/Player render via WebGL, while headless Player and export bake use matching CPU samplers.
+The real-time pipeline runs in a dedicated Electron `utilityProcess` (the engine host), fully isolated from the UI. 2D texture-style nodes (TOPs) render on a native **gpu-engine** sidecar (`wgpu`: Metal / DirectX / Vulkan) at the patch’s logical resolution, then UV-sample onto LEDs. Floats, Sequence, 1D generators, and sACN stay on the CPU evaluator. If the sidecar is missing, those nodes fall back to CPU `evaluate()`.
 
 ```
 Renderer (React, UI only)
@@ -24,7 +24,8 @@ Renderer (React, UI only)
    ▼
 Engine host (utilityProcess)
    ├─ FrameClock ── drift-corrected ~44 fps tick
-   ├─ Evaluator ── writes RGB into SharedArrayBuffer
+   ├─ Evaluator ── floats / Sequence / 1D nodes; writes RGB into SharedArrayBuffer
+   ├─ gpu-engine sidecar ── wgpu TOP passes, media decode, Syphon (macOS)
    └─ Output worker (worker_thread) ── reads SAB on its own tick,
       packs DMX frames, sends sACN (E1.31) UDP packets
 ```
@@ -54,9 +55,12 @@ npm run build
 npx electron out/main/player.js --project examples/01-scrolling-wave.pxf --auto-output
 ```
 
+`npm run build` compiles the Rust `gpu-engine` sidecar (`cargo` required) then the Electron app. Packaged builds copy the binary into `extraResources` and codesign it with the app on macOS.
+
 **Environment variables:**
 
 - `PIXELFORGE_SENTRY_DSN` — enable crash reporting (optional)
+- `PIXELFORGE_GPU_ENGINE` — path to the `gpu-engine` sidecar (set automatically by the engine launcher)
 
 ## Rack / startup show (Player)
 
@@ -89,9 +93,9 @@ On Linux, automatic login registration is limited — Player shows a manual auto
 ## Using it
 
 1. **File → New / Open / Save** (or **Cmd/Ctrl+S**) — projects are `.pxf` files. **Examples ▾** in the toolbar loads bundled demos.
-2. Build or import a patch in the left panel: layout builder (line / matrix / ring), or CSV/JSON point import. Pixel order in the patch **is** channel order.
+2. Build or import a patch from **Patch** next to **+ Add node**: layout builder (line / matrix / ring), or CSV/JSON point import. Pixel order in the patch **is** channel order.
 3. Author the node graph. Wire effect nodes into a **Pixel Output** node and choose sACN, Art-Net, or DDP (plus start universe / host). **Syphon / Spout In** pulls a texture from Resolume, VDMX, OBS, or TouchDesigner; **Syphon / Spout Out** publishes the LED image for those apps (macOS/Windows).
-4. Pick a network interface in the left panel (or leave the system default).
+4. On Pixel Output, pick **Send from** if you need a specific network adapter (or leave System default).
 5. Toggle **Output ON**. A controller patched to that universe/stream will light up.
 6. Use the **3D** preview tab to load an STL reference mesh and see live pixel colours on the layout.
 7. The status bar shows engine fps, packets/sec, and send errors. **Export ▾** writes a Player show folder, ESP32 ALED, or Falcon Player FSEQ.
@@ -100,8 +104,8 @@ On Linux, automatic login registration is limited — Player shows a manual auto
 
 These are current product limits, not bugs:
 
-- **RGB only.** The engine emits a packed RGB stream. There is no RGBW / white-channel derivation, and no per-pixel universe/channel overrides — addressing is sequential from the Pixel Output start universe (170 RGB pixels per sACN/Art-Net universe).
-- **8,192 pixels max** (~48 sACN universes). Larger layouts are truncated with a warning in the patch panel.
+- **RGB and RGBW.** The engine evaluates in RGB. Pixel Output can emit RGB (170 pixels per sACN/Art-Net universe) or RGBW (128 pixels per universe), deriving the white channel at output with a subtractive or luminance strategy. Addressing is sequential from the Pixel Output start universe — there are no per-pixel universe/channel overrides.
+- **32,768 pixels max** (~193 sACN universes in RGB, or 256 in RGBW). Larger layouts are truncated with a warning in the Patch dialog.
 - **Live audio, MIDI, and keyboard** are captured in the Editor/Player window and pushed to the engine. They do not run in **headless** Player or in baked ESP/FSEQ exports. Use OSC In, Syphon/Spout In (engine-side, macOS/Windows), or sACN streaming from a windowed Player for interactive rack shows.
 - **Syphon / Spout** is macOS (Syphon Metal) and Windows (Spout) only. Frames are copied through CPU RGBA (same path as video), so 1080p is downsampled before it hits the LED sampler. Linux shows the nodes as unavailable.
 

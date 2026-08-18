@@ -10,3 +10,11 @@ export function getNetworkInterfaces(): Promise<NetworkInterfaceInfo[]> {
   }
   return Promise.resolve([])
 }
+
+/** Syphon/Spout senders discovered in the Electron main process. */
+export function listShareSenders(): Promise<string[]> {
+  if (typeof window.pixelforge !== 'undefined' && typeof window.pixelforge.listShareSenders === 'function') {
+    return window.pixelforge.listShareSenders()
+  }
+  return Promise.resolve([])
+}

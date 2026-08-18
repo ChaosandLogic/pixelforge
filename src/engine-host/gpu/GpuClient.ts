@@ -1,7 +1,9 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
-import { writeSync } from 'node:fs'
+import { existsSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
 import { GPU_PREVIEW_SIZE, type GpuCompileRequest, type GpuFrameRequest, type GpuHelloOk } from '@shared/gpu/protocol'
-import { encodeGpuMessage, readGpuMessage } from './ipc'
+import { encodeGpuMessage, readGpuMessage, writeExact } from './ipc'
 
 export interface GpuFrameResult {
   error: string | null
@@ -19,6 +21,7 @@ export class GpuClient {
   private proc: ChildProcessWithoutNullStreams | null = null
   private nextId = 1
   private onExit: (() => void) | null = null
+  private stopping = false
   hello: GpuHelloOk | null = null
   lastError: string | null = null
 
@@ -35,9 +38,15 @@ export class GpuClient {
 
   start(): boolean {
     if (this.proc !== null) return this.available
+    this.stopping = false
     try {
+      const syphonFramework = syphonFrameworkPath()
       const proc = spawn(this.binaryPath, [], {
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: {
+          ...process.env,
+          ...(syphonFramework !== undefined ? { PIXELFORGE_SYPHON_FRAMEWORK: syphonFramework } : {})
+        }
       })
       proc.stdout.pause()
       proc.stderr.on('data', (chunk: Buffer) => {
@@ -45,9 +54,11 @@ export class GpuClient {
         if (text !== '') console.error(`[gpu-engine] ${text}`)
       })
       proc.on('exit', (code) => {
-        console.error(`[gpu-engine] exited with code ${code}`)
+        const unexpected = !this.stopping
         this.proc = null
         this.hello = null
+        if (!unexpected) return
+        console.error(`[gpu-engine] exited with code ${code}`)
         this.onExit?.()
       })
       this.proc = proc
@@ -68,6 +79,7 @@ export class GpuClient {
   }
 
   stop(): void {
+    this.stopping = true
     const proc = this.proc
     this.proc = null
     this.hello = null
@@ -80,6 +92,16 @@ export class GpuClient {
     proc.kill()
   }
 
+  listSenders(): string[] {
+    if (!this.available) return []
+    try {
+      const res = this.request({ kind: 'senders' }) as { kind?: string; body?: { senders?: string[] } }
+      return res.kind === 'senders-ok' ? (res.body?.senders ?? []) : []
+    } catch {
+      return []
+    }
+  }
+
   compile(body: GpuCompileRequest, positions: Float32Array): void {
     const blobs = new Map<string, Buffer>([['positions', Buffer.from(positions.buffer, positions.byteOffset, positions.byteLength)]])
     const res = this.request({ kind: 'compile', body }, blobs) as { kind?: string; error?: string }
@@ -88,10 +110,10 @@ export class GpuClient {
     }
   }
 
-  frame(body: GpuFrameRequest, uploads: Map<string, Float32Array>): GpuFrameResult {
+  frame(body: GpuFrameRequest, uploads: Map<string, { width: number; height: number; rgb: Float32Array }>): GpuFrameResult {
     const blobs = new Map<string, Buffer>()
-    for (const [id, rgb] of uploads) {
-      blobs.set(`upload:${id}`, Buffer.from(rgb.buffer, rgb.byteOffset, rgb.byteLength))
+    for (const [id, upload] of uploads) {
+      blobs.set(`upload:${id}`, Buffer.from(upload.rgb.buffer, upload.rgb.byteOffset, upload.rgb.byteLength))
     }
     const msg = this.requestRaw({ kind: 'frame', body }, blobs)
     const header = msg.header as {
@@ -142,15 +164,35 @@ export class GpuClient {
     if (proc === null || proc.stdin.writableEnded) throw new Error('gpu-engine is not running')
     const id = this.nextId++
     const packed = encodeGpuMessage({ id, ...header }, blobs ?? new Map())
-    writeSync(proc.stdin.fd, packed)
-    const stdoutFd = (proc.stdout as unknown as { fd: number }).fd
-    return readGpuMessage(stdoutFd)
+    writeExact(stdioFd(proc.stdin), packed)
+    return readGpuMessage(stdioFd(proc.stdout))
   }
 
   private write(header: Record<string, unknown>): void {
     const proc = this.proc
     if (proc === null) return
     const packed = encodeGpuMessage({ id: this.nextId++, ...header })
-    writeSync(proc.stdin.fd, packed)
+    writeExact(stdioFd(proc.stdin), packed)
   }
+}
+
+function stdioFd(stream: unknown): number {
+  const s = stream as { fd?: number; _handle?: { fd?: number } }
+  const fd = s.fd ?? s._handle?.fd
+  if (typeof fd !== 'number') throw new Error('gpu-engine stdio has no fd')
+  return fd
+}
+
+function syphonFrameworkPath(): string | undefined {
+  if (process.platform !== 'darwin') return undefined
+  const arch = process.arch === 'arm64' ? 'arm64' : 'x64'
+  try {
+    const require = createRequire(import.meta.url)
+    const pkg = dirname(require.resolve(`@napolab/texture-bridge-darwin-${arch}/package.json`))
+    const framework = join(pkg, 'Syphon.framework')
+    if (existsSync(framework)) return framework
+  } catch {
+    /* optional */
+  }
+  return undefined
 }

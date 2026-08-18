@@ -12,6 +12,7 @@ import type { AudioLevels, GraphData, MediaFrame } from '@shared/graph/types'
 import { parseOutputConfig, parseOutputRoutes } from '@shared/output/config'
 import type { FixtureRange } from '@shared/patch/layout'
 import { universeCountFor } from '@shared/patch/types'
+import { mergeShareSenders } from '@shared/share/senders'
 import { bakeFrames } from './bake'
 import { FrameClock } from './FrameClock'
 import { BufferPool } from './evaluator/BufferPool'
@@ -71,6 +72,7 @@ attachGpu()
 const gpuShareActive = (): boolean => gpu?.available === true && gpu.hello?.share !== 'none'
 
 let rendererPort: MessagePortMain | null = null
+let clientPort: MessagePortMain | null = null
 let lastGraph: GraphData | null = null
 let lastPatch: {
   positions: Float32Array
@@ -109,7 +111,7 @@ const clock = new FrameClock(config.targetFps, (timeMs, deltaMs) => {
         if (v !== undefined) evaluator.setOscState(node.id, v)
       }
     }
-    if (!gpuShareActive()) share.receive(evaluator, lastGraph)
+    share.receive(evaluator, lastGraph)
   }
   evaluator.evaluate(timeMs, deltaMs)
   if (lastGraph !== null && !gpuShareActive()) share.publish(evaluator, lastGraph)
@@ -130,7 +132,11 @@ const statusTimer = setInterval(() => {
   const pixelCount = evaluator.getPixelCount()
   const driver = parseOutputConfig(lastGraph, config.startUniverse)
   const activeCount = output.activeRouteCount
-  if (!gpuShareActive()) share.pollDiscovery()
+  share.pollDiscovery()
+  if (gpuShareActive()) {
+    const listed = gpu?.listSenders() ?? []
+    if (listed.length > 0) evaluator.gpuShareSenders = listed
+  }
   postToRenderer({
     type: 'status',
     status: {
@@ -138,17 +144,18 @@ const statusTimer = setInterval(() => {
       packetsPerSec: output.packetsPerSec,
       outputActive: output.enabled,
       startUniverse: driver.startUniverse,
-      universeCount: universeCountFor(pixelCount),
+      universeCount: universeCountFor(pixelCount, driver.colorMode),
       pixelCount,
       outputProtocol: driver.protocol,
       outputProtocolName: output.protocolName,
+      colorMode: driver.colorMode,
       outputError: output.lastError,
       graphError: evaluator.graphError ?? evaluator.evalError,
       outputCount: activeCount,
       outputErrors: output.getRouteErrors(),
       shareAvailable: gpuShareActive() || share.status.available,
       sharePlatform: gpuShareActive() ? evaluator.gpuSharePlatform : share.status.platform,
-      shareSenders: gpuShareActive() ? evaluator.gpuShareSenders : share.status.senders,
+      shareSenders: mergeShareSenders(share.status.senders, evaluator.gpuShareSenders),
       shareError: gpuShareActive() ? evaluator.gpuShareError : share.status.error,
       gpuAvailable: evaluator.gpuEnabled,
       gpuError: gpu?.lastError ?? null
@@ -157,7 +164,8 @@ const statusTimer = setInterval(() => {
 }, 500)
 
 function postToRenderer(msg: EngineToRenderer): void {
-  rendererPort?.postMessage(msg)
+  const port = rendererPort ?? clientPort
+  port?.postMessage(msg)
 }
 
 function handleRendererMessage(msg: RendererToEngine): void {
@@ -174,7 +182,7 @@ function handleRendererMessage(msg: RendererToEngine): void {
       lastGraph = msg.graph
       evaluator.setGraph(msg.graph)
       oscListener.syncGraph(msg.graph)
-      if (!gpuShareActive()) share.syncGraph(msg.graph, evaluator)
+      share.syncGraph(msg.graph, evaluator, { senders: !gpuShareActive() })
       lastPatch = {
         positions: msg.positions,
         count: msg.count,
@@ -195,14 +203,14 @@ function handleRendererMessage(msg: RendererToEngine): void {
       lastGraph = msg.graph
       evaluator.setGraph(msg.graph)
       oscListener.syncGraph(msg.graph)
-      if (!gpuShareActive()) share.syncGraph(msg.graph, evaluator)
+      share.syncGraph(msg.graph, evaluator, { senders: !gpuShareActive() })
       syncOutputs()
       break
     case 'patch-node-params': {
       evaluator.patchNodeParams(msg.nodeId, msg.params)
       const node = lastGraph?.nodes.find((n) => n.id === msg.nodeId)
       if (node !== undefined) Object.assign(node.params, msg.params)
-      if (!gpuShareActive()) share.syncGraph(lastGraph, evaluator)
+      share.syncGraph(lastGraph, evaluator, { senders: !gpuShareActive() })
       break
     }
     case 'set-patch':
@@ -305,15 +313,24 @@ function handleBake(requestId: number, durationMs: number, fps: number): void {
   postToRenderer({ type: 'bake-result', requestId, ...result })
 }
 
+function attachIncomingPort(port: MessagePortMain): void {
+  port.on('message', (e) => handleRendererMessage(e.data as RendererToEngine))
+  port.start()
+}
+
 process.parentPort.on('message', (event) => {
   const data = event.data as { type?: string }
-  if (data?.type === 'renderer-port' || data?.type === 'client-port') {
+  const port = event.ports[0]
+  if (data?.type === 'renderer-port') {
     rendererPort?.close()
-    const port = event.ports[0]
     if (port === undefined) return
     rendererPort = port
-    port.on('message', (e) => handleRendererMessage(e.data as RendererToEngine))
-    port.start()
+    attachIncomingPort(port)
+  } else if (data?.type === 'client-port') {
+    clientPort?.close()
+    if (port === undefined) return
+    clientPort = port
+    attachIncomingPort(port)
   } else if (data?.type === 'shutdown') {
     shutdown()
   }
@@ -328,5 +345,6 @@ function shutdown(): void {
   share.dispose()
   oscListener.dispose()
   rendererPort?.close()
+  clientPort?.close()
   process.exit(0)
 }

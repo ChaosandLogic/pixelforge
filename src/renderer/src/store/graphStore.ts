@@ -30,6 +30,7 @@ import { KEYBOARD_IN_NODE_TYPE } from '@shared/graph/nodes/input/KeyboardIn'
 import { IMAGE_NODE_TYPE } from '@shared/graph/nodes/generators/ImageFile'
 import { VIDEO_NODE_TYPE } from '@shared/graph/nodes/generators/VideoFile'
 import { SYPHON_IN_NODE_TYPE } from '@shared/graph/nodes/generators/SyphonIn'
+import { shareInputsFromGraph } from '@shared/share/senders'
 import { SYPHON_OUT_NODE_TYPE } from '@shared/graph/nodes/output/SyphonOut'
 import { FIXTURE_NODE_TYPE } from '@shared/graph/nodes/setup/Fixture'
 import { OUTPUT_NODE_TYPE } from '@shared/graph/nodes/output/PixelOutput'
@@ -112,11 +113,19 @@ interface GraphState {
 
 let syncRaf: number | null = null
 
+function syncShareInputs(graph: GraphData): void {
+  const api = window.pixelforge
+  if (typeof api?.setShareInputs !== 'function') return
+  void api.setShareInputs(shareInputsFromGraph(graph))
+}
+
 function scheduleSync(get: () => GraphState): void {
   if (syncRaf !== null) return
   syncRaf = requestAnimationFrame(() => {
     syncRaf = null
-    engineBridge.send({ type: 'set-graph', graph: get().toGraphData() })
+    const graph = get().toGraphData()
+    engineBridge.send({ type: 'set-graph', graph })
+    syncShareInputs(graph)
   })
 }
 
@@ -289,7 +298,9 @@ export const useGraphStore = create<GraphState>((set, get) => {
   queueMicrotask(() => scheduleSync(get))
 
   onEngineConnect(() => {
-    engineBridge.send({ type: 'set-graph', graph: get().toGraphData() })
+    const graph = get().toGraphData()
+    engineBridge.send({ type: 'set-graph', graph })
+    syncShareInputs(graph)
   })
 
   return {
@@ -368,6 +379,7 @@ export const useGraphStore = create<GraphState>((set, get) => {
         )
       })
       engineBridge.send({ type: 'patch-node-params', nodeId, params: { [name]: value } })
+      if (name === 'sender') syncShareInputs(get().toGraphData())
     },
 
     setParamBinding: (nodeId, paramName, bindingKeyValue) => {

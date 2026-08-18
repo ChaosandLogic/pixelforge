@@ -61,14 +61,10 @@ function pickPixelRaster(
   previewView: 'effect' | 'output',
   previews: Record<string, NodePreviewData>
 ): Extract<NodePreviewData, { kind: 'pixels' }> | null {
-  if (nodeType === VIDEO_NODE_TYPE) {
-    const frame = getVideoPreviewFrame(nodeId)
-    if (frame !== null) return frame
-  }
   const enginePreview = previews[nodeId]
-  if (enginePreview?.kind !== 'pixels') return null
   if (
     previewView === 'output' &&
+    enginePreview?.kind === 'pixels' &&
     enginePreview.layout !== undefined
   ) {
     return {
@@ -78,11 +74,13 @@ function pickPixelRaster(
       data: enginePreview.layout.data
     }
   }
-  return enginePreview
+  if (enginePreview?.kind === 'pixels') return enginePreview
+  if (nodeType === VIDEO_NODE_TYPE) return getVideoPreviewFrame(nodeId)
+  return null
 }
 
 /**
- * Live output thumbnail at NODE_PREVIEW_SIZE (scaled to fit the node card).
+ * Live effect thumbnail (square UV field) or output/layout raster.
  * Redraws on engine preview updates; video nodes also poll each frame.
  */
 export function NodePreview({

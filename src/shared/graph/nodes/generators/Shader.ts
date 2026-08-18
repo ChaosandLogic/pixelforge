@@ -21,8 +21,8 @@ import {
 export const SHADER_NODE_TYPE = 'generator/shader'
 
 /**
- * Curated 2D shader presets. Live Editor/Player push WebGL frames via
- * media-frame; evaluate falls back to CPU samplers for headless / bake.
+ * Curated 2D shader presets. The GPU sidecar runs matching WGSL modes;
+ * CPU `evaluate()` remains the reference path when the sidecar is down.
  */
 export const Shader: NodeTypeDef = {
   type: SHADER_NODE_TYPE,
@@ -59,6 +59,7 @@ export const Shader: NodeTypeDef = {
     },
     { name: 'intensity', label: 'Intensity', type: 'float', default: 1, min: 0, max: 2, step: 0.01 }
   ],
+  gpu: { pass: 'generator/shader' },
   evaluate(inputs, params, ctx) {
     const scope = generatorScope(inputs, ctx)
     const out = beginScopedOutput(ctx)

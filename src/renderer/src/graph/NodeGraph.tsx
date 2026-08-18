@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Background, BackgroundVariant, Controls, ReactFlow, ReactFlowProvider, type EdgeChange } from '@xyflow/react'
 import { isValidConnection, useGraphStore } from '@/store/graphStore'
 import { buildParamBindingEdges, isBindingEdgeId } from '@/graph/bindingEdges'
+import { PatchDialog } from '@/patch/PatchDialog'
 import { AddNodeMenu } from './AddNodeMenu'
 import { PfNode } from './components/PfNode'
 import { SequenceNode } from './components/SequenceNode'
@@ -51,6 +52,8 @@ function GraphCanvas(): React.JSX.Element {
     const dataChanges = changes.filter((c) => !('id' in c && isBindingEdgeId(c.id)))
     if (dataChanges.length > 0) onEdgesChange(dataChanges)
   }
+
+  const [patchOpen, setPatchOpen] = useState(false)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -108,7 +111,18 @@ function GraphCanvas(): React.JSX.Element {
         <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} />
         <Controls showInteractive={false} />
       </ReactFlow>
-      <AddNodeMenu />
+      <div className="graph-workspace-tools">
+        <AddNodeMenu />
+        <button
+          type="button"
+          className={patchOpen ? 'add-node-btn active' : 'add-node-btn'}
+          onClick={() => setPatchOpen(true)}
+          title="Layout builder, import, and export patch"
+        >
+          Patch
+        </button>
+      </div>
+      <PatchDialog open={patchOpen} onClose={() => setPatchOpen(false)} />
     </div>
   )
 }

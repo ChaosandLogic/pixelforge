@@ -1,5 +1,6 @@
 import { parentPort, workerData } from 'node:worker_threads'
 import type { OutputProtocolKind } from '@shared/output/config'
+import { packOutputStream, type ColorMode, type WhiteMode } from '@shared/output/rgbw'
 import { createOutputProtocol } from './createOutputProtocol'
 import type { OutputProtocol } from './OutputProtocol'
 import type { FromOutputWorker, OutputWorkerData, ToOutputWorker } from './workerMessages'
@@ -19,15 +20,18 @@ const seq = new Int32Array(control)
 let protocol: OutputProtocol = createOutputProtocol({ protocol: 'sacn', startUniverse: 1 })
 let protocolKind: OutputProtocolKind = 'sacn'
 let pixelCount = 170
+let colorMode: ColorMode = 'rgb'
+let whiteMode: WhiteMode = 'subtractive'
 let enabled = false
 let sending = false
 let packetCount = 0
 let lastError: string | null = null
 let protocolName = 'sACN'
 
-// Private copy of the most recent torn-free frame. We always send from here so
+// Private copy of the most recent torn-free RGB frame. We always send from here so
 // a frame the evaluator was mid-writing is never transmitted.
 let frame = new Uint8Array(pixelCount * 3)
+let wireFrame = new Uint8Array(pixelCount * 4)
 
 /**
  * Seqlock read: copy the shared pixel buffer into `frame` only if the evaluator
@@ -61,6 +65,8 @@ port.on('message', (msg: ToOutputWorker) => {
         protocolName = protocol.name
       }
       pixelCount = msg.pixelCount
+      colorMode = msg.colorMode === 'rgbw' ? 'rgbw' : 'rgb'
+      whiteMode = msg.whiteMode === 'luminance' ? 'luminance' : 'subtractive'
       protocol.configure(msg)
       clearInterval(tickTimer)
       tickTimer = setInterval(tick, 1000 / msg.targetFps)
@@ -83,7 +89,10 @@ function tick(): void {
   if (!enabled || sending) return
   sending = true
   readStableFrame(pixelCount * 3)
-  const stream = frame.subarray(0, pixelCount * 3)
+  const rgb = frame.subarray(0, pixelCount * 3)
+  const rgbwBytes = pixelCount * 4
+  if (wireFrame.length < rgbwBytes) wireFrame = new Uint8Array(rgbwBytes)
+  const stream = packOutputStream(rgb, pixelCount, colorMode, whiteMode, wireFrame)
   protocol
     .send(stream)
     .then((packets) => {

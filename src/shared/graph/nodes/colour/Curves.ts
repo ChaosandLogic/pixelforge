@@ -14,6 +14,7 @@ export const Curves: NodeTypeDef = {
     { name: 'midtones', label: 'Midtones', type: 'float', default: 0, min: -1, max: 1, step: 0.01 },
     { name: 'highlights', label: 'Highlights', type: 'float', default: 0, min: -1, max: 1, step: 0.01 }
   ],
+  gpu: { pass: 'colour/curves' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

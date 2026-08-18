@@ -184,8 +184,54 @@ fn perlin3(p: vec3<f32>) -> f32 {
   return mix(y1, mix(x3, x4, v), w) * 0.5 + 0.5;
 }
 
+fn hash14(p: vec4<f32>) -> f32 {
+  return hash1(p.x + p.y * 57.0 + p.z * 113.0 + p.w * 311.0);
+}
+
+fn grad4(h: f32, x: f32, y: f32, z: f32, w: f32) -> f32 {
+  let hi = u32(h * 32.0) & 31u;
+  let a = select(-1.0, 1.0, (hi & 1u) == 0u);
+  let b = select(-1.0, 1.0, (hi & 2u) == 0u);
+  let c = select(-1.0, 1.0, (hi & 4u) == 0u);
+  let which = (hi >> 3u) & 3u;
+  if (which == 0u) { return b * y + c * z + a * w; }
+  if (which == 1u) { return a * x + c * z + b * w; }
+  if (which == 2u) { return a * x + b * y + c * w; }
+  return a * x + b * y + c * z;
+}
+
+fn corner4(i: vec4<f32>, f: vec4<f32>, d: vec4<f32>) -> f32 {
+  return grad4(hash14(i + d), f.x - d.x, f.y - d.y, f.z - d.z, f.w - d.w);
+}
+
 fn perlin4(p: vec4<f32>) -> f32 {
-  return perlin3(p.xyz + vec3<f32>(p.w * 0.37, p.w * 0.19, p.w * 0.53));
+  let i = floor(p);
+  let f = p - i;
+  let u = fade(f.x);
+  let v = fade(f.y);
+  let s = fade(f.z);
+  let t = fade(f.w);
+  let n0000 = corner4(i, f, vec4<f32>(0.0, 0.0, 0.0, 0.0));
+  let n1000 = corner4(i, f, vec4<f32>(1.0, 0.0, 0.0, 0.0));
+  let n0100 = corner4(i, f, vec4<f32>(0.0, 1.0, 0.0, 0.0));
+  let n1100 = corner4(i, f, vec4<f32>(1.0, 1.0, 0.0, 0.0));
+  let n0010 = corner4(i, f, vec4<f32>(0.0, 0.0, 1.0, 0.0));
+  let n1010 = corner4(i, f, vec4<f32>(1.0, 0.0, 1.0, 0.0));
+  let n0110 = corner4(i, f, vec4<f32>(0.0, 1.0, 1.0, 0.0));
+  let n1110 = corner4(i, f, vec4<f32>(1.0, 1.0, 1.0, 0.0));
+  let n0001 = corner4(i, f, vec4<f32>(0.0, 0.0, 0.0, 1.0));
+  let n1001 = corner4(i, f, vec4<f32>(1.0, 0.0, 0.0, 1.0));
+  let n0101 = corner4(i, f, vec4<f32>(0.0, 1.0, 0.0, 1.0));
+  let n1101 = corner4(i, f, vec4<f32>(1.0, 1.0, 0.0, 1.0));
+  let n0011 = corner4(i, f, vec4<f32>(0.0, 0.0, 1.0, 1.0));
+  let n1011 = corner4(i, f, vec4<f32>(1.0, 0.0, 1.0, 1.0));
+  let n0111 = corner4(i, f, vec4<f32>(0.0, 1.0, 1.0, 1.0));
+  let n1111 = corner4(i, f, vec4<f32>(1.0, 1.0, 1.0, 1.0));
+  let x00 = mix(mix(n0000, n1000, u), mix(n0100, n1100, u), v);
+  let x10 = mix(mix(n0010, n1010, u), mix(n0110, n1110, u), v);
+  let x01 = mix(mix(n0001, n1001, u), mix(n0101, n1101, u), v);
+  let x11 = mix(mix(n0011, n1011, u), mix(n0111, n1111, u), v);
+  return mix(mix(x00, x10, s), mix(x01, x11, s), t) * 0.5 + 0.5;
 }
 
 fn sample_tex(tex: texture_2d<f32>, uv: vec2<f32>) -> vec3<f32> {
@@ -347,10 +393,10 @@ fn eval_pixel(gid: vec2<u32>) -> vec3<f32> {
       let cell = vec2<f32>(uv.x * w, uv.y * h);
       var n: f32;
       switch sub {
-        case 1u: { n = value_noise_3d(vec3<f32>(cell.x * s, cell.y * s, z * s)); }
-        case 2u: { n = perlin3(vec3<f32>(uv * scale, z * scale)); }
-        case 3u: { n = perlin4(vec4<f32>(uv * scale, z * scale, u.time * speed)); }
-        case 4u: { n = perlin4(vec4<f32>(uv * scale, z * scale, w_off + z * scale * 0.5)); }
+        case 1u: { n = value_noise_3d(vec3<f32>(cell.x * s, cell.y * s, z * s + u.time * speed)); }
+        case 2u: { n = perlin3(vec3<f32>(uv.x * scale, uv.y * scale, z * scale + u.time * speed)); }
+        case 3u: { n = perlin4(vec4<f32>(uv.x * scale, uv.y * scale, z * scale, w_off + u.time * speed)); }
+        case 4u: { n = perlin4(vec4<f32>(uv.x * scale + u.time * speed, uv.y * scale, z * scale, w_off)); }
         default: { n = value_noise_2d(vec2<f32>(cell.x * s, cell.y * s + u.time * speed)); }
       }
       n = (n - 0.5) * contrast + 0.5;

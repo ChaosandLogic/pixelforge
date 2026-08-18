@@ -12,8 +12,8 @@ export const IMAGE_NODE_TYPE = 'generator/image'
 export const IMAGE_INLINE_PARAMS = new Set(['file'])
 
 /**
- * Static image mapped across pixels. Decode happens in the renderer;
- * frames are pushed via media-frame (same path as VideoFile).
+ * Static image mapped across pixels. The GPU sidecar decodes the file;
+ * CPU `evaluate()` samples a media-frame only when the sidecar is down.
  */
 export const ImageFile: NodeTypeDef = {
   type: IMAGE_NODE_TYPE,
@@ -36,6 +36,7 @@ export const ImageFile: NodeTypeDef = {
       options: ['cover', 'contain', 'stretch']
     }
   ],
+  gpu: { pass: 'generator/image' },
   evaluate(inputs, params, ctx) {
     const scope = generatorScope(inputs, ctx)
     const out = beginScopedOutput(ctx)

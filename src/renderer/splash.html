@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en" data-product="editor">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PixelForge</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'"
+    />
+    <style>
+      :root {
+        --bg: #0a0d12;
+        --text: #e8eef4;
+        --text-dim: #8b96a5;
+        --teal: #26d4c8;
+        --blue: #3ba7ff;
+        --accent: #ff7a1a;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        user-select: none;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+          radial-gradient(ellipse 70% 55% at 50% 38%, rgba(38, 212, 200, 0.1), transparent 62%),
+          radial-gradient(ellipse 50% 40% at 50% 70%, rgba(59, 167, 255, 0.06), transparent 70%),
+          var(--bg);
+      }
+
+      body::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(221, 227, 234, 0.045) 1px, transparent 1px);
+        background-size: 14px 14px;
+        mask-image: radial-gradient(circle at 50% 42%, #000 20%, transparent 72%);
+        pointer-events: none;
+      }
+
+      .stage {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 28px 36px 24px;
+      }
+
+      .mark {
+        position: relative;
+        width: 92px;
+        height: 92px;
+        margin-bottom: 18px;
+      }
+
+      .mark-glow {
+        position: absolute;
+        inset: -18px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(38, 212, 200, 0.32), rgba(59, 167, 255, 0.08) 46%, transparent 70%);
+        animation: breathe 2.4s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      .logo {
+        position: relative;
+        width: 92px;
+        height: 92px;
+        border-radius: 22px;
+        object-fit: cover;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.06),
+          0 12px 28px rgba(0, 0, 0, 0.45);
+      }
+
+      html[data-product='editor'] .logo-player,
+      html[data-product='player'] .logo-editor {
+        display: none;
+      }
+
+      .name {
+        font-size: 22px;
+        font-weight: 650;
+        letter-spacing: 0.04em;
+        line-height: 1.1;
+      }
+
+      .product {
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+      }
+
+      html[data-product='player'] .product {
+        color: #7fd4ff;
+      }
+
+      .leds {
+        display: flex;
+        gap: 5px;
+        margin-top: 22px;
+      }
+
+      .led {
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: #1a222c;
+        animation: chase 1.7s ease-in-out infinite;
+      }
+
+      .led:nth-child(1) { animation-delay: 0s; }
+      .led:nth-child(2) { animation-delay: 0.07s; }
+      .led:nth-child(3) { animation-delay: 0.14s; }
+      .led:nth-child(4) { animation-delay: 0.21s; }
+      .led:nth-child(5) { animation-delay: 0.28s; }
+      .led:nth-child(6) { animation-delay: 0.35s; }
+      .led:nth-child(7) { animation-delay: 0.42s; }
+      .led:nth-child(8) { animation-delay: 0.49s; }
+      .led:nth-child(9) { animation-delay: 0.56s; }
+      .led:nth-child(10) { animation-delay: 0.63s; }
+      .led:nth-child(11) { animation-delay: 0.7s; }
+      .led:nth-child(12) { animation-delay: 0.77s; }
+      .led:nth-child(13) { animation-delay: 0.84s; }
+      .led:nth-child(14) { animation-delay: 0.91s; }
+      .led:nth-child(15) { animation-delay: 0.98s; }
+      .led:nth-child(16) { animation-delay: 1.05s; }
+
+      .tag {
+        margin-top: 16px;
+        font-size: 11px;
+        letter-spacing: 0.02em;
+        color: var(--text-dim);
+        opacity: 0.85;
+      }
+
+      @keyframes breathe {
+        0%,
+        100% {
+          opacity: 0.7;
+          transform: scale(0.96);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.06);
+        }
+      }
+
+      @keyframes chase {
+        0%,
+        100% {
+          background: #1a222c;
+          box-shadow: none;
+        }
+        35% {
+          background: var(--teal);
+          box-shadow: 0 0 8px rgba(38, 212, 200, 0.75);
+        }
+        50% {
+          background: #f4fffd;
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.55);
+        }
+        65% {
+          background: var(--blue);
+          box-shadow: 0 0 8px rgba(59, 167, 255, 0.55);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <div class="mark">
+        <div class="mark-glow"></div>
+        <img class="logo logo-editor" src="./src/assets/logo.png" alt="" width="92" height="92" />
+        <img class="logo logo-player" src="./src/assets/logo-player.png" alt="" width="92" height="92" />
+      </div>
+      <div class="name">PixelForge</div>
+      <div class="product" id="product">Editor</div>
+      <div class="leds" aria-hidden="true">
+        <span class="led"></span><span class="led"></span><span class="led"></span><span class="led"></span>
+        <span class="led"></span><span class="led"></span><span class="led"></span><span class="led"></span>
+        <span class="led"></span><span class="led"></span><span class="led"></span><span class="led"></span>
+        <span class="led"></span><span class="led"></span><span class="led"></span><span class="led"></span>
+      </div>
+      <p class="tag">Starting the engine…</p>
+    </div>
+    <script type="module" src="./src/splash.ts"></script>
+  </body>
+</html>

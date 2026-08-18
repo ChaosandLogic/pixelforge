@@ -5,6 +5,7 @@ import type { StartupPlan } from '@shared/playerStartup'
 import { EngineLauncher } from '../engine/EngineLauncher'
 import { bootstrapProjectFromPath } from '../engine/ProjectBootstrap'
 import { registerAppIpc } from '../ipc/app'
+import { registerShareIpc } from '../ipc/share'
 import { registerMediaIpc } from '../ipc/media'
 import { registerNetworkIpc } from '../ipc/network'
 import { registerPlayerProjectIpc } from '../ipc/playerProject'
@@ -18,8 +19,12 @@ import { readShowStartupHints } from './showPath'
 import { syncLoginItem } from './loginItem'
 import { readPlayerStartupConfig } from './startupConfig'
 import { resolveStartupPlan, validateStartupPlan } from './startupPlan'
+import { createSplashWindow, handoffSplash, hasAppWindow } from '../splash'
+import { ShareReceiverHub } from '../share/receiver'
+import { shareInputsFromGraph } from '@shared/share/senders'
 
 const engine = new EngineLauncher()
+const shareHub = new ShareReceiverHub((msg) => engine.sendToEngine(msg))
 const cli = parsePlayerArgs(process.argv.slice(1))
 
 // Packaged builds get their icon from electron-builder; this only dresses up the
@@ -37,7 +42,7 @@ let bootProjectPath: string | null = null
 let bootProject: ProjectFile | null = null
 let bootPlan: StartupPlan | null = null
 
-function createPlayerWindow(): void {
+function createPlayerWindow(splash: BrowserWindow | null = null): void {
   const win = new BrowserWindow({
     width: 960,
     height: 640,
@@ -53,7 +58,7 @@ function createPlayerWindow(): void {
     }
   })
 
-  win.on('ready-to-show', () => win.show())
+  handoffSplash(win, splash)
 
   win.webContents.setWindowOpenHandler((details) => {
     void shell.openExternal(details.url)
@@ -75,6 +80,7 @@ async function applyPlanToEngine(plan: StartupPlan): Promise<ProjectFile | null>
   if (plan.projectPath === null) return null
   validateStartupPlan(plan)
   const project = await bootstrapProjectFromPath(engine, plan.projectPath)
+  shareHub.setInputs(shareInputsFromGraph(project.graph))
   if (plan.interface !== null) {
     engine.sendToEngine({ type: 'set-config', config: { iface: plan.interface } })
   }
@@ -156,6 +162,7 @@ app.whenReady().then(async () => {
     applyPlan: applyPlanToEngine
   })
   registerAppIpc()
+  registerShareIpc(shareHub)
   setupAppMenu('player')
 
   if (plan.headless) {
@@ -163,6 +170,7 @@ app.whenReady().then(async () => {
     return
   }
 
+  const splash = createSplashWindow('player')
   engine.start()
 
   if (plan.projectPath !== null) {
@@ -173,7 +181,7 @@ app.whenReady().then(async () => {
     }
   }
 
-  createPlayerWindow()
+  createPlayerWindow(splash)
   initAutoUpdater('player')
 
   ipcMain.on('engine:request-port', (event) => {
@@ -181,7 +189,7 @@ app.whenReady().then(async () => {
   })
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createPlayerWindow()
+    if (!hasAppWindow()) createPlayerWindow()
   })
 }).catch((err: unknown) => {
   console.error('[player] Fatal error during startup:', err)
@@ -193,5 +201,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('will-quit', () => {
+  shareHub.dispose()
   engine.stop()
 })

@@ -80,6 +80,8 @@ export class OutputManager {
         sacnHost: route.sacnHost,
         ddpHost: route.ddpHost,
         ddpPort: route.ddpPort,
+        colorMode: route.colorMode,
+        whiteMode: route.whiteMode,
         iface,
         targetFps,
         pixelCount: this.pixelCount

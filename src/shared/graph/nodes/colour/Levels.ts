@@ -13,6 +13,7 @@ export const Levels: NodeTypeDef = {
     { name: 'contrast', label: 'Contrast', type: 'float', default: 1, min: 0, max: 3, step: 0.01 },
     { name: 'gamma', label: 'Gamma', type: 'float', default: 1, min: 0.2, max: 4, step: 0.05 }
   ],
+  gpu: { pass: 'colour/levels' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

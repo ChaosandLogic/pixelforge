@@ -1,9 +1,9 @@
 /**
  * Patch model. Points carry only an id and a position — no per-pixel
  * universe/channel. Pixel order IS the channel order: the engine emits one
- * flat RGB channel stream in patch order, and the output protocol chunks it
- * downstream (sACN: 510 channels per universe; DDP later: offset packets,
- * no universe limit).
+ * flat RGB stream in patch order. Pixel Output may expand to RGBW, then the
+ * protocol chunks it (sACN/Art-Net: 510 RGB or 512 RGBW channels per universe;
+ * DDP: offset packets, no universe limit).
  */
 
 export interface PatchPoint {
@@ -13,6 +13,8 @@ export interface PatchPoint {
   z: number
 }
 
+import type { ColorMode } from '../output/rgbw'
+import { channelsPerPixel, dmxChannelsPerUniverse } from '../output/rgbw'
 import type { LayoutData } from './layout'
 
 export interface PatchData {
@@ -24,16 +26,22 @@ export interface PatchData {
 /** 170 RGB pixels per DMX universe (510 of 512 channels used). */
 export const CHANNELS_PER_UNIVERSE = 510
 
-export function universeCountFor(pixelCount: number): number {
-  return Math.max(1, Math.ceil((pixelCount * 3) / CHANNELS_PER_UNIVERSE))
+export function universeCountFor(pixelCount: number, colorMode: ColorMode = 'rgb'): number {
+  const cpp = channelsPerPixel(colorMode)
+  return Math.max(1, Math.ceil((pixelCount * cpp) / dmxChannelsPerUniverse(colorMode)))
 }
 
-/** Derived mapping for display: where a point lands in the sACN stream. */
-export function deriveAddress(index: number, startUniverse: number): { universe: number; channel: number } {
-  const channelIndex = index * 3
+/** Derived mapping for display: where a point lands in the sACN/Art-Net stream. */
+export function deriveAddress(
+  index: number,
+  startUniverse: number,
+  colorMode: ColorMode = 'rgb'
+): { universe: number; channel: number } {
+  const perUniverse = dmxChannelsPerUniverse(colorMode)
+  const channelIndex = index * channelsPerPixel(colorMode)
   return {
-    universe: startUniverse + Math.floor(channelIndex / CHANNELS_PER_UNIVERSE),
-    channel: (channelIndex % CHANNELS_PER_UNIVERSE) + 1
+    universe: startUniverse + Math.floor(channelIndex / perUniverse),
+    channel: (channelIndex % perUniverse) + 1
   }
 }
 

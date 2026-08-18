@@ -21,6 +21,7 @@ export const Offset: NodeTypeDef = {
     { name: 'offset', label: 'Offset', type: 'float', default: 0, min: -1, max: 1, step: 0.01 },
     { name: 'speed', label: 'Speed', type: 'float', default: 0, min: -5, max: 5, step: 0.05 }
   ],
+  gpu: { pass: 'transform/offset' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

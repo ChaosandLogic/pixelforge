@@ -34,6 +34,7 @@ export const Mask: NodeTypeDef = {
     { name: 'offset', label: 'Offset', type: 'float', default: 0, min: -1, max: 1, step: 0.01 },
     { name: 'invert', label: 'Invert', type: 'boolean', default: false }
   ],
+  gpu: { pass: 'transform/mask' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

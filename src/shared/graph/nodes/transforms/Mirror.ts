@@ -19,6 +19,7 @@ export const Mirror: NodeTypeDef = {
   inputs: [{ name: 'pixels', label: 'Pixels', type: 'pixels' }],
   outputs: [{ name: 'pixels', label: 'Pixels', type: 'pixels' }],
   params: [{ name: 'mode', label: 'Mode', type: 'select', default: 'fold', options: ['fold', 'flip'] }],
+  gpu: { pass: 'transform/mirror' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

@@ -159,6 +159,34 @@ body {
   padding: 14px;
 }
 
+.patch-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.patch-dialog {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.patch-dialog-body {
+  padding: 14px 18px 18px;
+  overflow-y: auto;
+}
+
 .patch-source {
   margin-bottom: 10px;
   font-size: 11px;
@@ -483,6 +511,7 @@ body {
   font-size: 12px;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
+  overflow-x: auto;
 }
 
 .status-dot {
@@ -941,6 +970,19 @@ select.media-file-btn {
   font-size: 9px;
   line-height: 1.35;
   color: var(--text-dim);
+}
+
+.output-field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.output-field-label-row .refresh-btn {
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
 }
 
 .pf-output {
@@ -1410,11 +1452,18 @@ select.media-file-btn {
 
 /* ---- add node menu ---- */
 
-.add-node-menu {
+.graph-workspace-tools {
   position: absolute;
   top: 12px;
   left: 12px;
   z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.add-node-menu {
+  position: relative;
 }
 
 .add-node-btn {
@@ -1431,6 +1480,11 @@ select.media-file-btn {
 
 .add-node-btn:hover {
   border-color: var(--accent);
+}
+
+.add-node-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .add-node-panel {
@@ -1897,7 +1951,7 @@ select.media-file-btn {
 .layout-builder-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 1100;
   background: rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;

@@ -28,6 +28,7 @@ export const Wave: NodeTypeDef = {
     { name: 'frequency', label: 'Frequency', type: 'float', default: 2, min: 0.1, max: 20, step: 0.1 },
     { name: 'speed', label: 'Speed', type: 'float', default: 0.5, min: -5, max: 5, step: 0.05 }
   ],
+  gpu: { pass: 'generator/wave' },
   evaluate(inputs, params, ctx) {
     const a = colourParam(params, 'colourA')
     const b = colourParam(params, 'colourB')

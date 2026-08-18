@@ -10,6 +10,7 @@ pub struct Request {
 }
 
 #[derive(Debug, Serialize)]
+#[allow(dead_code)]
 pub struct Response {
     pub id: u32,
     pub kind: String,
@@ -90,13 +91,21 @@ pub struct ShareOut {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct CpuUpload {
+    pub node_id: String,
+    pub width: u32,
+    pub height: u32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FrameRequest {
     pub time_ms: f32,
     pub delta_ms: f32,
     pub live_node_ids: Vec<String>,
     pub uniforms: std::collections::HashMap<String, NodeUniforms>,
     #[serde(default)]
-    pub cpu_upload_ids: Vec<String>,
+    pub cpu_uploads: Vec<CpuUpload>,
     pub sample_node_ids: Vec<String>,
     #[serde(default)]
     pub preview_node_ids: Vec<String>,

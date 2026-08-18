@@ -15,6 +15,10 @@ import {
   type NodeTypeDef
 } from '../../types'
 
+/**
+ * Histogram-style sort of the LED buffer. Stays on the CPU evaluator (v1);
+ * wire through an upload/download if a GPU TOP needs it.
+ */
 export const PixelSort: NodeTypeDef = {
   type: 'transform/pixel-sort',
   label: 'Pixel Sort',

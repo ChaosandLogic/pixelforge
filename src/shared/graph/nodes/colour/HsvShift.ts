@@ -76,6 +76,7 @@ export const HsvShift: NodeTypeDef = {
     { name: 'saturation', label: 'Saturation', type: 'float', default: 1, min: 0, max: 2, step: 0.01 },
     { name: 'value', label: 'Value', type: 'float', default: 1, min: 0, max: 2, step: 0.01 }
   ],
+  gpu: { pass: 'colour/hsv-shift' },
   evaluate(inputs, params, ctx) {
     const src = pixelsInput(inputs, 'pixels')
     if (src === null) {

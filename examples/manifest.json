@@ -48,5 +48,35 @@
     "filename": "10-signal-labyrinth.pxf",
     "name": "Signal Labyrinth",
     "description": "Deep float routing (delay/hold/ramp/gate/compare) driving a 5-layer pixel compositing stack on a 32×8 matrix."
+  },
+  {
+    "filename": "11-plasma-field.pxf",
+    "name": "Plasma Field",
+    "description": "Shader plasma on a 32×16 matrix with a slow hue drift — a looping 2D field."
+  },
+  {
+    "filename": "12-tunnel-ride.pxf",
+    "name": "Tunnel Ride",
+    "description": "Shader tunnel spinning through UV rotate — depth without a sequence."
+  },
+  {
+    "filename": "13-aurora-veil.pxf",
+    "name": "Aurora Veil",
+    "description": "Soft aurora shader through a box blur — atmospheric sheet lighting."
+  },
+  {
+    "filename": "14-kaleido-garden.pxf",
+    "name": "Kaleido Garden",
+    "description": "Perlin noise folded into 8 kaleidoscope segments with a slow hue spin."
+  },
+  {
+    "filename": "15-ember-trails.pxf",
+    "name": "Ember Trails",
+    "description": "Procedural fire with Feedback persistence — rising embers and smear."
+  },
+  {
+    "filename": "16-ripple-warp.pxf",
+    "name": "Ripple Warp",
+    "description": "Ripple shader warped by slow noise — TouchDesigner-style UV displace."
   }
 ]

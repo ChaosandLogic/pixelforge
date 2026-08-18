@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { encodeFseq, fpsFromStepTime, validateFseqExport } from '@shared/export/fseq'
 import { fseqExportPreflight } from '@shared/export/fseqPreflight'
 import { measureLoopSeam, formatLoopSeam } from '@shared/export/loopSeam'
+import { parseOutputConfig } from '@shared/output/config'
 import { usePatchStore } from '@/store/patchStore'
 import { ExportBakeFields } from './ExportBakeFields'
 import { useExportBakeFlow } from './useExportBakeFlow'
@@ -32,11 +33,14 @@ export function ExportFseqDialog({ open, onClose }: ExportFseqDialogProps): Reac
 
     flow.setStatus(`Encoding FSEQ… (${seamLabel})`)
     try {
+      const driver = parseOutputConfig(flow.graph)
       const encoded = encodeFseq({
         frames: bakeResult.frames,
         frameCount: bakeResult.frameCount,
         pixelCount: bakeResult.pixelCount,
-        fps: bakeResult.fps
+        fps: bakeResult.fps,
+        colorMode: driver.colorMode,
+        whiteMode: driver.whiteMode
       })
       if (encoded.error !== null) {
         alert(`Encode failed: ${encoded.error}`)
@@ -47,7 +51,8 @@ export function ExportFseqDialog({ open, onClose }: ExportFseqDialogProps): Reac
         bakeResult.pixelCount,
         bakeResult.frameCount,
         bakeResult.fps,
-        encoded.data.byteLength
+        encoded.data.byteLength,
+        driver.colorMode
       )
       if (!validation.ok) {
         alert(validation.errors.join('\n'))

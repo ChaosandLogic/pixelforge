@@ -67,7 +67,15 @@ impl MediaStore {
 fn decode_image(path: &Path) -> Option<(u32, u32, Vec<u8>)> {
     let img = image::open(path).ok()?.to_rgba8();
     let (w, h) = img.dimensions();
-    Some((w, h, img.into_raw()))
+    let max_edge = 512u32;
+    if w.max(h) <= max_edge {
+        return Some((w, h, img.into_raw()));
+    }
+    let scale = max_edge as f32 / w.max(h) as f32;
+    let nw = (w as f32 * scale).round().max(1.0) as u32;
+    let nh = (h as f32 * scale).round().max(1.0) as u32;
+    let resized = image::imageops::resize(&img, nw, nh, image::imageops::FilterType::Triangle);
+    Some((nw, nh, resized.into_raw()))
 }
 
 fn decode_video(path: &Path) -> Option<VideoSession> {
@@ -106,10 +114,16 @@ fn parse_rate(s: &str) -> f32 {
 }
 
 fn ffmpeg_frames(path: &Path, width: u32, height: u32, fps: f32) -> Option<VideoSession> {
+    let max_edge = 512u32;
+    let scale = (max_edge as f32 / width.max(height).max(1) as f32).min(1.0);
+    let width = (width as f32 * scale).round().max(1.0) as u32;
+    let height = (height as f32 * scale).round().max(1.0) as u32;
     let mut child = Command::new("ffmpeg")
         .args([
             "-i",
             path.to_str()?,
+            "-vf",
+            &format!("scale={width}:{height}"),
             "-f",
             "rawvideo",
             "-pix_fmt",

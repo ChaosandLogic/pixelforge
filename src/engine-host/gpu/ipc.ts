@@ -1,9 +1,19 @@
-import { readSync } from 'node:fs'
+import { readSync, writeSync } from 'node:fs'
 import { GPU_IPC_MAGIC, GPU_PROTOCOL_VERSION } from '@shared/gpu/protocol'
 
 export interface GpuIpcMessage {
   header: unknown
   blobs: Map<string, Buffer>
+}
+
+const WAIT = new Int32Array(new SharedArrayBuffer(4))
+
+function sleepMs(ms: number): void {
+  Atomics.wait(WAIT, 0, 0, ms)
+}
+
+function isAgain(err: unknown): boolean {
+  return err instanceof Error && (err as NodeJS.ErrnoException).code === 'EAGAIN'
 }
 
 export function encodeGpuMessage(header: unknown, blobs: Map<string, Buffer> = new Map()): Buffer {
@@ -50,13 +60,30 @@ export function decodeGpuMessage(buf: Buffer): GpuIpcMessage {
   return { header, blobs }
 }
 
+export function writeExact(fd: number, data: Buffer): void {
+  let off = 0
+  while (off < data.length) {
+    try {
+      off += writeSync(fd, data, off, data.length - off)
+    } catch (err) {
+      if (!isAgain(err)) throw err
+      sleepMs(1)
+    }
+  }
+}
+
 export function readExact(fd: number, nbytes: number): Buffer {
   const buf = Buffer.alloc(nbytes)
   let off = 0
   while (off < nbytes) {
-    const n = readSync(fd, buf, off, nbytes - off, null)
-    if (n <= 0) throw new Error('gpu-engine closed the pipe')
-    off += n
+    try {
+      const n = readSync(fd, buf, off, nbytes - off, null)
+      if (n <= 0) throw new Error('gpu-engine closed the pipe')
+      off += n
+    } catch (err) {
+      if (!isAgain(err)) throw err
+      sleepMs(1)
+    }
   }
   return buf
 }

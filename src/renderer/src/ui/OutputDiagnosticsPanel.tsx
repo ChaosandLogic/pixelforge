@@ -58,7 +58,9 @@ export function OutputDiagnosticsPanel(): React.JSX.Element {
         </div>
         <div className="diag-stat">
           <span className="diag-stat-label">Pixels</span>
-          <span className="diag-stat-value">{status.pixelCount.toLocaleString()}</span>
+          <span className="diag-stat-value">
+            {status.pixelCount.toLocaleString()} {status.colorMode === 'rgbw' ? 'RGBW' : 'RGB'}
+          </span>
         </div>
         {status.outputCount > 1 && (
           <div className="diag-stat">

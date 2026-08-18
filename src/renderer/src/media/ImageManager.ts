@@ -1,7 +1,7 @@
 import { IMAGE_NODE_TYPE } from '@shared/graph/nodes/generators/ImageFile'
 import { useGraphStore, type PfNode } from '@/store/graphStore'
 
-/** Loads still images for Image nodes and pushes RGB frames to the engine. */
+/** Loads still images for Image node UI; engine decode is in the GPU sidecar. */
 
 const MAX_SAMPLE = 128
 
